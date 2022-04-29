@@ -1,5 +1,5 @@
 export default {
-  name: 'markdowneditor',
+  name: 'Markdown Editor',
   version: '1.0.0',
   extra: {
     loadStorybook: process.env.LOAD_STORYBOOK === 'true',
