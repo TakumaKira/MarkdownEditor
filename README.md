@@ -7,6 +7,9 @@ This is a solution to the [In-browser markdown editor challenge on Frontend Ment
 - [Frontend Mentor - In-browser markdown editor solution](#frontend-mentor---in-browser-markdown-editor-solution)
   - [Table of contents](#table-of-contents)
   - [Setup](#setup)
+    - [Run simulators](#run-simulators)
+    - [Run Storybook](#run-storybook)
+    - [Run unit test](#run-unit-test)
   - [Overview](#overview)
     - [The challenge](#the-challenge)
     - [Screenshot](#screenshot)
@@ -20,7 +23,21 @@ This is a solution to the [In-browser markdown editor challenge on Frontend Ment
 
 ## Setup
 
+### Run simulators
+
+Run ``yarn web``.(Or ``yarn ios``/``yarn android`` on your need. You need to setup and get the simulator ready beforehand.)
+
+### Run Storybook
+
 You need to set your local IP address like ``LOCAL_IP=xxx.xxx.xx.x`` within .env file at your root directory to run Storybook correctly.
+
+Then run ``yarn storybook`` and you will see Storybook UI page, but stories won't show up at this point.
+
+Then run ``yarn web:storybook``(or ``yarn ios:storybook``/``yarn android:storybook`` on your need. You need to setup and get the simulator ready beforehand.) and you will see the stories(you might need to reload Storybook UI page). You should be able to select a story and web/ios/android simulator will show the selected story.
+
+### Run unit test
+
+Run ``yarn test``.
 
 ## Overview
 

@@ -6,7 +6,6 @@
     "start": "expo start",
     "storybook": "export $(cat .env | xargs) && start-storybook -p 7007 -h $LOCAL_IP",
     "build-storybook": "build-storybook",
-    "test": "jest --watchAll --coverage",
     "web": "expo start --web",
     "web:storybook": "export $(cat .env | xargs) && LOAD_STORYBOOK=true expo start --web",
     "build:web": "expo build:web",
@@ -14,6 +13,7 @@
     "ios:storybook": "export $(cat .env | xargs) && LOAD_STORYBOOK=true expo start --ios",
     "android": "expo start --android",
     "android:storybook": "export $(cat .env | xargs) && LOAD_STORYBOOK=true expo start --android",
+    "test": "jest --watchAll --coverage",
     "eject": "expo eject"
   },
   "dependencies": {
