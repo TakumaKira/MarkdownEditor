@@ -1,14 +1,17 @@
-import { StatusBar } from 'expo-status-bar'
-import { StyleSheet, Text, View } from 'react-native'
-import StorybookUI from './storybook'
 import Constants from 'expo-constants'
+import React from 'react'
+import { StyleSheet } from 'react-native'
+import Frame from './components/Frame'
+import MainView from './components/MainView'
+import SideBar from './components/SideBar'
+import StorybookUI from './storybook'
 
 const App = () => {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <Frame
+      sideBar={SideBar}
+      main={MainView}
+    />
   )
 }
 
