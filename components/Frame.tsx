@@ -17,24 +17,24 @@ const Frame = (props: {sidebar: () => JSX.Element, main: (setShowSidebar: Dispat
     Animated.timing(sidebarWidthAnim, {
       toValue: SIDEBAR_WIDTH,
       duration: ANIM_DURATION,
-      useNativeDriver: true
+      useNativeDriver: false
     }).start()
     Animated.timing(containerWidthAnim, {
       toValue: windowWidth + SIDEBAR_WIDTH,
       duration: ANIM_DURATION,
-      useNativeDriver: true
+      useNativeDriver: false
     }).start()
   }
   const hideAnim = () => {
     Animated.timing(sidebarWidthAnim, {
       toValue: 0,
       duration: ANIM_DURATION,
-      useNativeDriver: true
+      useNativeDriver: false
     }).start()
     Animated.timing(containerWidthAnim, {
       toValue: windowWidth,
       duration: ANIM_DURATION,
-      useNativeDriver: true
+      useNativeDriver: false
     }).start()
   }
 
