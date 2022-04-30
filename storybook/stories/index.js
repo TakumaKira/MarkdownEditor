@@ -1,1 +1,5 @@
 import './Frame.stories'
+import './SideBar.stories'
+import './MainView.stories'
+import './TopBar.stories'
+import './EditorView.stories'

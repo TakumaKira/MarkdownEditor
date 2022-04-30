@@ -1,12 +1,12 @@
 import React, { Dispatch, SetStateAction } from 'react'
 import { Animated, StyleSheet, View, Dimensions } from 'react-native'
+import { SIDEBAR_WIDTH } from './SideBar'
 
-const SIDEBAR_WIDTH = 250
 const ANIM_DURATION = 500
 
-const Frame = (props: {sidebar: () => JSX.Element, main: (setShowSidebar: Dispatch<SetStateAction<boolean>>) => JSX.Element}) => {
+const Frame = (props: {sideBar: () => JSX.Element, main: (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>}) => JSX.Element}) => {
   const {
-    sidebar, main
+    sideBar: sidebar, main
   } = props
   const [showSidebar, setShowSidebar] = React.useState(false)
   const windowWidth = Dimensions.get('window').width
@@ -48,7 +48,7 @@ const Frame = (props: {sidebar: () => JSX.Element, main: (setShowSidebar: Dispat
         {sidebar()}
       </Animated.View>
       <View style={styles.mainContainer}>
-        {main(setShowSidebar)}
+        {main({setShowSidebar})}
       </View>
     </Animated.View>
   )

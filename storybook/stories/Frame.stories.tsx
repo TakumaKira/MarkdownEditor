@@ -1,11 +1,12 @@
 import { storiesOf } from '@storybook/react-native';
 import { Dispatch, SetStateAction } from 'react';
-import { StyleSheet, Text, View, Button } from 'react-native';
+import { Button, StyleSheet, Text, View } from 'react-native';
 import Frame from '../../components/Frame';
+import { SIDEBAR_WIDTH } from '../../components/SideBar';
 
 const styles = StyleSheet.create({
   sidebarContainer: {
-    width: 250,
+    width: SIDEBAR_WIDTH,
     height: '100%',
     backgroundColor: '#1D1F22',
     alignItems: 'center',
@@ -26,18 +27,25 @@ const MockSidebar = () =>
     <Text style={styles.sidebarText}>Sidebar</Text>
     <Text style={styles.sidebarText}>Menu</Text>
   </View>
-const MockMain = (setShowSidebar: Dispatch<SetStateAction<boolean>>) =>
-  <View style={styles.mainContainer}>
-    <Button
-      title="Sidebar Visibility Button"
-      onPress={() => setShowSidebar(value => !value)}
-    />
-    <Text>Main</Text>
-  </View>
+const MockMain = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>}) => {
+  const {
+    setShowSidebar,
+  } = props
+
+  return (
+    <View style={styles.mainContainer}>
+      <Button
+        title="Sidebar Visibility Button"
+        onPress={() => setShowSidebar(value => !value)}
+      />
+      <Text>Main</Text>
+    </View>
+  )
+}
 
 storiesOf('Frame', module).add('to Storybook', () =>
   <Frame
-    sidebar={MockSidebar}
+    sideBar={MockSidebar}
     main={MockMain}
   />
 );
