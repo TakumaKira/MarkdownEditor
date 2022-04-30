@@ -33,7 +33,7 @@ You need to set your local IP address like ``LOCAL_IP=xxx.xxx.xx.x`` within .env
 
 Then run ``yarn storybook`` and you will see Storybook UI page, but stories won't show up at this point.
 
-Then run ``yarn web:storybook``(or ``yarn ios:storybook``/``yarn android:storybook`` on your need. You need to setup and get the simulator ready beforehand.) and you will see the stories(you might need to reload Storybook UI page). You should be able to select a story and web/ios/android simulator will show the selected story.
+Then run ``yarn start:storybook`` and click "Run in web browser"/"Run on iOS simulator"/"Run on Android device/emulator"(You need to setup and get the simulator ready beforehand) on sidebar of Expo developer tools. You will see the stories(you might need to reload Storybook UI page) and should be able to select a story and web/ios/android simulator will show the selected story(You should be able to get logs on the main window).
 
 ### Run unit test
 
