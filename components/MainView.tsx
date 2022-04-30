@@ -1,11 +1,11 @@
-import { Dispatch, SetStateAction } from 'react'
-import { Button, StyleSheet, Text, View } from 'react-native'
+import React, { Dispatch, SetStateAction } from 'react'
+import { StyleSheet, View } from 'react-native'
+import EditorView from './EditorView'
+import TopBar from './TopBar'
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 })
 
@@ -16,11 +16,8 @@ const MainView = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>}) =>
 
   return (
     <View style={styles.container}>
-      <Button
-        title="Sidebar Visibility Button"
-        onPress={() => setShowSidebar(value => !value)}
-      />
-      <Text>Main</Text>
+      <TopBar setShowSidebar={setShowSidebar} />
+      <EditorView />
     </View>
   )
 }
