@@ -1238,26 +1238,6 @@
   resolved "https://registry.yarnpkg.com/@emotion/weak-memoize/-/weak-memoize-0.2.5.tgz#8eed982e2ee6f7f4e44c253e12962980791efd46"
   integrity sha512-6U71C2Wp7r5XtFtQzYrW5iKFT67OixrSxjI4MptCHzdSVlgabczzqLe0ZSgnub/5Kp4hSbpDB1tMytZY9pwxxA==
 
-"@expo-google-fonts/commissioner@^0.2.2":
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/@expo-google-fonts/commissioner/-/commissioner-0.2.2.tgz#f84f022f45601c0e771dd4261f20df0535fbf94a"
-  integrity sha512-F0vN/oJRpBuXAeVaxSjyR6qMzFDgV0rfiY9hiDUWyU4om+cBamUncnCXd7ZZ2fa3nLHWl2X74Vl5Z0PEg3A+Uw==
-
-"@expo-google-fonts/roboto-mono@^0.2.2":
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/@expo-google-fonts/roboto-mono/-/roboto-mono-0.2.2.tgz#90ba396114bf8b293154a25bd869de238b5f0884"
-  integrity sha512-x3a3wZ4Qq/OHzSL9fH492XCpTrCzhXvkVh+h9Q8+ESoHAqbR3EFx/SuZIFlLlX8Dg5AWesGOZxOQIRCOSo01nw==
-
-"@expo-google-fonts/roboto-slab@^0.2.2":
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/@expo-google-fonts/roboto-slab/-/roboto-slab-0.2.2.tgz#2a661e92105a67139099d5d320ff4447c0420c48"
-  integrity sha512-YgF942UHWld8x+l3QbIHFmS/mF88xuQV1p3hVwgBKpscxKLAux3Re8XMu3YKVwKdzXJQm02llv3+bErrSy+Dxg==
-
-"@expo-google-fonts/roboto@^0.2.2":
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/@expo-google-fonts/roboto/-/roboto-0.2.2.tgz#0a9f4685e8d02bdb0d2d2919c102f531bdb353d4"
-  integrity sha512-qP0oZsR8rTID5T9wEXSt9yCYMnKYKlvIlrJGGpd+t71Obt2J51+51PBpvxd5c8fpABEru3zx6ENmpU9lzwr8zw==
-
 "@expo/apple-utils@0.0.0-alpha.31":
   version "0.0.0-alpha.31"
   resolved "https://registry.yarnpkg.com/@expo/apple-utils/-/apple-utils-0.0.0-alpha.31.tgz#ab18640c384ba4b088e4490977a12f6f41a1e2a0"
