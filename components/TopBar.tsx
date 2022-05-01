@@ -7,7 +7,7 @@ import TextWithCustomFont from './TextWithCustomFont'
 const styles = StyleSheet.create({
   container: {
     height: 72,
-    backgroundColor: colors[900],
+    backgroundColor: colors[800],
     flexDirection: 'row',
   },
   text: {
