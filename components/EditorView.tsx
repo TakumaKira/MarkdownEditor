@@ -1,7 +1,14 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, TextInput, View } from 'react-native'
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  header: {
+    height: 42,
+    backgroundColor: '#F5F5F5',
+  },
+  text: {
     flex: 1,
   },
 })
@@ -9,7 +16,8 @@ const styles = StyleSheet.create({
 const EditorView = () => {
   return (
     <View style={styles.container}>
-      <Text>EditorView</Text>
+      <View style={styles.header}></View>
+      <TextInput multiline style={styles.text} />
     </View>
   )
 }
