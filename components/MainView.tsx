@@ -1,6 +1,6 @@
 import React, { Dispatch, SetStateAction } from 'react'
 import { StyleSheet, View } from 'react-native'
-import EditorView from './EditorView'
+import EditorViewFrame from './EditorViewFrame'
 import TopBar from './TopBar'
 
 const styles = StyleSheet.create({
@@ -17,7 +17,7 @@ const MainView = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>}) =>
   return (
     <View style={styles.container}>
       <TopBar setShowSidebar={setShowSidebar} />
-      <EditorView />
+      <EditorViewFrame />
     </View>
   )
 }
