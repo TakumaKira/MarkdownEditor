@@ -1,4 +1,7 @@
-import { StyleSheet, TextInput, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
+import colors from '../theme/colors'
+import textStyles from '../theme/textStyles'
+import TextInputWithCustomFont from './TextInputWithCustomFont'
 
 const styles = StyleSheet.create({
   container: {
@@ -6,7 +9,7 @@ const styles = StyleSheet.create({
   },
   header: {
     height: 42,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors[200],
   },
   text: {
     flex: 1,
@@ -17,7 +20,7 @@ const EditorView = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}></View>
-      <TextInput multiline style={styles.text} />
+      <TextInputWithCustomFont multiline style={[styles.text, textStyles.markdownCode]} />
     </View>
   )
 }
