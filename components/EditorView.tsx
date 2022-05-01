@@ -1,4 +1,5 @@
 import { StyleSheet, TextInput, View } from 'react-native'
+import colors from '../theme/colors'
 
 const styles = StyleSheet.create({
   container: {
@@ -6,7 +7,7 @@ const styles = StyleSheet.create({
   },
   header: {
     height: 42,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors[200],
   },
   text: {
     flex: 1,

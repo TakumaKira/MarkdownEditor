@@ -1,14 +1,15 @@
 import { Dispatch, SetStateAction } from 'react'
 import { Button, StyleSheet, Text, View } from 'react-native'
+import colors from '../theme/colors'
 
 const styles = StyleSheet.create({
   container: {
     height: 72,
-    backgroundColor: '#2B2D31',
+    backgroundColor: colors[900],
     flexDirection: 'row',
   },
   text: {
-    color: '#FFFFFF',
+    color: colors[100],
   },
 })
 

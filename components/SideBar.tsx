@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native'
+import colors from '../theme/colors'
 
 export const SIDEBAR_WIDTH = 250
 
@@ -6,10 +7,10 @@ const styles = StyleSheet.create({
   container: {
     width: SIDEBAR_WIDTH,
     flex: 1,
-    backgroundColor: '#1D1F22',
+    backgroundColor: colors[900],
   },
   text: {
-    color: '#FFFFFF',
+    color: colors[100],
   },
 })
 
