@@ -5,9 +5,9 @@ import { RobotoSlab_300Light, RobotoSlab_400Regular, RobotoSlab_700Bold } from '
 import AppLoading from 'expo-app-loading'
 import { useFonts } from 'expo-font'
 import React from 'react'
-import { StyleProp, Text, TextStyle } from 'react-native'
+import { TextInput, TextInputProps } from 'react-native'
 
-const TextWithCustomFont = (props: {children: string, style?: StyleProp<TextStyle>}) => {
+const TextInputWithCustomFont = (props: TextInputProps) => {
   const [fontsLoaded] = useFonts({
     Roboto_300Light,
     Roboto_400Regular,
@@ -23,14 +23,9 @@ const TextWithCustomFont = (props: {children: string, style?: StyleProp<TextStyl
     return <AppLoading />
   }
 
-  const {
-    children,
-    style,
-  } = props
-
   return (
-    <Text style={style}>{children}</Text>
+    <TextInput {...props} />
   )
 }
 
-export default TextWithCustomFont
+export default TextInputWithCustomFont
