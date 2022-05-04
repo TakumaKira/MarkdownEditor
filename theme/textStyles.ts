@@ -69,6 +69,9 @@ const textStyles = StyleSheet.create({
     lineHeight: 18,
     letterSpacing: 5
   },
+  link: {
+    textDecorationLine: 'underline'
+  },
 })
 
 export default textStyles

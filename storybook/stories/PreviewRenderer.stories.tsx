@@ -15,9 +15,6 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: colors[200],
   },
-  link: {
-    textDecorationLine: 'underline',
-  },
 })
 
 const Bullet = () => {
@@ -81,14 +78,14 @@ storiesOf('PreviewRenderer', module)
         <TextWithCustomFont style={[textStyles.previewParagraph, {marginTop: 4}]}><Bullet />Choose between Light or Dark mode depending on your preference</TextWithCustomFont>
       </View>
       <View style={styles.blockQuote}>
-        <TextWithCustomFont style={textStyles.previewParagraphBold}>This is an example of a blockquote. If you would like to learn more about markdown syntax, you can visit this <TextWithCustomFont style={styles.link} onPress={() => console.log('https://www.markdownguide.org/cheat-sheet/')}>markdown cheatsheet</TextWithCustomFont></TextWithCustomFont>
+        <TextWithCustomFont style={textStyles.previewParagraphBold}>This is an example of a blockquote. If you would like to learn more about markdown syntax, you can visit this <TextWithCustomFont style={textStyles.link} onPress={() => console.log('https://www.markdownguide.org/cheat-sheet/')}>markdown cheatsheet</TextWithCustomFont></TextWithCustomFont>
       </View>
       <TextWithCustomFont style={textStyles.previewH4}>Headings</TextWithCustomFont>
       <TextWithCustomFont style={textStyles.previewParagraph}>To create a heading, add the hash sign (#) before the heading. The number of number signs you use should correspond to the heading level. You'll see in this guide that we've used all six heading levels (not necessarily in the correct way you should use headings!) to illustrate how they should look.</TextWithCustomFont>
       <TextWithCustomFont style={textStyles.previewH5}>Lists</TextWithCustomFont>
       <TextWithCustomFont style={textStyles.previewParagraph}>You can see examples of ordered and unordered lists above.</TextWithCustomFont>
       <TextWithCustomFont style={textStyles.previewH6}>Code Blocks</TextWithCustomFont>
-      <TextWithCustomFont style={textStyles.previewParagraph}>This markdown editor allows for inline-code snippets, like this: <TextWithCustomFont style={textStyles.markdownCode}>&lt;p&gt;I'm inline&lt;/p&gt;</TextWithCustomFont>. It also allows for larger code blocks like this:</TextWithCustomFont>
+      <TextWithCustomFont style={textStyles.previewParagraph}>This markdown editor allows for inline-code snippets, like this: <TextWithCustomFont style={textStyles.markdownCode}>{"<p>I'm inline</p>"}</TextWithCustomFont>. It also allows for larger code blocks like this:</TextWithCustomFont>
       <View style={styles.blockCode}>
         <TextWithCustomFont style={textStyles.markdownCode}>&lt;main&gt;</TextWithCustomFont>
         <TextWithCustomFont style={textStyles.markdownCode}>  &lt;h1&gt;This is a larger code block&lt;/h1&gt;</TextWithCustomFont>
