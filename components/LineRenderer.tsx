@@ -14,7 +14,7 @@ const LineRenderer = (props: {children: string, style?: StyleProp<TextStyle>}) =
         if (typeof part === 'string') {
           return part
         }
-        return <React.Fragment key={i}>{part.toJSX()}</React.Fragment>
+        return <React.Fragment key={i}>{part.renderFragment()}</React.Fragment>
       })}
     </TextWithCustomFont>
   )

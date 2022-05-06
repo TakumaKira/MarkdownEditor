@@ -5,14 +5,14 @@ export enum InlineMarkdownType {
   LINK = 'link',
 }
 
-const InlineMarkdownTypes: {[key in InlineMarkdownType]: {regexp: RegExp, toJSX: (input: string) => JSX.Element}} = {
+const InlineMarkdownTypes: {[key in InlineMarkdownType]: {regexp: RegExp, renderFragment: (input: string) => JSX.Element}} = {
   [InlineMarkdownType.CODE]: {
     regexp: /`.*`/,
-    toJSX: input => <Inline.Code>{removeInlineMarkdown(input)}</Inline.Code>
+    renderFragment: input => <Inline.Code>{removeInlineMarkdown(input)}</Inline.Code>
   },
   [InlineMarkdownType.LINK]: {
     regexp: /\[.*\]\(.*\)/,
-    toJSX: input => {
+    renderFragment: input => {
       const {url, text} = readLinkText(input)
       if (!url || !text) {
         console.error('url', url, 'text', text)
@@ -26,7 +26,7 @@ const InlineMarkdownTypes: {[key in InlineMarkdownType]: {regexp: RegExp, toJSX:
 type FoundMarkdown = {
   type: InlineMarkdownType
   content: string
-  toJSX: () => JSX.Element
+  renderFragment: () => JSX.Element
 }
 type FoundMarkdownWithIndex = FoundMarkdown & {
   index: number
@@ -48,7 +48,7 @@ function _splitByMarkdown(input: (string | FoundMarkdown)[]): (string | FoundMar
   if (!foundMarkdown) {
     return input
   }
-  const {type, content, index, toJSX} = foundMarkdown
+  const {type, content, index, renderFragment} = foundMarkdown
   const before = index === 0
     ? null
     : last.substring(0, index)
@@ -57,7 +57,7 @@ function _splitByMarkdown(input: (string | FoundMarkdown)[]): (string | FoundMar
     : null
   input.pop()
   before && input.push(before)
-  input.push({type, content, toJSX})
+  input.push({type, content, renderFragment})
   after && input.push(after)
   return _splitByMarkdown(input)
 }
@@ -79,8 +79,8 @@ export function findInlineMarkdown(line: string): FoundMarkdownWithIndex | null 
           content = r[0]
         }
       }
-      // The original parameter of toJSX can be fixed here.
-      results.push({type: markdownType, content, index: result.index, toJSX: () => InlineMarkdownTypes[markdownType].toJSX(content)})
+      // The original parameter of renderFragment can be fixed here.
+      results.push({type: markdownType, content, index: result.index, renderFragment: () => InlineMarkdownTypes[markdownType].renderFragment(content)})
     }
   }
   // We want to chose a type of markdown with the youngest start index.

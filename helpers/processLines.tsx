@@ -1,33 +1,91 @@
+import { Text, View } from 'react-native'
+import TextWithCustomFont from '../components/TextWithCustomFont'
+import textStyles from '../theme/textStyles'
+import { renderFragments } from './renderLines'
+
 export enum MultilineBlockType {
-  CODE = 'code',
+  CODE = 'mbt_code',
 }
-const MultilineBlockTypes: {[key in MultilineBlockType]: {markdown: string}} = {
+export const MultilineBlockTypes: {[key in MultilineBlockType]: {markdown: string, renderBlock: (block: Block) => JSX.Element}} = {
   [MultilineBlockType.CODE]: {
     markdown: "```",
+    renderBlock: block =>
+      <View style={textStyles.blockCode}>
+        {block.lines.map((line, i) =>
+          <TextWithCustomFont
+            style={textStyles.markdownCode}
+            key={i}
+          >
+            {line}
+          </TextWithCustomFont>
+        )}
+      </View>,
   },
 } as const
 
-export enum ListBlockType {
-  ORDERED_LIST = 'orderedList',
-  UNORDERED_LIST = 'unorderedList',
-  QUOTE = 'quote',
+const Bullet = () => {
+  return (<Text>・</Text>)
 }
-const ListBlockTypes: {[key in ListBlockType]: {regexp: RegExp, isSuccessor: (prevLine: string, currLine: string) => boolean}} = {
+
+export enum ListBlockType {
+  ORDERED_LIST = 'lbt_orderedList',
+  UNORDERED_LIST = 'lbt_unorderedList',
+  QUOTE = 'lbt_quote',
+}
+const RegExps: {[key in ListBlockType]: RegExp} = {
+  [ListBlockType.ORDERED_LIST]: /^\d+. /,
+  [ListBlockType.UNORDERED_LIST]: /^- /,
+  [ListBlockType.QUOTE]: /^> /,
+} as const
+export const ListBlockTypes: {[key in ListBlockType]: {regexp: RegExp, isSuccessor: (prevLine: string, currLine: string) => boolean, renderBlock: (block: Block) => JSX.Element}} = {
   [ListBlockType.ORDERED_LIST]: {
-    regexp: /^\d+. /,
+    regexp: RegExps[ListBlockType.ORDERED_LIST],
     isSuccessor: (prevLine, currLine) => {
-      const prevNum = Number(/^\d+. /.exec(prevLine)?.[0].replace('. ', ''))
-      const currNum = Number(/^\d+. /.exec(currLine)?.[0].replace('. ', ''))
+      const prevNum = Number(RegExps[ListBlockType.ORDERED_LIST].exec(prevLine)?.[0].replace('. ', ''))
+      const currNum = Number(RegExps[ListBlockType.ORDERED_LIST].exec(currLine)?.[0].replace('. ', ''))
       return prevNum + 1 === currNum
-    }
+    },
+    renderBlock: block =>
+      <View style={textStyles.indent}>
+        {block.lines.map((line, i) =>
+          <TextWithCustomFont
+            style={[textStyles.previewParagraph, i === 0 ? undefined : textStyles.indentedLines]}
+            key={i}
+          >
+            {renderFragments(line)}
+          </TextWithCustomFont>
+        )}
+      </View>,
   },
   [ListBlockType.UNORDERED_LIST]: {
-    regexp: /^- /,
-    isSuccessor: (prevLine, currLine) => /^- /.test(prevLine)
+    regexp: RegExps[ListBlockType.UNORDERED_LIST],
+    isSuccessor: (prevLine, currLine) => RegExps[ListBlockType.UNORDERED_LIST].test(prevLine),
+    renderBlock: block =>
+      <View style={textStyles.indent}>
+        {block.lines.map((line, i) =>
+          <TextWithCustomFont
+            style={[textStyles.previewParagraph, i === 0 ? undefined : textStyles.indentedLines]}
+            key={i}
+          >
+            <Bullet />{renderFragments(line.replace(RegExps[ListBlockType.UNORDERED_LIST], ''))}
+          </TextWithCustomFont>
+        )}
+      </View>,
   },
   [ListBlockType.QUOTE]: {
-    regexp: /^> /,
-    isSuccessor: (prevLine, currLine) => /^> /.test(prevLine)
+    regexp: RegExps[ListBlockType.QUOTE],
+    isSuccessor: (prevLine, currLine) => RegExps[ListBlockType.QUOTE].test(prevLine),
+    renderBlock: block =>
+      <View style={textStyles.blockQuote}>
+        {block.lines.map((line, i) =>
+          <TextWithCustomFont
+            style={textStyles.previewParagraphBold}
+            key={i}
+          >
+            {renderFragments(line.replace(RegExps[ListBlockType.QUOTE], ''))}
+          </TextWithCustomFont>
+        )}
+      </View>,
   },
 } as const
 

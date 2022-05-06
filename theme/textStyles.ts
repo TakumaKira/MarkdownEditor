@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native'
+import colors from './colors'
 import fonts from './fonts'
 
 const textStyles = StyleSheet.create({
@@ -72,6 +73,20 @@ const textStyles = StyleSheet.create({
   link: {
     textDecorationLine: 'underline'
   },
+  blockCode: {
+    padding: 24,
+    backgroundColor: colors[200],
+  },
+  blockQuote: {
+    padding: 24,
+    backgroundColor: colors[200],
+  },
+  indent: {
+    paddingLeft: 24,
+  },
+  indentedLines: {
+    marginTop: 4,
+  }
 })
 
 export default textStyles
