@@ -1,7 +1,7 @@
-import { render, waitFor, fireEvent } from '@testing-library/react-native'
-import textStyles from "../theme/textStyles"
-import Inline from "./Inline"
+import { fireEvent, render, waitFor } from '@testing-library/react-native'
 import * as WebBrowser from 'expo-web-browser'
+import textStyles from "../../theme/textStyles"
+import { Inline } from './components'
 
 describe('Inline.Code', () => {
   test('render text correctly', async() => {

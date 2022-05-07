@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
-import TextInputWithCustomFont from './TextInputWithCustomFont'
+import TextInputWithCustomFont from './common/withCustomFont/TextInputWithCustomFont'
 
 const styles = StyleSheet.create({
   container: {
