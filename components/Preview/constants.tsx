@@ -120,10 +120,6 @@ export const InlineMarkdownTypes: {[key in InlineMarkdownType]: {regexp: RegExp,
     regexp: /\[.*\]\(.*\)/,
     renderFragment: input => {
       const {url, text} = readLinkText(input)
-      if (!url || !text) {
-        console.error('url', url, 'text', text)
-        throw new Error('url and text cannot be null')
-      }
       return <Inline.Link url={url}>{text}</Inline.Link>
     }
   },

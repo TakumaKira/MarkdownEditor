@@ -14,8 +14,8 @@ export const Inline = {
     <Text style={textStyles.markdownCode}>
       {props.children}
     </Text>,
-  Link: (props: {children: string, url: string}) =>
-    <Text style={textStyles.link} onPress={() => WebBrowser.openBrowserAsync(props.url)}>
+  Link: (props: {children: string | null, url: string | null}) =>
+    <Text style={textStyles.link} onPress={() => WebBrowser.openBrowserAsync(props.url ?? '')}>
       {props.children}
     </Text>
 } as const
