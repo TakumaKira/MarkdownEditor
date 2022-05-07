@@ -9,7 +9,7 @@ export const Bullet = () => {
   return (<Text>・</Text>)
 }
 
-export const Inline = {
+export const Inline: {[key in string]: React.ComponentFactory<any, any>} = {
   Code: (props: {children: string}) =>
     <Text style={textStyles.markdownCode}>
       {props.children}

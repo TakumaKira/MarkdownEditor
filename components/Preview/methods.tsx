@@ -132,6 +132,44 @@ export function findListBlocks(originalLines: (string | Block)[]): (string | Blo
   }
 }
 
+export function renderLine(line: string | Block): JSX.Element {
+  if (typeof line === 'string') {
+    return renderStringLine(line)
+  }
+  return renderBlockLine(line)
+}
+function renderStringLine(originalLine: string): JSX.Element {
+  const {lineType, restOfLine} = ((_line: string) => {
+    for (const lineType of Object.keys(LineTypes) as LineType[]) {
+      const result = LineTypes[lineType].regexp?.exec(_line) ?? null
+      if (result) {
+        return {lineType, restOfLine: _line.replace(result[0], '')}
+      }
+    }
+    return {lineType: LineType.DEFAULT, restOfLine: _line}
+  })(originalLine)
+
+  return (
+    <Text style={LineTypes[lineType].style}>
+      {renderFragments(restOfLine)}
+    </Text>
+  )
+}
+function renderBlockLine(line: Block): JSX.Element {
+  if (Object.values(MultilineBlockType).includes(line.type as MultilineBlockType)) {
+    const type = line.type as MultilineBlockType
+    return MultilineBlockTypes[type].renderBlock(line)
+  }
+  const type = line.type as ListBlockType
+  return ListBlockTypes[type].renderBlock(line)
+}
+export function renderFragments(line: string): JSX.Element {
+  return (
+    <>{splitByMarkdown(line).map((s, i) =>
+      <React.Fragment key={i}>{typeof s === 'string' ? s : s.renderFragment()}</React.Fragment>
+    )}</>
+  )
+}
 export function splitByMarkdown(input: string): (string | FoundMarkdown)[] {
   return _splitByMarkdown([input])
 }
@@ -189,57 +227,4 @@ export function findInlineMarkdown(line: string): FoundMarkdownWithIndex | null 
     return prev.index < curr.index ? prev : curr
   }, results[0])
   return oneWithYoungestIndex ?? null
-}
-
-export function renderLine(line: string | Block): JSX.Element {
-  if (typeof line === 'string') {
-    return renderStringLine(line)
-  }
-  return renderBlockLine(line)
-}
-function renderStringLine(originalLine: string): JSX.Element {
-  const {lineType, restOfLine} = ((_line: string) => {
-    for (const lineType of Object.keys(LineTypes) as LineType[]) {
-      const result = LineTypes[lineType].regexp?.exec(_line) ?? null
-      if (result) {
-        return {lineType, restOfLine: _line.replace(result[0], '')}
-      }
-    }
-    return {lineType: LineType.DEFAULT, restOfLine: _line}
-  })(originalLine)
-
-  return (
-    <Text style={LineTypes[lineType].style}>
-      {renderFragments(restOfLine)}
-    </Text>
-  )
-}
-function renderBlockLine(line: Block): JSX.Element {
-  if (Object.values(MultilineBlockType).includes(line.type as MultilineBlockType)) {
-    const type = line.type as MultilineBlockType
-    return MultilineBlockTypes[type].renderBlock(line)
-  }
-  const type = line.type as ListBlockType
-  return ListBlockTypes[type].renderBlock(line)
-}
-export function renderFragments(line: string): JSX.Element {
-  return (
-    <>{splitByMarkdown(line).map((s, i) =>
-      <React.Fragment key={i}>{typeof s === 'string' ? s : s.renderFragment()}</React.Fragment>
-    )}</>
-  )
-}
-
-/** Remove the first and the last character. */
-export function removeInlineMarkdown(input: string): string {
-  return input.substring(1, input.length - 1)
-}
-
-/** Get "link text" and "url" from string like "[link text](url)" */
-export function readLinkText(linkText: string): {url: string | null, text: string | null} {
-  let t: string | undefined
-  const text = ((t = /\[.*\]/.exec(linkText)?.[0]) && removeInlineMarkdown(t)) ?? null
-  let u: string | undefined
-  const url = ((u = /\(.*\)/.exec(linkText)?.[0]) && removeInlineMarkdown(u)) ?? null
-  return {url, text}
 }

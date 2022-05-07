@@ -2,7 +2,7 @@ import { StyleProp, TextStyle, View } from 'react-native'
 import textStyles from '../../theme/textStyles'
 import { Text } from '../common/withCustomFont'
 import { Bullet, Inline } from './components'
-import { readLinkText, removeInlineMarkdown, renderFragments } from './methods'
+import { renderFragments } from './methods'
 import { Block } from './models'
 import { InlineMarkdownType, LineType, ListBlockType, MultilineBlockType } from "./types"
 
@@ -124,3 +124,17 @@ export const InlineMarkdownTypes: {[key in InlineMarkdownType]: {regexp: RegExp,
     }
   },
 } as const
+
+/** Remove the first and the last character. */
+function removeInlineMarkdown(input: string): string {
+  return input.substring(1, input.length - 1)
+}
+
+/** Get "link text" and "url" from string like "[link text](url)" */
+function readLinkText(linkText: string): {url: string | null, text: string | null} {
+  let t: string | undefined
+  const text = ((t = /\[.*\]/.exec(linkText)?.[0]) && removeInlineMarkdown(t)) ?? null
+  let u: string | undefined
+  const url = ((u = /\(.*\)/.exec(linkText)?.[0]) && removeInlineMarkdown(u)) ?? null
+  return {url, text}
+}
