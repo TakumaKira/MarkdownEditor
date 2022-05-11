@@ -1,6 +1,6 @@
 import React from 'react'
 import { View } from 'react-native'
-import render from './classes'
+import render from './markdown'
 
 const Preview = (props: {children: string}) => {
   return (
