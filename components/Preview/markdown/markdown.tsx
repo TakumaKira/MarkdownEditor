@@ -14,70 +14,71 @@ export default abstract class Markdown {
   abstract render(): JSX.Element
   protected renderFragments(line: string): JSX.Element {
     return (
-      <>{splitByMarkdown(line).map((s, i) =>
+      <>{Markdown.splitByMarkdown(line).map((s, i) =>
         <React.Fragment key={i}>{s.render()}</React.Fragment>
       )}</>
     )
   }
-}
-export function splitByMarkdown(input: string): InlineMarkdown[] {
-  return _splitByMarkdown([input]) as InlineMarkdown[]
-}
-function _splitByMarkdown(input: (string | InlineMarkdown)[]): (string | InlineMarkdown)[] {
-  if (input.length === 0) {
-    return input
+  // Technically, methods below can be private member, but these needs to be tested itself.
+  static splitByMarkdown(input: string): InlineMarkdown[] {
+    return Markdown._splitByMarkdown([input]) as InlineMarkdown[]
   }
-  const last = input[input.length - 1]
-  if (typeof last !== 'string') {
-    return input
+  static _splitByMarkdown(input: (string | InlineMarkdown)[]): (string | InlineMarkdown)[] {
+    if (input.length === 0) {
+      return input
+    }
+    const last = input[input.length - 1]
+    if (typeof last !== 'string') {
+      return input
+    }
+    const foundMarkdown = Markdown.findInlineMarkdown(last)
+    if (!foundMarkdown) {
+      input[input.length - 1] = new Default(last)
+      return input
+    }
+    const {InlineMarkdownClass, content, index} = foundMarkdown
+    const before = index === 0
+      ? null
+      : last.substring(0, index)
+    const after = index + content.length < last.length
+      ? last.substring(index + content.length)
+      : null
+    input.pop()
+    before && input.push(new Default(before))
+    input.push(new InlineMarkdownClass(content))
+    after && input.push(after)
+    return Markdown._splitByMarkdown(input)
   }
-  const foundMarkdown = findInlineMarkdown(last)
-  if (!foundMarkdown) {
-    input[input.length - 1] = new Default(last)
-    return input
-  }
-  const {InlineMarkdownClass, content, index} = foundMarkdown
-  const before = index === 0
-    ? null
-    : last.substring(0, index)
-  const after = index + content.length < last.length
-    ? last.substring(index + content.length)
-    : null
-  input.pop()
-  before && input.push(new Default(before))
-  input.push(new InlineMarkdownClass(content))
-  after && input.push(after)
-  return _splitByMarkdown(input)
-}
-export function findInlineMarkdown(line: string): FoundMarkdownWithIndex | null {
-  // Find the result of each markdown
-  const results: FoundMarkdownWithIndex[] = []
-  for (const _InlineMarkdownClass of InlineMarkdowns) {
-    const result = _InlineMarkdownClass.regexp?.exec(line) ?? null
-    if (result) {
-      // Initial result might include multiple markdown as like closing markdown was actually of second or third one,
-      // so check again with removing the last character which must be the part of the closing markdown.
-      let content = result[0]
-      let r: RegExpExecArray | null
-      // Look for shorter result till we could not find the new one.
-      while ((r = _InlineMarkdownClass.regexp?.exec(content.substring(0, content.length - 2)) ?? null) !== null) {
-        // If we got the result without the last character, it should be shorter result.
-        if (r) {
-          content = r[0]
+  static findInlineMarkdown(line: string): FoundMarkdownWithIndex | null {
+    // Find the result of each markdown
+    const results: FoundMarkdownWithIndex[] = []
+    for (const _InlineMarkdownClass of InlineMarkdowns) {
+      const result = _InlineMarkdownClass.regexp?.exec(line) ?? null
+      if (result) {
+        // Initial result might include multiple markdown as like closing markdown was actually of second or third one,
+        // so check again with removing the last character which must be the part of the closing markdown.
+        let content = result[0]
+        let r: RegExpExecArray | null
+        // Look for shorter result till we could not find the new one.
+        while ((r = _InlineMarkdownClass.regexp?.exec(content.substring(0, content.length - 2)) ?? null) !== null) {
+          // If we got the result without the last character, it should be shorter result.
+          if (r) {
+            content = r[0]
+          }
         }
+        // The original parameter of renderFragment can be fixed here.
+        results.push({InlineMarkdownClass: _InlineMarkdownClass, content, index: result.index})
       }
-      // The original parameter of renderFragment can be fixed here.
-      results.push({InlineMarkdownClass: _InlineMarkdownClass, content, index: result.index})
     }
+    // We want to chose a type of markdown with the youngest start index.
+    const oneWithYoungestIndex = results.reduce((prev, curr, i) => {
+      if (i !== 0 && prev.index === curr.index) {
+        throw new Error('Multiple markdown types with the same start index is not supported')
+      }
+      return prev.index < curr.index ? prev : curr
+    }, results[0])
+    return oneWithYoungestIndex ?? null
   }
-  // We want to chose a type of markdown with the youngest start index.
-  const oneWithYoungestIndex = results.reduce((prev, curr, i) => {
-    if (i !== 0 && prev.index === curr.index) {
-      throw new Error('Multiple markdown types with the same start index is not supported')
-    }
-    return prev.index < curr.index ? prev : curr
-  }, results[0])
-  return oneWithYoungestIndex ?? null
 }
 
 

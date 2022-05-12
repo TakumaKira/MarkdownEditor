@@ -1,7 +1,7 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native'
 import * as WebBrowser from 'expo-web-browser'
 import textStyles from '../../../theme/textStyles'
-import { Default, findInlineMarkdown, Inline, InlineCode, Link, splitByMarkdown } from './markdown'
+import Markdown, { Default, Inline, InlineCode, Link } from './markdown'
 import MultilineBlock, { BlockCode } from './multilineBlock'
 
 describe('MultilineBlock', () => {
@@ -35,9 +35,9 @@ describe('MultilineBlock', () => {
     expect(MultilineBlock.find(['```', '```'])).toEqual([new BlockCode([])])
   })
 })
-describe('splitByMarkdown', () => {
+describe('Markdown.splitByMarkdown', () => {
   test('return array of string or FoundMarkdown without any valid inline markdown', () => {
-    expect(splitByMarkdown('this is `inline code` and click [this link](https://link.com) and this is `inline code`[this link](https://link.com)'))
+    expect(Markdown.splitByMarkdown('this is `inline code` and click [this link](https://link.com) and this is `inline code`[this link](https://link.com)'))
       .toEqual([
         new Default('this is '),
         new InlineCode('`inline code`'),
@@ -50,11 +50,11 @@ describe('splitByMarkdown', () => {
   })
 })
 
-describe('findInlineMarkdown', () => {
+describe('Markdown.findInlineMarkdown', () => {
   test('find inline code', () => {
     const contentText = 'inline code'
     const contentCode = '`inline code`'
-    const resultCode = findInlineMarkdown('this is `inline code` and...')
+    const resultCode = Markdown.findInlineMarkdown('this is `inline code` and...')
     expect(resultCode)
       .toEqual({index: 8, InlineMarkdownClass: InlineCode, content: contentCode})
     expect(new InlineCode(contentCode).render())
@@ -64,7 +64,7 @@ describe('findInlineMarkdown', () => {
     const linkText = 'this link'
     const url = 'https://link.com'
     const contentLink = '[this link](https://link.com)'
-    const resultLink = findInlineMarkdown('click [this link](https://link.com)')
+    const resultLink = Markdown.findInlineMarkdown('click [this link](https://link.com)')
     expect(resultLink)
       .toEqual({index: 6, InlineMarkdownClass: Link, content: contentLink})
     expect(new Link(contentLink).render())
@@ -73,7 +73,7 @@ describe('findInlineMarkdown', () => {
   test('return the one with youngest index when the line has multiple type of markdowns', () => {
     const contentText = 'inline code'
     const contentCode = '`inline code`'
-    const resultCode = findInlineMarkdown('this is `inline code` and click [this link](https://link.com)')
+    const resultCode = Markdown.findInlineMarkdown('this is `inline code` and click [this link](https://link.com)')
     expect(resultCode)
       .toEqual({index: 8, InlineMarkdownClass: InlineCode, content: contentCode})
     expect(new InlineCode(contentCode).render())
@@ -82,7 +82,7 @@ describe('findInlineMarkdown', () => {
     const linkText = 'this link'
     const url = 'https://link.com'
     const contentLink = '[this link](https://link.com)'
-    const resultLink = findInlineMarkdown('click [this link](https://link.com) and this is `inline code`')
+    const resultLink = Markdown.findInlineMarkdown('click [this link](https://link.com) and this is `inline code`')
     expect(resultLink)
       .toEqual({index: 6, InlineMarkdownClass: Link, content: contentLink})
     expect(new Link(contentLink).render())
@@ -91,7 +91,7 @@ describe('findInlineMarkdown', () => {
   test('return the one with shortest length when it has multiple candidates for its closing', () => {
     const contentText = 'inline code'
     const contentCode = '`inline code`'
-    const resultCode = findInlineMarkdown('this is `inline code` and this is `inline code`')
+    const resultCode = Markdown.findInlineMarkdown('this is `inline code` and this is `inline code`')
     expect(resultCode)
       .toEqual({index: 8, InlineMarkdownClass: InlineCode, content: contentCode})
     expect(new InlineCode(contentCode).render())
@@ -100,7 +100,7 @@ describe('findInlineMarkdown', () => {
     const linkText = 'this link'
     const url = 'https://link.com'
     const contentLink = '[this link](https://link.com)'
-    const resultLink = findInlineMarkdown('click [this link](https://link.com) and click [this link](https://link.com)')
+    const resultLink = Markdown.findInlineMarkdown('click [this link](https://link.com) and click [this link](https://link.com)')
     expect(resultLink)
       .toEqual({index: 6, InlineMarkdownClass: Link, content: contentLink})
     expect(new Link(contentLink).render())
