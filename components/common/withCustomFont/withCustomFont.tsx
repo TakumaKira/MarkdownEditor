@@ -1,17 +1,18 @@
 import AppLoading from 'expo-app-loading'
-import { loadAsync } from 'expo-font'
+import { FontSource, loadAsync } from 'expo-font'
 import React from 'react'
+import fonts, { FontValues } from '../../../theme/fonts'
 
 const customFonts = {
-  'Roboto_300Light': require('../../../assets/fonts/Roboto-Light.ttf'),
-  'Roboto_400Regular': require('../../../assets/fonts/Roboto-Regular.ttf'),
-  'Roboto_500Medium': require('../../../assets/fonts/Roboto-Medium.ttf'),
-  'RobotoSlab_300Light': require('../../../assets/fonts/RobotoSlab-Light.ttf'),
-  'RobotoSlab_400Regular': require('../../../assets/fonts/RobotoSlab-Regular.ttf'),
-  'RobotoSlab_700Bold': require('../../../assets/fonts/RobotoSlab-Bold.ttf'),
-  'RobotoMono_400Regular': require('../../../assets/fonts/RobotoMono-Regular.ttf'),
-  'Commissioner_700Bold': require('../../../assets/fonts/Commissioner-Bold.ttf'),
-}
+  [fonts.robotoLight]: require('../../../assets/fonts/Roboto-Light.ttf'),
+  [fonts.robotoRegular]: require('../../../assets/fonts/Roboto-Regular.ttf'),
+  [fonts.robotoMedium]: require('../../../assets/fonts/Roboto-Medium.ttf'),
+  [fonts.robotoSlabLight]: require('../../../assets/fonts/RobotoSlab-Light.ttf'),
+  [fonts.robotoSlabRegular]: require('../../../assets/fonts/RobotoSlab-Regular.ttf'),
+  [fonts.robotoSlabBold]: require('../../../assets/fonts/RobotoSlab-Bold.ttf'),
+  [fonts.robotoMonoRegular]: require('../../../assets/fonts/RobotoMono-Regular.ttf'),
+  [fonts.commissionerBold]: require('../../../assets/fonts/Commissioner-Bold.ttf'),
+} as Record<FontValues, FontSource>
 
 const withCustomFont = (Component: any) => (props?: any) => { // TODO: Restrict type
   const [fontsLoaded, setFontsLoaded] = React.useState(false)
