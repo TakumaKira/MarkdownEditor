@@ -1,3 +1,4 @@
+import React from 'react'
 import { Text } from 'react-native'
 import textStyles from '../../../theme/textStyles'
 import Markdown from './markdown'
@@ -93,6 +94,18 @@ export class H6Line extends Line {
   }
 }
 
+export class HorizontalRule extends Line {
+  static override regexp = /^-{3}$/
+  render(): JSX.Element {
+    const Rule = React.memo(() => {
+      return <>Render horizontal line</>
+    })
+    return (
+      <Rule />
+    )
+  }
+}
+
 type ListMarkdownTypes
   = typeof DefaultLine
   | typeof H1Line
@@ -101,6 +114,7 @@ type ListMarkdownTypes
   | typeof H4Line
   | typeof H5Line
   | typeof H6Line
+  | typeof HorizontalRule
 const LineMarkdowns: ListMarkdownTypes[] = [
   DefaultLine,
   H1Line,
@@ -109,4 +123,5 @@ const LineMarkdowns: ListMarkdownTypes[] = [
   H4Line,
   H5Line,
   H6Line,
+  HorizontalRule,
 ]

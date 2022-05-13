@@ -1,5 +1,6 @@
 import * as WebBrowser from 'expo-web-browser'
 import React from "react"
+import { Image, useWindowDimensions } from 'react-native'
 import textStyles from "../../../theme/textStyles"
 import { Text } from '../../common/withCustomFont'
 
@@ -72,9 +73,6 @@ export default abstract class Markdown {
     }
     // We want to chose a type of markdown with the youngest start index.
     const oneWithYoungestIndex = results.reduce((prev, curr, i) => {
-      if (i !== 0 && prev.index === curr.index) {
-        throw new Error('Multiple markdown types with the same start index is not supported')
-      }
       return prev.index < curr.index ? prev : curr
     }, results[0])
     return oneWithYoungestIndex ?? null
@@ -99,10 +97,10 @@ export class Default extends InlineMarkdown {
 }
 
 export class InlineCode extends InlineMarkdown {
-  static override regexp = /`.*`/
+  static override regexp = /`((?!`).)+`/
   render(): JSX.Element {
     return (
-      <Inline.Code>{removeInlineMarkdown(this._line)}</Inline.Code>
+      <Inline.Code>{removeInlineMarkdown(this._line, 1)}</Inline.Code>
     )
   }
 }
@@ -113,9 +111,9 @@ export class Link extends InlineMarkdown {
     /** Get "link text" and "url" from string like "[link text](url)" */
     const {url, text} = ((linkText: string): {url: string | null, text: string | null} => {
       let t: string | undefined
-      const text = ((t = /\[.*\]/.exec(linkText)?.[0]) && removeInlineMarkdown(t)) ?? null
+      const text = ((t = /\[.*\]/.exec(linkText)?.[0]) && removeInlineMarkdown(t, 1)) ?? null
       let u: string | undefined
-      const url = ((u = /\(.*\)/.exec(linkText)?.[0]) && removeInlineMarkdown(u)) ?? null
+      const url = ((u = /\(.*\)/.exec(linkText)?.[0]) && removeInlineMarkdown(u, 1)) ?? null
       return {url, text}
     })(this._line)
 
@@ -125,17 +123,60 @@ export class Link extends InlineMarkdown {
   }
 }
 
+export class Bold extends InlineMarkdown {
+  static override regexp = /\*\*((?!\*).)+\*\*/
+  render(): JSX.Element {
+    return (
+      <Inline.Bold>{removeInlineMarkdown(this._line, 2)}</Inline.Bold>
+    )
+  }
+}
+
+export class Italic extends InlineMarkdown {
+  static override regexp = /\*((?!\*).)+\*/
+  render(): JSX.Element {
+    return (
+      <Inline.Italic>{removeInlineMarkdown(this._line, 1)}</Inline.Italic>
+    )
+  }
+}
+
+export class InlineImage extends InlineMarkdown {
+  static override regexp = /\!\[.*\]\(.*\)/
+  render(): JSX.Element {
+    /** Get "link text" and "url" from string like "![link text](url)" */
+    const {url, text} = React.useMemo(() => {
+      let t: string | undefined
+      const text = ((t = /\!\[.*\]/.exec(this._line)?.[0]) && removeInlineMarkdown(t.replace('!', ''), 1)) ?? null
+      let u: string | undefined
+      const url = ((u = /\(.*\)/.exec(this._line)?.[0]) && removeInlineMarkdown(u, 1)) ?? null
+      return {url, text}
+    }, [this._line])
+
+    return (url
+      ? <Inline.Image url={url} altText={text} />
+      : <></>
+    )
+  }
+}
+
 type InlineMarkdownTypes
   = typeof Default
   | typeof InlineCode
   | typeof Link
+  | typeof Bold
+  | typeof Italic
+  | typeof InlineImage
 const InlineMarkdowns: InlineMarkdownTypes[] = [
   Default,
   InlineCode,
   Link,
+  Bold,
+  Italic,
+  InlineImage,
 ]
 
-export const Inline: {[key in string]: React.ComponentFactory<any, any>} = {
+export const Inline: {[key in 'Code' | 'Link' | 'Bold' | 'Italic' | 'Image']: React.ComponentFactory<any, any>} = {
   Code: (props: {children: string}) =>
     <Text style={textStyles.markdownCode}>
       {props.children}
@@ -143,10 +184,38 @@ export const Inline: {[key in string]: React.ComponentFactory<any, any>} = {
   Link: (props: {children: string | null, url: string | null}) =>
     <Text style={textStyles.link} onPress={() => WebBrowser.openBrowserAsync(props.url ?? '')}>
       {props.children}
-    </Text>
+    </Text>,
+  Bold: (props: {children: string}) =>
+    <Text style={{fontWeight: 'bold'}}> {/* No need to prepare and/or define thicker weight font to make work */}
+      {props.children}
+    </Text>,
+  Italic: (props: {children: string}) =>
+    <Text style={{fontStyle: 'italic'}}> {/* No need to prepare and/or define italic style font to make work */}
+      {props.children}
+    </Text>,
+  Image: (props: {url: string, altText: string}) => {
+    const [originalSize, setOriginalSize] = React.useState({width: 0, height: 0})
+    React.useEffect(() => {
+      Image.getSize(props.url, (width, height) => {
+        setOriginalSize({width, height})
+      })
+    }, [props.url])
+
+    const windowWidth = useWindowDimensions().width
+    const size = React.useMemo<{width: number, height: number}>(() => {
+      const {width: originalWidth, height: originalHeight} = originalSize
+      if (originalWidth < windowWidth / 2) {
+        return {width: originalWidth, height: originalHeight}
+      }
+      const scale = windowWidth / 2 / originalWidth
+      return {width: originalWidth * scale, height: originalHeight * scale}
+    }, [originalSize, windowWidth])
+
+    return <Image source={{uri: props.url}} style={size} resizeMode="contain" accessibilityLabel={props.altText} />
+  },
 } as const
 
 /** Remove the first and the last character. */
-function removeInlineMarkdown(input: string): string {
-  return input.substring(1, input.length - 1)
+function removeInlineMarkdown(input: string, markdownLength: number): string {
+  return input.substring(markdownLength, input.length - markdownLength)
 }

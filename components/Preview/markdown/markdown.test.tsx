@@ -1,7 +1,7 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native'
 import * as WebBrowser from 'expo-web-browser'
 import textStyles from '../../../theme/textStyles'
-import Markdown, { Default, Inline, InlineCode, Link } from './markdown'
+import Markdown, { Bold, Default, Inline, InlineCode, Italic, Link } from './markdown'
 import MultilineBlock, { BlockCode } from './multilineBlock'
 
 describe('MultilineBlock', () => {
@@ -105,6 +105,24 @@ describe('Markdown.findInlineMarkdown', () => {
       .toEqual({index: 6, InlineMarkdownClass: Link, content: contentLink})
     expect(new Link(contentLink).render())
       .toEqual(<Inline.Link url={url}>{linkText}</Inline.Link>)
+  })
+})
+
+describe('InlineCode', () => {
+  test('InlineCode.regexp should return "`t`" if it tested with "`t``"', () => {
+    expect(InlineCode.regexp.exec('`t``')?.[0]).toBe('`t`')
+  })
+})
+
+describe('Bold', () => {
+  test('Bold.regexp should return "**t**" if it tested with "**t***"', () => {
+    expect(Bold.regexp.exec('**t***')?.[0]).toBe('**t**')
+  })
+})
+
+describe('Italic', () => {
+  test('Italic.regexp should return "*t*" if it tested with "*t**"', () => {
+    expect(Italic.regexp.exec('*t**')?.[0]).toBe('*t*')
   })
 })
 

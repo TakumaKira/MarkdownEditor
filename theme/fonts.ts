@@ -1,4 +1,4 @@
-export type FontKeys
+type FontKeys
   = 'robotoLight'
   | 'robotoRegular'
   | 'robotoMedium'
