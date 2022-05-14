@@ -22,47 +22,56 @@ const textStyles = StyleSheet.create({
   markdownCode: {
     fontFamily: fonts.robotoMonoRegular,
     fontSize: 14,
-    lineHeight: 24
+    lineHeight: 24,
+    color: colors[700],
   },
   previewH1: {
     fontFamily: fonts.robotoSlabBold,
     fontSize: 32,
-    lineHeight: 42
+    lineHeight: 42,
+    color: colors[700],
   },
   previewH2: {
     fontFamily: fonts.robotoSlabLight,
     fontSize: 28,
-    lineHeight: 37
+    lineHeight: 37,
+    color: colors[700],
   },
   previewH3: {
     fontFamily: fonts.robotoSlabBold,
     fontSize: 24,
-    lineHeight: 32
+    lineHeight: 32,
+    color: colors[700],
   },
   previewH4: {
     fontFamily: fonts.robotoSlabBold,
     fontSize: 20,
-    lineHeight: 26
+    lineHeight: 26,
+    color: colors[700],
   },
   previewH5: {
     fontFamily: fonts.robotoSlabBold,
     fontSize: 16,
-    lineHeight: 21
+    lineHeight: 21,
+    color: colors[700],
   },
   previewH6: {
     fontFamily: fonts.robotoSlabBold,
     fontSize: 14,
-    lineHeight: 18
+    lineHeight: 18,
+    color: colors.Orange,
   },
   previewParagraph: {
     fontFamily: fonts.robotoSlabRegular,
     fontSize: 14,
-    lineHeight: 24
+    lineHeight: 24,
+    color: colors[500],
   },
   previewParagraphBold: {
     fontFamily: fonts.robotoSlabBold,
     fontSize: 14,
-    lineHeight: 24
+    lineHeight: 24,
+    color: colors[700],
   },
   title: {
     fontFamily: fonts.commissionerBold,
@@ -73,13 +82,17 @@ const textStyles = StyleSheet.create({
   link: {
     textDecorationLine: 'underline'
   },
-  blockCode: {
+  codeBlock: {
     padding: 24,
     backgroundColor: colors[200],
+    borderRadius: 4,
+    overflow: 'hidden',
   },
-  blockQuote: {
+  quoteBlock: {
     padding: 24,
     backgroundColor: colors[200],
+    borderRadius: 4,
+    overflow: 'hidden',
   },
   indent: {
     paddingLeft: 24,

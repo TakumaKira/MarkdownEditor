@@ -1,4 +1,5 @@
-import { View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
+import colors from '../../../theme/colors'
 import textStyles from '../../../theme/textStyles'
 import { Text } from '../../common/withCustomFont'
 import Markdown from './markdown'
@@ -91,17 +92,41 @@ export class OrderedList extends ListBlock {
     const currNum = Number(OrderedList.regexp.exec(currLine)?.[0].replace('. ', ''))
     return prevNum + 1 === currNum
   }
-  render(): JSX.Element{
+  render(): JSX.Element {
+    // TODO: Reduce unwanted re-rendering
+    const getNumber = (line: string): number => {
+      return Number(OrderedList.regexp.exec(line)![0].replace('. ', ''))
+    }
+    /** Reserved width which can contain the number with longest width */
+    const getWidth = () => {
+      const biggestNum = getNumber(this._lines[this._lines.length - 1])
+      const digit = (biggestNum + '').length
+      // a number letter has less than 8px, and dot has less than 2px
+      return digit * 8 + 2
+    }
+    const ListNumber = (props: {children: number}) => {
+      return (
+        <View style={[listStyles.itemHeaderContainer, listStyles.numberContainer, {width: getWidth()}]}>
+          <Text style={textStyles.previewParagraph}>{props.children}.</Text>
+        </View>
+      )
+    }
     return (
       <View style={textStyles.indent}>
-        {this._lines.map((line, i) =>
-          <Text
-            style={[textStyles.previewParagraph, i === 0 ? undefined : textStyles.indentedLines]}
-            key={i}
-          >
-            {this.renderFragments(line)}
-          </Text>
-        )}
+        {this._lines.map((line, i) => {
+          // TODO: Stop rendering here multiple times
+          return (
+            <View
+              style={[listStyles.itemContainer, i === 0 ? undefined : textStyles.indentedLines]}
+              key={i}
+            >
+              <ListNumber>{getNumber(line)}</ListNumber>
+              <Text style={textStyles.previewParagraph}>
+                {this.renderFragments(line.replace(OrderedList.regexp, ''))}
+              </Text>
+            </View>
+          )
+        })}
       </View>
     )
   }
@@ -114,22 +139,52 @@ export class UnorderedList extends ListBlock {
   }
   render(): JSX.Element{
     const Bullet = () => {
-      return (<Text>・</Text>)
+      return (
+        <View style={[listStyles.itemHeaderContainer, listStyles.bulletContainer]}>
+          <View style={listStyles.bullet} />
+        </View>
+      )
     }
     return (
       <View style={textStyles.indent}>
         {this._lines.map((line, i) =>
-          <Text
-            style={[textStyles.previewParagraph, i === 0 ? undefined : textStyles.indentedLines]}
+          <View
+            style={[listStyles.itemContainer, i === 0 ? undefined : textStyles.indentedLines]}
             key={i}
           >
-            <Bullet />{this.renderFragments(line.replace(UnorderedList.regexp, ''))}
-          </Text>
+            <Bullet />
+            <Text style={textStyles.previewParagraph}>
+              {this.renderFragments(line.replace(UnorderedList.regexp, ''))}
+            </Text>
+          </View>
         )}
       </View>
     )
   }
 }
+const listStyles = StyleSheet.create({
+  itemContainer: {
+    flexDirection: 'row',
+  },
+  itemHeaderContainer: {
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  numberContainer: {
+    marginRight: 9,
+    alignItems: 'flex-end',
+  },
+  bulletContainer: {
+    width: 19,
+  },
+  bullet: {
+    height: 3,
+    width: 3,
+    borderRadius: 1.5,
+    backgroundColor: colors.Orange,
+  },
+})
 
 export class Quote extends ListBlock {
   static override regexp = /^> /
@@ -138,12 +193,13 @@ export class Quote extends ListBlock {
   }
   render(): JSX.Element{
     return (
-      <View style={textStyles.blockQuote}>
+      <View style={textStyles.quoteBlock}>
         {this._lines.map((line, i) =>
           <Text
             style={textStyles.previewParagraphBold}
             key={i}
           >
+            <View style={quoteStyles.viewMarker} />
             {this.renderFragments(line.replace(Quote.regexp, ''))}
           </Text>
         )}
@@ -151,6 +207,16 @@ export class Quote extends ListBlock {
     )
   }
 }
+const quoteStyles = StyleSheet.create({
+  viewMarker: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: '100%',
+    width: 4,
+    backgroundColor: colors.Orange,
+  },
+})
 
 type ListBlockMarkdownTypes
   = typeof OrderedList

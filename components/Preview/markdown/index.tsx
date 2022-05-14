@@ -1,4 +1,5 @@
 import React from "react"
+import { StyleSheet, View } from 'react-native'
 import Line from "./line"
 import ListBlock from "./listBlock"
 import MultilineBlock from "./multilineBlock"
@@ -6,11 +7,18 @@ import MultilineBlock from "./multilineBlock"
 export default function render(input: string): JSX.Element {
   return (
     <>
-      {blockLines(input.split('\n'))
-        .map((line, i) => <React.Fragment key={i}>{line.render()}</React.Fragment>)}
+      {blockLines(input.split('\n').filter(line => line !== ''))
+        .map((line, i) =>
+          <View key={i} style={i === 0 ? undefined : styles.block}>{line.render()}</View>
+        )}
     </>
   )
 }
+const styles = StyleSheet.create({
+  block: {
+    marginTop: 20,
+  },
+})
 
 export function blockLines(input: string[]): (ListBlock | MultilineBlock | Line)[] {
   return ListBlock.find(MultilineBlock.find(input))

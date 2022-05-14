@@ -55,7 +55,7 @@ export class BlockCode extends MultilineBlock {
   static override regexp = /^```$/
   render(): JSX.Element{
     return (
-      <View style={textStyles.blockCode}>
+      <View style={textStyles.codeBlock}>
         {this._lines.map((line, i) =>
           <Text
             style={textStyles.markdownCode}
