@@ -1,5 +1,6 @@
 import React from 'react'
-import { Text } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
+import colors from '../../../theme/colors'
 import textStyles from '../../../theme/textStyles'
 import Markdown from './markdown'
 
@@ -98,13 +99,27 @@ export class HorizontalRule extends Line {
   static override regexp = /^-{3}$/
   render(): JSX.Element {
     const Rule = React.memo(() => {
-      return <>Render horizontal line</>
+      return (
+        <View style={horizontalRuleStyles.container}>
+          <View style={horizontalRuleStyles.rule} />
+        </View>
+      )
     })
     return (
       <Rule />
     )
   }
 }
+const horizontalRuleStyles = StyleSheet.create({
+  container: {
+    height: 24,
+    justifyContent: 'center',
+  },
+  rule: {
+    height: 2,
+    backgroundColor: colors[500],
+  },
+})
 
 type ListMarkdownTypes
   = typeof DefaultLine
