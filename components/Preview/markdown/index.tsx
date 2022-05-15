@@ -5,6 +5,7 @@ import ListBlock from "./listBlock"
 import MultilineBlock from "./multilineBlock"
 
 export default function render(input: string): JSX.Element {
+  // TODO: Prevent re-render when modified other block?
   return (
     <>
       {blockLines(input.split('\n').filter(line => line !== ''))

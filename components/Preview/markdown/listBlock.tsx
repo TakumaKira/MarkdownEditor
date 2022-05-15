@@ -10,7 +10,7 @@ export default abstract class ListBlock extends Markdown {
   constructor(protected _lines: string[]) {
     super()
   }
-  static override find(input: (string | MultilineBlock)[]): (string | MultilineBlock | ListBlock)[] {
+  static override find(input: ReturnType<typeof MultilineBlock.find>): (string | MultilineBlock | ListBlock)[] {
     const result: (string | MultilineBlock | ListBlock)[] = []
     let blockLinesBuffer: string[] = []
     let prev: string | MultilineBlock | ListBlock | null = null
@@ -93,7 +93,6 @@ export class OrderedList extends ListBlock {
     return prevNum + 1 === currNum
   }
   render(): JSX.Element {
-    // TODO: Reduce unwanted re-rendering
     const getNumber = (line: string): number => {
       return Number(OrderedList.regexp.exec(line)![0].replace('. ', ''))
     }
@@ -114,7 +113,6 @@ export class OrderedList extends ListBlock {
     return (
       <View style={textStyles.indent}>
         {this._lines.map((line, i) => {
-          // TODO: Stop rendering here multiple times
           return (
             <View
               style={[listStyles.itemContainer, i === 0 ? undefined : textStyles.indentedLines]}
