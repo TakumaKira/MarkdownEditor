@@ -52,59 +52,38 @@ describe('Markdown.splitByMarkdown', () => {
 
 describe('Markdown.findInlineMarkdown', () => {
   test('find inline code', () => {
-    const contentText = 'inline code'
     const contentCode = '`inline code`'
     const resultCode = Markdown.findInlineMarkdown('this is `inline code` and...')
     expect(resultCode)
       .toEqual({index: 8, InlineMarkdownClass: InlineCode, content: contentCode})
-    expect(new InlineCode(contentCode).render())
-      .toEqual(<Inline.Code>{contentText}</Inline.Code>)
   })
   test('find link', () => {
-    const linkText = 'this link'
-    const url = 'https://link.com'
     const contentLink = '[this link](https://link.com)'
     const resultLink = Markdown.findInlineMarkdown('click [this link](https://link.com)')
     expect(resultLink)
       .toEqual({index: 6, InlineMarkdownClass: Link, content: contentLink})
-    expect(new Link(contentLink).render())
-      .toEqual(<Inline.Link url={url}>{linkText}</Inline.Link>)
   })
   test('return the one with youngest index when the line has multiple type of markdowns', () => {
-    const contentText = 'inline code'
     const contentCode = '`inline code`'
     const resultCode = Markdown.findInlineMarkdown('this is `inline code` and click [this link](https://link.com)')
     expect(resultCode)
       .toEqual({index: 8, InlineMarkdownClass: InlineCode, content: contentCode})
-    expect(new InlineCode(contentCode).render())
-      .toEqual(<Inline.Code>{contentText}</Inline.Code>)
 
-    const linkText = 'this link'
-    const url = 'https://link.com'
     const contentLink = '[this link](https://link.com)'
     const resultLink = Markdown.findInlineMarkdown('click [this link](https://link.com) and this is `inline code`')
     expect(resultLink)
       .toEqual({index: 6, InlineMarkdownClass: Link, content: contentLink})
-    expect(new Link(contentLink).render())
-      .toEqual(<Inline.Link url={url}>{linkText}</Inline.Link>)
   })
   test('return the one with shortest length when it has multiple candidates for its closing', () => {
-    const contentText = 'inline code'
     const contentCode = '`inline code`'
     const resultCode = Markdown.findInlineMarkdown('this is `inline code` and this is `inline code`')
     expect(resultCode)
       .toEqual({index: 8, InlineMarkdownClass: InlineCode, content: contentCode})
-    expect(new InlineCode(contentCode).render())
-      .toEqual(<Inline.Code>{contentText}</Inline.Code>)
 
-    const linkText = 'this link'
-    const url = 'https://link.com'
     const contentLink = '[this link](https://link.com)'
     const resultLink = Markdown.findInlineMarkdown('click [this link](https://link.com) and click [this link](https://link.com)')
     expect(resultLink)
       .toEqual({index: 6, InlineMarkdownClass: Link, content: contentLink})
-    expect(new Link(contentLink).render())
-      .toEqual(<Inline.Link url={url}>{linkText}</Inline.Link>)
   })
 })
 
@@ -129,7 +108,7 @@ describe('Italic', () => {
 describe('Inline.Code', () => {
   test('render text correctly', async() => {
     const text = 'text'
-    const result = render(<Inline.Code>{text}</Inline.Code>)
+    const result = render(<Inline.Code>{"`" + text + "`"}</Inline.Code>)
     await waitFor(() => result.getByText(text))
     const snapshot = result.toJSON()
     expect(snapshot.children).toEqual([text])
@@ -144,7 +123,7 @@ describe('Inline.Link', () => {
   test('render text correctly', async() => {
     const text = 'text'
     const url = 'https://test.com'
-    const result = render(<Inline.Link url={url}>{text}</Inline.Link>)
+    const result = render(<Inline.Link>{"[" + text + "](" + url + ")"}</Inline.Link>)
     await waitFor(() => result.getByText(text))
     const snapshot = result.toJSON()
     expect(snapshot.children).toEqual([text])
@@ -155,7 +134,7 @@ describe('Inline.Link', () => {
     mockOpenBrowserAsync.mockImplementation(() => new Promise(() => {}))
     const text = 'text'
     const url = 'https://test.com'
-    const result = render(<Inline.Link url={url}>{text}</Inline.Link>)
+    const result = render(<Inline.Link>{"[" + text + "](" + url + ")"}</Inline.Link>)
     await waitFor(() => result.getByText(text))
     fireEvent.press(result.getByText(text))
     expect(mockOpenBrowserAsync).toBeCalledWith(url)

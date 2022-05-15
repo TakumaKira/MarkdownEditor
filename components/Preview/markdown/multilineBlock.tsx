@@ -1,3 +1,4 @@
+import React from 'react'
 import { View } from 'react-native'
 import textStyles from '../../../theme/textStyles'
 import { Text } from '../../common/withCustomFont'
@@ -55,16 +56,7 @@ export class BlockCode extends MultilineBlock {
   static override regexp = /^```$/
   render(): JSX.Element{
     return (
-      <View style={textStyles.codeBlock}>
-        {this._lines.map((line, i) =>
-          <Text
-            style={textStyles.markdownCode}
-            key={i}
-          >
-            {line}
-          </Text>
-        )}
-      </View>
+      <Multiline.BlockCode>{JSON.stringify(this._lines)}</Multiline.BlockCode>
     )
   }
 }
@@ -74,3 +66,17 @@ type MultilineBlockMarkdownTypes
 const MultilineBlockMarkdowns: MultilineBlockMarkdownTypes[] = [
   BlockCode,
 ]
+
+const Multiline: {[key in 'BlockCode']: React.MemoExoticComponent<any>} = {
+  BlockCode: React.memo((props: {children: string}) =>
+    <View style={textStyles.codeBlock}>
+      {(JSON.parse(props.children) as string[]).map((line, i) =>
+        <Text
+          style={textStyles.markdownCode}
+          key={i}
+        >
+          {line}
+        </Text>
+      )}
+    </View>),
+} as const

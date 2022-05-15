@@ -1,3 +1,4 @@
+import React from 'react'
 import { StyleSheet, View } from 'react-native'
 import colors from '../../../theme/colors'
 import textStyles from '../../../theme/textStyles'
@@ -93,39 +94,8 @@ export class OrderedList extends ListBlock {
     return prevNum + 1 === currNum
   }
   render(): JSX.Element {
-    const getNumber = (line: string): number => {
-      return Number(OrderedList.regexp.exec(line)![0].replace('. ', ''))
-    }
-    /** Reserved width which can contain the number with longest width */
-    const getWidth = () => {
-      const biggestNum = getNumber(this._lines[this._lines.length - 1])
-      const digit = (biggestNum + '').length
-      // a number letter has less than 8px, and dot has less than 2px
-      return digit * 8 + 2
-    }
-    const ListNumber = (props: {children: number}) => {
-      return (
-        <View style={[listStyles.itemHeaderContainer, listStyles.numberContainer, {width: getWidth()}]}>
-          <Text style={textStyles.previewParagraph}>{props.children}.</Text>
-        </View>
-      )
-    }
     return (
-      <View style={textStyles.indent}>
-        {this._lines.map((line, i) => {
-          return (
-            <View
-              style={[listStyles.itemContainer, i === 0 ? undefined : textStyles.indentedLines]}
-              key={i}
-            >
-              <ListNumber>{getNumber(line)}</ListNumber>
-              <Text style={textStyles.previewParagraph}>
-                {this.renderFragments(line.replace(OrderedList.regexp, ''))}
-              </Text>
-            </View>
-          )
-        })}
-      </View>
+      <Block.OrderedList renderFragments={this.renderFragments}>{JSON.stringify(this._lines)}</Block.OrderedList>
     )
   }
 }
@@ -136,30 +106,109 @@ export class UnorderedList extends ListBlock {
     return UnorderedList.regexp.test(prevLine)
   }
   render(): JSX.Element{
-    const Bullet = () => {
+    return (
+      <Block.UnorderedList renderFragments={this.renderFragments}>{JSON.stringify(this._lines)}</Block.UnorderedList>
+    )
+  }
+}
+
+export class Quote extends ListBlock {
+  static override regexp = /^> /
+  static override isSuccessor(prevLine: string, currLine: string): boolean {
+    return Quote.regexp.test(prevLine)
+  }
+  render(): JSX.Element{
+    return (
+      <Block.Quote renderFragments={this.renderFragments}>{JSON.stringify(this._lines)}</Block.Quote>
+    )
+  }
+}
+
+type ListBlockMarkdownTypes
+  = typeof OrderedList
+  | typeof UnorderedList
+  | typeof Quote
+const ListBlockMarkdowns: ListBlockMarkdownTypes[] = [
+  OrderedList,
+  UnorderedList,
+  Quote,
+]
+
+const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExoticComponent<any>} = {
+  OrderedList: React.memo((props: {children: string, renderFragments: (line: string) => JSX.Element}) => {
+    const lines: string[] = JSON.parse(props.children)
+    const getNumber = (line: string): number => {
+      return Number(OrderedList.regexp.exec(line)![0].replace('. ', ''))
+    }
+    /** Reserved width which can contain the number with longest width */
+    const getWidth = () => {
+      const biggestNum = getNumber(lines[lines.length - 1])
+      const digit = (biggestNum + '').length
+      // a number letter has less than 8px, and dot has less than 2px
+      return digit * 8 + 2
+    }
+    const ListNumber = React.memo((props: {children: number}) => {
+      return (
+        <View style={[listStyles.itemHeaderContainer, listStyles.numberContainer, {width: getWidth()}]}>
+          <Text style={textStyles.previewParagraph}>{props.children}.</Text>
+        </View>
+      )
+    })
+    return (
+      <View style={textStyles.indent}>
+        {lines.map((line, i) => {
+          return (
+            <View
+              style={[listStyles.itemContainer, i === 0 ? undefined : textStyles.indentedLines]}
+              key={i}
+            >
+              <ListNumber>{getNumber(line)}</ListNumber>
+              <Text style={textStyles.previewParagraph}>
+                {props.renderFragments(line.replace(OrderedList.regexp, ''))}
+              </Text>
+            </View>
+          )
+        })}
+      </View>
+    )
+  }),
+  UnorderedList: React.memo((props: {children: string, renderFragments: (line: string) => JSX.Element}) => {
+    const Bullet = React.memo(() => {
       return (
         <View style={[listStyles.itemHeaderContainer, listStyles.bulletContainer]}>
           <View style={listStyles.bullet} />
         </View>
       )
-    }
+    })
     return (
       <View style={textStyles.indent}>
-        {this._lines.map((line, i) =>
+        {(JSON.parse(props.children) as string[]).map((line, i) =>
           <View
             style={[listStyles.itemContainer, i === 0 ? undefined : textStyles.indentedLines]}
             key={i}
           >
             <Bullet />
             <Text style={textStyles.previewParagraph}>
-              {this.renderFragments(line.replace(UnorderedList.regexp, ''))}
+              {props.renderFragments(line.replace(UnorderedList.regexp, ''))}
             </Text>
           </View>
         )}
       </View>
     )
-  }
-}
+  }),
+  Quote: React.memo((props: {children: string, renderFragments: (line: string) => JSX.Element}) =>
+    <View style={textStyles.quoteBlock}>
+      {(JSON.parse(props.children) as string[]).map((line, i) =>
+        <Text
+          style={textStyles.previewParagraphBold}
+          key={i}
+        >
+          <View style={quoteStyles.viewMarker} />
+          {props.renderFragments(line.replace(Quote.regexp, ''))}
+        </Text>
+      )}
+    </View>),
+} as const
 const listStyles = StyleSheet.create({
   itemContainer: {
     flexDirection: 'row',
@@ -183,28 +232,6 @@ const listStyles = StyleSheet.create({
     backgroundColor: colors.Orange,
   },
 })
-
-export class Quote extends ListBlock {
-  static override regexp = /^> /
-  static override isSuccessor(prevLine: string, currLine: string): boolean {
-    return Quote.regexp.test(prevLine)
-  }
-  render(): JSX.Element{
-    return (
-      <View style={textStyles.quoteBlock}>
-        {this._lines.map((line, i) =>
-          <Text
-            style={textStyles.previewParagraphBold}
-            key={i}
-          >
-            <View style={quoteStyles.viewMarker} />
-            {this.renderFragments(line.replace(Quote.regexp, ''))}
-          </Text>
-        )}
-      </View>
-    )
-  }
-}
 const quoteStyles = StyleSheet.create({
   viewMarker: {
     position: 'absolute',
@@ -215,13 +242,3 @@ const quoteStyles = StyleSheet.create({
     backgroundColor: colors.Orange,
   },
 })
-
-type ListBlockMarkdownTypes
-  = typeof OrderedList
-  | typeof UnorderedList
-  | typeof Quote
-const ListBlockMarkdowns: ListBlockMarkdownTypes[] = [
-  OrderedList,
-  UnorderedList,
-  Quote,
-]

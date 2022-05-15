@@ -1,11 +1,10 @@
 import React from "react"
 import { StyleSheet, View } from 'react-native'
-import Line from "./line"
+import LineMarkdown from "./line"
 import ListBlock from "./listBlock"
 import MultilineBlock from "./multilineBlock"
 
 export default function render(input: string): JSX.Element {
-  // TODO: Prevent re-render when modified other block?
   return (
     <>
       {blockLines(input.split('\n').filter(line => line !== ''))
@@ -21,11 +20,11 @@ const styles = StyleSheet.create({
   },
 })
 
-export function blockLines(input: string[]): (ListBlock | MultilineBlock | Line)[] {
+export function blockLines(input: string[]): (ListBlock | MultilineBlock | LineMarkdown)[] {
   return ListBlock.find(MultilineBlock.find(input))
     .map(line =>
       typeof line === 'string'
-        ? Line.find(line)
+        ? LineMarkdown.find(line)
         : line
     )
 }

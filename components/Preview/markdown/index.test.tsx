@@ -1,5 +1,5 @@
 import { blockLines } from "."
-import Line, { DefaultLine, H1Line, H2Line, H3Line, H4Line, H5Line, H6Line } from "./line"
+import LineMarkdown, { DefaultLine, H1Line, H2Line, H3Line, H4Line, H5Line, H6Line } from "./line"
 import ListBlock, { OrderedList, Quote, UnorderedList } from "./listBlock"
 import MultilineBlock, { BlockCode } from "./multilineBlock"
 
@@ -41,7 +41,7 @@ describe('blockLines', () => {
       '</main>',
       '```',
     ]
-    const targetResult: (ListBlock | MultilineBlock | Line)[] = [
+    const targetResult: (ListBlock | MultilineBlock | LineMarkdown)[] = [
       new H1Line('# Welcome to Markdown'),
       new DefaultLine(''),
       new DefaultLine('Markdown is a lightweight markup language that you can use to add formatting elements to plaintext text documents.'),
