@@ -84,6 +84,9 @@ export default abstract class ListBlock extends Markdown {
       return null
     }
   }
+  override is(prev: ListBlock): boolean {
+    return JSON.stringify(prev._lines) === JSON.stringify(this._lines)
+  }
 }
 
 export class OrderedList extends ListBlock {
@@ -95,7 +98,7 @@ export class OrderedList extends ListBlock {
   }
   render(): JSX.Element {
     return (
-      <Block.OrderedList renderFragments={this.renderFragments}>{JSON.stringify(this._lines)}</Block.OrderedList>
+      <Block.OrderedList>{JSON.stringify(this._lines)}</Block.OrderedList>
     )
   }
 }
@@ -107,7 +110,7 @@ export class UnorderedList extends ListBlock {
   }
   render(): JSX.Element{
     return (
-      <Block.UnorderedList renderFragments={this.renderFragments}>{JSON.stringify(this._lines)}</Block.UnorderedList>
+      <Block.UnorderedList>{JSON.stringify(this._lines)}</Block.UnorderedList>
     )
   }
 }
@@ -119,7 +122,7 @@ export class Quote extends ListBlock {
   }
   render(): JSX.Element{
     return (
-      <Block.Quote renderFragments={this.renderFragments}>{JSON.stringify(this._lines)}</Block.Quote>
+      <Block.Quote>{JSON.stringify(this._lines)}</Block.Quote>
     )
   }
 }
@@ -135,7 +138,7 @@ const ListBlockMarkdowns: ListBlockMarkdownTypes[] = [
 ]
 
 const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExoticComponent<any>} = {
-  OrderedList: React.memo((props: {children: string, renderFragments: (line: string) => JSX.Element}) => {
+  OrderedList: React.memo((props: {children: string}) => {
     const lines: string[] = JSON.parse(props.children)
     const getNumber = (line: string): number => {
       return Number(OrderedList.regexp.exec(line)![0].replace('. ', ''))
@@ -164,7 +167,7 @@ const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExot
             >
               <ListNumber>{getNumber(line)}</ListNumber>
               <Text style={textStyles.previewParagraph}>
-                {props.renderFragments(line.replace(OrderedList.regexp, ''))}
+                <Markdown.FragmentRenderer>{line.replace(OrderedList.regexp, '')}</Markdown.FragmentRenderer>
               </Text>
             </View>
           )
@@ -172,7 +175,7 @@ const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExot
       </View>
     )
   }),
-  UnorderedList: React.memo((props: {children: string, renderFragments: (line: string) => JSX.Element}) => {
+  UnorderedList: React.memo((props: {children: string}) => {
     const Bullet = React.memo(() => {
       return (
         <View style={[listStyles.itemHeaderContainer, listStyles.bulletContainer]}>
@@ -189,14 +192,14 @@ const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExot
           >
             <Bullet />
             <Text style={textStyles.previewParagraph}>
-              {props.renderFragments(line.replace(UnorderedList.regexp, ''))}
+              <Markdown.FragmentRenderer>{line.replace(UnorderedList.regexp, '')}</Markdown.FragmentRenderer>
             </Text>
           </View>
         )}
       </View>
     )
   }),
-  Quote: React.memo((props: {children: string, renderFragments: (line: string) => JSX.Element}) =>
+  Quote: React.memo((props: {children: string}) =>
     <View style={textStyles.quoteBlock}>
       {(JSON.parse(props.children) as string[]).map((line, i) =>
         <Text
@@ -204,7 +207,7 @@ const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExot
           key={i}
         >
           <View style={quoteStyles.viewMarker} />
-          {props.renderFragments(line.replace(Quote.regexp, ''))}
+          <Markdown.FragmentRenderer>{line.replace(Quote.regexp, '')}</Markdown.FragmentRenderer>
         </Text>
       )}
     </View>),

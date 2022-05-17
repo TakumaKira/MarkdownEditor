@@ -49,6 +49,9 @@ export default abstract class MultilineBlock extends Markdown {
     }
     return result
   }
+  override is(prev: MultilineBlock): boolean {
+    return JSON.stringify(prev._lines) === JSON.stringify(this._lines)
+  }
 }
 
 export class BlockCode extends MultilineBlock {

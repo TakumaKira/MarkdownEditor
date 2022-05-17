@@ -17,12 +17,15 @@ export default abstract class LineMarkdown extends Markdown {
     }
     return new DefaultLine(line)
   }
+  override is(prev: LineMarkdown): boolean {
+    return prev._line === this._line
+  }
 }
 
 export class DefaultLine extends LineMarkdown {
   render(): JSX.Element {
     return (
-      <Line.Default renderFragments={this.renderFragments}>{this._line}</Line.Default>
+      <Line.Default>{this._line}</Line.Default>
     )
   }
 }
@@ -31,7 +34,7 @@ export class H1Line extends LineMarkdown {
   static override regexp = /^#{1} /
   render(): JSX.Element {
     return (
-      <Line.H1 renderFragments={this.renderFragments}>{this._line}</Line.H1>
+      <Line.H1>{this._line}</Line.H1>
     )
   }
 }
@@ -40,7 +43,7 @@ export class H2Line extends LineMarkdown {
   static override regexp = /^#{2} /
   render(): JSX.Element {
     return (
-      <Line.H2 renderFragments={this.renderFragments}>{this._line}</Line.H2>
+      <Line.H2>{this._line}</Line.H2>
     )
   }
 }
@@ -49,7 +52,7 @@ export class H3Line extends LineMarkdown {
   static override regexp = /^#{3} /
   render(): JSX.Element {
     return (
-      <Line.H3 renderFragments={this.renderFragments}>{this._line}</Line.H3>
+      <Line.H3>{this._line}</Line.H3>
     )
   }
 }
@@ -58,7 +61,7 @@ export class H4Line extends LineMarkdown {
   static override regexp = /^#{4} /
   render(): JSX.Element {
     return (
-      <Line.H4 renderFragments={this.renderFragments}>{this._line}</Line.H4>
+      <Line.H4>{this._line}</Line.H4>
     )
   }
 }
@@ -67,7 +70,7 @@ export class H5Line extends LineMarkdown {
   static override regexp = /^#{5} /
   render(): JSX.Element {
     return (
-      <Line.H5 renderFragments={this.renderFragments}>{this._line}</Line.H5>
+      <Line.H5>{this._line}</Line.H5>
     )
   }
 }
@@ -76,7 +79,7 @@ export class H6Line extends LineMarkdown {
   static override regexp = /^#{6} /
   render(): JSX.Element {
     return (
-      <Line.H6 renderFragments={this.renderFragments}>{this._line}</Line.H6>
+      <Line.H6>{this._line}</Line.H6>
     )
   }
 }
@@ -111,33 +114,33 @@ const LineMarkdowns: ListMarkdownTypes[] = [
 ]
 
 const Line: {[key in 'Default' | 'H1' | 'H2' | 'H3' | 'H4' | 'H5' | 'H6' | 'Rule']: React.MemoExoticComponent<any>} = {
-  Default: React.memo((props: {children: string, renderFragments: (line: string) => JSX.Element}) =>
+  Default: React.memo((props: {children: string}) =>
     <Text style={textStyles.previewParagraph}>
-      {props.renderFragments(props.children)}
+      <Markdown.FragmentRenderer>{props.children}</Markdown.FragmentRenderer>
     </Text>),
-  H1: React.memo((props: {children: string, renderFragments: (line: string) => JSX.Element}) =>
+  H1: React.memo((props: {children: string}) =>
     <Text style={textStyles.previewH1}>
-      {props.renderFragments(props.children.replace(H1Line.regexp, ''))}
+      <Markdown.FragmentRenderer>{props.children.replace(H1Line.regexp, '')}</Markdown.FragmentRenderer>
     </Text>),
-  H2: React.memo((props: {children: string, renderFragments: (line: string) => JSX.Element}) =>
+  H2: React.memo((props: {children: string}) =>
     <Text style={textStyles.previewH2}>
-      {props.renderFragments(props.children.replace(H2Line.regexp, ''))}
+      <Markdown.FragmentRenderer>{props.children.replace(H2Line.regexp, '')}</Markdown.FragmentRenderer>
     </Text>),
-  H3: React.memo((props: {children: string, renderFragments: (line: string) => JSX.Element}) =>
+  H3: React.memo((props: {children: string}) =>
     <Text style={textStyles.previewH3}>
-      {props.renderFragments(props.children.replace(H3Line.regexp, ''))}
+      <Markdown.FragmentRenderer>{props.children.replace(H3Line.regexp, '')}</Markdown.FragmentRenderer>
     </Text>),
-  H4: React.memo((props: {children: string, renderFragments: (line: string) => JSX.Element}) =>
+  H4: React.memo((props: {children: string}) =>
     <Text style={textStyles.previewH4}>
-      {props.renderFragments(props.children.replace(H4Line.regexp, ''))}
+      <Markdown.FragmentRenderer>{props.children.replace(H4Line.regexp, '')}</Markdown.FragmentRenderer>
     </Text>),
-  H5: React.memo((props: {children: string, renderFragments: (line: string) => JSX.Element}) =>
+  H5: React.memo((props: {children: string}) =>
     <Text style={textStyles.previewH5}>
-      {props.renderFragments(props.children.replace(H5Line.regexp, ''))}
+      <Markdown.FragmentRenderer>{props.children.replace(H5Line.regexp, '')}</Markdown.FragmentRenderer>
     </Text>),
-  H6: React.memo((props: {children: string, renderFragments: (line: string) => JSX.Element}) =>
+  H6: React.memo((props: {children: string}) =>
     <Text style={textStyles.previewH6}>
-      {props.renderFragments(props.children.replace(H6Line.regexp, ''))}
+      <Markdown.FragmentRenderer>{props.children.replace(H6Line.regexp, '')}</Markdown.FragmentRenderer>
     </Text>),
   Rule: React.memo(() =>
     <View style={horizontalRuleStyles.container}>

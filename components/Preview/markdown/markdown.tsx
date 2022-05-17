@@ -3,6 +3,7 @@ import React from "react"
 import { Image, useWindowDimensions } from 'react-native'
 import textStyles from "../../../theme/textStyles"
 import { Text } from '../../common/withCustomFont'
+import { v4 as uuidv4 } from 'uuid'
 
 type FoundMarkdownWithIndex = {
   index: number
@@ -13,13 +14,18 @@ export default abstract class Markdown {
   static regexp: RegExp | null
   static find: (input: any) => any
   abstract render(): JSX.Element
-  protected renderFragments(line: string): JSX.Element {
+  abstract is(prev: Markdown): boolean
+  private _id: string = uuidv4()
+  get id(): string {
+    return this._id
+  }
+  static FragmentRenderer = React.memo((props: {children: string}) => {
     return (
-      <>{Markdown.splitByMarkdown(line).map((s, i) =>
+      <>{Markdown.splitByMarkdown(props.children).map((s, i) =>
         <React.Fragment key={i}>{s.render()}</React.Fragment>
       )}</>
     )
-  }
+  })
   // Technically, methods below can be private member, but these needs to be tested itself.
   static splitByMarkdown(input: string): InlineMarkdown[] {
     return Markdown._splitByMarkdown([input]) as InlineMarkdown[]
@@ -85,6 +91,9 @@ export default abstract class Markdown {
 abstract class InlineMarkdown extends Markdown {
   constructor(protected _line: string) {
     super()
+  }
+  override is(prev: InlineMarkdown): boolean {
+    return prev._line === this._line
   }
 }
 

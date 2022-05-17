@@ -2,16 +2,29 @@ import React from "react"
 import { StyleSheet, View } from 'react-native'
 import LineMarkdown from "./line"
 import ListBlock from "./listBlock"
+import Markdown from "./markdown"
 import MultilineBlock from "./multilineBlock"
 
 export default function render(input: string): JSX.Element {
+  const [blocks, setBlocks] = React.useState<Markdown[]>([])
+  React.useEffect(() => {
+    const newBlocks = blockLines(input.split('\n').filter(line => line !== ''))
+    setBlocks(prevBlocks => {
+      const stock = [...prevBlocks]
+      return newBlocks.map(newBlock => {
+        for (let i = 0; i < stock.length; i++) {
+          if (newBlock.constructor.name === stock[i].constructor.name && newBlock.is(stock[i])) {
+            return stock.splice(i, 1)[0]
+          }
+        }
+        return newBlock
+      })
+    })
+  }, [input])
   return (
-    <>
-      {blockLines(input.split('\n').filter(line => line !== ''))
-        .map((line, i) =>
-          <View key={i} style={i === 0 ? undefined : styles.block}>{line.render()}</View>
-        )}
-    </>
+    <>{blocks.map((line, i) =>
+      <View key={line.id} style={i === 0 ? undefined : styles.block}>{line.render()}</View>
+    )}</>
   )
 }
 const styles = StyleSheet.create({
@@ -20,7 +33,7 @@ const styles = StyleSheet.create({
   },
 })
 
-export function blockLines(input: string[]): (ListBlock | MultilineBlock | LineMarkdown)[] {
+export function blockLines(input: string[]): Markdown[] {
   return ListBlock.find(MultilineBlock.find(input))
     .map(line =>
       typeof line === 'string'
