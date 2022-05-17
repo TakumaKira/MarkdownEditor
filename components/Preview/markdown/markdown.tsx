@@ -1,9 +1,9 @@
 import * as WebBrowser from 'expo-web-browser'
 import React from "react"
 import { Image, useWindowDimensions } from 'react-native'
+import { v4 as uuidv4 } from 'uuid'
 import textStyles from "../../../theme/textStyles"
 import { Text } from '../../common/withCustomFont'
-import { v4 as uuidv4 } from 'uuid'
 
 type FoundMarkdownWithIndex = {
   index: number
