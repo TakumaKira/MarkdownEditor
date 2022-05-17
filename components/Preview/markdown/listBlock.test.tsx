@@ -1,6 +1,8 @@
 import ListBlock, { OrderedList, Quote, UnorderedList } from "./listBlock"
 import MultilineBlock, { BlockCode } from "./multilineBlock"
 
+jest.mock('uuid', () => ({v4: jest.fn()}))
+
 describe('ListBlock', () => {
   test('ListBlock.find() returns intended result', () => {
     const input: (string | MultilineBlock)[] = [

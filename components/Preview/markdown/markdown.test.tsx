@@ -4,6 +4,8 @@ import textStyles from '../../../theme/textStyles'
 import Markdown, { Bold, Default, Inline, InlineCode, Italic, Link } from './markdown'
 import MultilineBlock, { BlockCode } from './multilineBlock'
 
+jest.mock('uuid', () => ({v4: jest.fn()}))
+
 describe('MultilineBlock', () => {
   test('MultilineBlock.find() returns intended result', () => {
     const originalLines: string[] = [

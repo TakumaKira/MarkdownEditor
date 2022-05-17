@@ -3,6 +3,8 @@ import LineMarkdown, { DefaultLine, H1Line, H2Line, H3Line, H4Line, H5Line, H6Li
 import ListBlock, { OrderedList, Quote, UnorderedList } from "./listBlock"
 import MultilineBlock, { BlockCode } from "./multilineBlock"
 
+jest.mock('uuid', () => ({v4: jest.fn()}))
+
 describe('blockLines', () => {
   test('returns intended result', () => {
     const input: string[] = [
