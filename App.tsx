@@ -4,6 +4,7 @@ import Frame from './components/Frame'
 import MainView from './components/MainView'
 import SideBar from './components/SideBar'
 import StorybookUI from './storybook'
+import 'react-native-get-random-values'
 
 const App = () => {
   return (
