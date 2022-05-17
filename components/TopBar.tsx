@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction } from 'react'
 import { Button, StyleSheet, View } from 'react-native'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
-import TextWithCustomFont from './TextWithCustomFont'
+import { Text } from './common/withCustomFont'
 
 const styles = StyleSheet.create({
   container: {
@@ -21,7 +21,7 @@ const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>}) => {
   } = props
   return (
     <View style={styles.container}>
-      <TextWithCustomFont style={[styles.text, textStyles.title]}>MARKDOWN</TextWithCustomFont>
+      <Text style={[styles.text, textStyles.title]}>MARKDOWN</Text>
       <Button
         title="Sidebar Visibility Button"
         onPress={() => setShowSidebar(value => !value)}

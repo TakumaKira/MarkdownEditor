@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 
 const styles = StyleSheet.create({
   container: {
