@@ -6,6 +6,7 @@ import Markdown from "./markdown"
 import MultilineBlock from "./multilineBlock"
 
 export default function render(input: string): JSX.Element {
+  // Re-use instances of Markdown when the line(s) are the same.
   const [blocks, setBlocks] = React.useState<Markdown[]>([])
   React.useEffect(() => {
     const newBlocks = blockLines(input.split('\n').filter(line => line !== ''))
@@ -21,6 +22,7 @@ export default function render(input: string): JSX.Element {
       })
     })
   }, [input])
+
   return (
     <>{blocks.map((line, i) =>
       <View key={line.id} style={i === 0 ? undefined : styles.block}>{line.render()}</View>
