@@ -3,7 +3,7 @@ import { Text, TextProps } from 'react-native'
 import withCustomFont from './withCustomFont'
 
 const TextWithCustomFont = (props: TextProps) => {
-  const WithCustomFont = withCustomFont(Text)
+  const WithCustomFont = React.useMemo(() => withCustomFont(Text), [])
 
   const {
     children,
