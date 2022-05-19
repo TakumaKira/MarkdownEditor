@@ -69,19 +69,14 @@ const Frame = (props: {sideBar: () => JSX.Element, main: (props: {setShowSidebar
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   sidebarContainer: {
-    height: '100%',
     overflow: 'hidden',
     alignItems: 'flex-end',
   },
   mainContainer: {
     flex: 1,
-    height: '100%',
   },
 })
 

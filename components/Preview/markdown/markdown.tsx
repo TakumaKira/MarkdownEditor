@@ -4,6 +4,7 @@ import { Image, useWindowDimensions } from 'react-native'
 import { v4 as uuidv4 } from 'uuid'
 import textStyles from "../../../theme/textStyles"
 import { Text } from '../../common/withCustomFont'
+import { PREVIEW_PADDING_LEFT, PREVIEW_PADDING_RIGHT } from '../../EditorView'
 
 type FoundMarkdownWithIndex = {
   index: number
@@ -219,14 +220,16 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
     const windowWidth = useWindowDimensions().width
     const size = React.useMemo<{width: number, height: number}>(() => {
       const {width: originalWidth, height: originalHeight} = originalSize
-      if (originalWidth < windowWidth / 2) {
+      const previewWidth = windowWidth / 2 - PREVIEW_PADDING_LEFT - PREVIEW_PADDING_RIGHT
+      if (originalWidth < previewWidth) {
         return {width: originalWidth, height: originalHeight}
       }
-      const scale = windowWidth / 2 / originalWidth
+      const scale = previewWidth / originalWidth
       return {width: originalWidth * scale, height: originalHeight * scale}
     }, [originalSize, windowWidth])
 
     return url
+      // TODO: Cache image for changing except url
       ? <Image source={{uri: url}} style={size} resizeMode="contain" accessibilityLabel={text ?? undefined} />
       : null
   }),
