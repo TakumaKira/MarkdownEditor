@@ -4,7 +4,7 @@ import { Image, useWindowDimensions } from 'react-native'
 import { v4 as uuidv4 } from 'uuid'
 import textStyles from "../../../theme/textStyles"
 import { Text } from '../../common/withCustomFont'
-import { PREVIEW_PADDING_LEFT, PREVIEW_PADDING_RIGHT } from '../../EditorView'
+import { PREVIEW_PADDING_LEFT, PREVIEW_PADDING_RIGHT } from '../../EditorView.constants'
 
 type FoundMarkdownWithIndex = {
   index: number

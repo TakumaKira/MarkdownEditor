@@ -1,15 +1,13 @@
 import React from 'react'
-import { ScrollView, StyleProp, StyleSheet, useWindowDimensions, View, ViewStyle } from 'react-native'
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
 import { TextInput } from './common/withCustomFont'
+import { PREVIEW_PADDING_LEFT, PREVIEW_PADDING_RIGHT } from './EditorView.constants'
 import Preview from './Preview'
 import { TOP_BAR_HEIGHT } from './TopBar'
 
 const HEADER_HEIGHT = 42
-
-export const PREVIEW_PADDING_LEFT = 23
-export const PREVIEW_PADDING_RIGHT = 24
 
 const styles = StyleSheet.create({
   headerContainer: {
