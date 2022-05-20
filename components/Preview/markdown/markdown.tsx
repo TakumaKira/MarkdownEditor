@@ -20,10 +20,29 @@ export default abstract class Markdown {
   get id(): string {
     return this._id
   }
+  static fragmentsMemo: InlineMarkdown[] = []
   static FragmentRenderer = React.memo((props: {children: string}) => {
+    console.log(Markdown.fragmentsMemo)
+    // Re-use instances of Markdown when the line(s) are the same.
+    const [blocks, setBlocks] = React.useState<InlineMarkdown[]>([])
+    React.useEffect(() => {
+      const newBlocks = Markdown.splitByMarkdown(props.children)
+      const stock = [...Markdown.fragmentsMemo]
+      const newFragments = newBlocks.map(newBlock => {
+        for (let i = 0; i < stock.length; i++) {
+          if (newBlock.constructor.name === stock[i].constructor.name && newBlock.is(stock[i])) {
+            return stock.splice(i, 1)[0]
+          }
+        }
+        return newBlock
+      })
+      Markdown.fragmentsMemo.push(...newFragments)
+      setBlocks(newFragments)
+    }, [props.children])
+
     return (
-      <>{Markdown.splitByMarkdown(props.children).map((s, i) =>
-        <React.Fragment key={i}>{s.render()}</React.Fragment>
+      <>{blocks.map(s =>
+        <React.Fragment key={s.id}>{s.render()}</React.Fragment>
       )}</>
     )
   })
@@ -144,9 +163,33 @@ export class Italic extends InlineMarkdown {
 
 export class InlineImage extends InlineMarkdown {
   static override regexp = /\!\[.*\]\(.*\)/
+  private _url: string | null
+  private _text: string | null
+  constructor(line: string) {
+    super(line)
+
+    /** Get "url" from string like "![link text](url)" */
+    this._url = (() => {
+      let u: string | undefined
+      const url = ((u = /\(.*\)/.exec(this._line)?.[0]) && removeInlineMarkdown(u, 1)) ?? null
+      return url
+    })()
+    this._text = (() => {
+      let t: string | undefined
+      const text = ((t = /\!\[.*\]/.exec(this._line)?.[0]) && removeInlineMarkdown(t.replace('!', ''), 1)) ?? null
+      return text
+    })()
+  }
+  override is(prev: InlineImage): boolean {
+    if (prev._url === this._url) {
+      prev._text = this._text
+      return true
+    }
+    return false
+  }
   render(): JSX.Element {
     return (
-      <Inline.Image>{this._line}</Inline.Image>
+      this._url ? <Inline.Image url={this._url} text={this._text} /> : <></>
     )
   }
 }
@@ -200,25 +243,14 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
     <Text style={{fontStyle: 'italic'}}> {/* No need to prepare and/or define italic style font to make work */}
       {removeInlineMarkdown(props.children, 1)}
     </Text>),
-  Image: React.memo((props: {children: string}) => {
-    /** Get "link text" and "url" from string like "![link text](url)" */
-    const {url, text} = React.useMemo(() => {
-      let t: string | undefined
-      const text = ((t = /\!\[.*\]/.exec(props.children)?.[0]) && removeInlineMarkdown(t.replace('!', ''), 1)) ?? null
-      let u: string | undefined
-      const url = ((u = /\(.*\)/.exec(props.children)?.[0]) && removeInlineMarkdown(u, 1)) ?? null
-      return {url, text}
-    }, [props.children])
-
-    const [originalSize, setOriginalSize] = React.useState({width: 0, height: 0})
-    React.useEffect(() => {
-      url && Image.getSize(url, (width, height) => {
-        setOriginalSize({width, height})
-      })
-    }, [url])
-
+  Image: React.memo((props: {url: string, text: string}) => {
     const windowWidth = useWindowDimensions().width
-    const size = React.useMemo<{width: number, height: number}>(() => {
+    const originalSize = useMemoizedImageSize(props.url)
+
+    const size = React.useMemo<{width: number, height: number} | undefined>(() => {
+      if (!originalSize) {
+        return
+      }
       const {width: originalWidth, height: originalHeight} = originalSize
       const previewWidth = windowWidth / 2 - PREVIEW_PADDING_LEFT - PREVIEW_PADDING_RIGHT
       if (originalWidth < previewWidth) {
@@ -228,12 +260,22 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
       return {width: originalWidth * scale, height: originalHeight * scale}
     }, [originalSize, windowWidth])
 
-    return url
-      // TODO: Cache image for changing except url
-      ? <Image source={{uri: url}} style={size} resizeMode="contain" accessibilityLabel={text ?? undefined} />
-      : null
+    return <Image source={{uri: props.url}} style={size} resizeMode="contain" accessibilityLabel={props.text ?? undefined} />
   }),
 } as const
+
+const imageSizeMemo: {[url in string]: {width: number, height: number}} = {}
+const useMemoizedImageSize = (url: string) => {
+  const [originalSize, setOriginalSize] = React.useState<{width: number, height: number}>()
+  if (imageSizeMemo[url]) {
+    return imageSizeMemo[url]
+  }
+  Image.getSize(url, (width, height) => {
+    imageSizeMemo[url] = {width, height}
+    setOriginalSize(imageSizeMemo[url])
+  })
+  return originalSize
+}
 
 /** Remove the first and the last character. */
 function removeInlineMarkdown(input: string, markdownLength: number): string {

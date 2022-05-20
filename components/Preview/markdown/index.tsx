@@ -21,6 +21,9 @@ export default function render(input: string): JSX.Element {
         return newBlock
       })
     })
+
+    // TODO: Maintain Markdown.fragmentsMemo, but how?
+    // Markdown.fragmentsMemo = []
   }, [input])
 
   return (
