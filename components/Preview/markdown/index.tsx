@@ -22,8 +22,7 @@ export default function render(input: string): JSX.Element {
       })
     })
 
-    // TODO: Maintain Markdown.fragmentsMemo, but how?
-    // Markdown.fragmentsMemo = []
+    Markdown.fragmentsMemo = Markdown.fragmentsMemo.filter(fragment => !fragment.isUnmounted)
   }, [input])
 
   return (

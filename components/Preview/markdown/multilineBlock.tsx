@@ -59,7 +59,7 @@ export class BlockCode extends MultilineBlock {
   static override regexp = /^```$/
   render(): JSX.Element{
     return (
-      <Multiline.BlockCode>{JSON.stringify(this._lines)}</Multiline.BlockCode>
+      <Multiline.BlockCode>{this._lines}</Multiline.BlockCode>
     )
   }
 }
@@ -71,9 +71,9 @@ const MultilineBlockMarkdowns: MultilineBlockMarkdownTypes[] = [
 ]
 
 const Multiline: {[key in 'BlockCode']: React.MemoExoticComponent<any>} = {
-  BlockCode: React.memo((props: {children: string}) =>
+  BlockCode: React.memo((props: {children: string[]}) =>
     <View style={textStyles.codeBlock}>
-      {(JSON.parse(props.children) as string[]).map((line, i) =>
+      {props.children.map((line, i) =>
         <Text
           style={textStyles.markdownCode}
           key={i}
@@ -81,5 +81,6 @@ const Multiline: {[key in 'BlockCode']: React.MemoExoticComponent<any>} = {
           {line}
         </Text>
       )}
-    </View>),
+    </View>,
+  (prevProps, nextProps) => JSON.stringify(prevProps.children) === JSON.stringify(nextProps.children)),
 } as const

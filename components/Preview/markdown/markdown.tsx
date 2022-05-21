@@ -20,9 +20,15 @@ export default abstract class Markdown {
   get id(): string {
     return this._id
   }
+  get isUnmounted(): boolean {
+    return this._isUnmounted
+  }
+  private _isUnmounted = false
+  protected unmount(): void {
+    this._isUnmounted = true
+  }
   static fragmentsMemo: InlineMarkdown[] = []
   static FragmentRenderer = React.memo((props: {children: string}) => {
-    console.log(Markdown.fragmentsMemo)
     // Re-use instances of Markdown when the line(s) are the same.
     const [blocks, setBlocks] = React.useState<InlineMarkdown[]>([])
     React.useEffect(() => {
@@ -120,7 +126,7 @@ abstract class InlineMarkdown extends Markdown {
 export class Default extends InlineMarkdown {
   render(): JSX.Element {
     return (
-      <Inline.Default>{this._line}</Inline.Default>
+      <Inline.Default unmount={() => this.unmount()}>{this._line}</Inline.Default>
     )
   }
 }
@@ -129,7 +135,7 @@ export class InlineCode extends InlineMarkdown {
   static override regexp = /`((?!`).)+`/
   render(): JSX.Element {
     return (
-      <Inline.Code>{this._line}</Inline.Code>
+      <Inline.Code unmount={() => this.unmount()}>{this._line}</Inline.Code>
     )
   }
 }
@@ -138,7 +144,7 @@ export class Link extends InlineMarkdown {
   static override regexp = /\[.*\]\(.*\)/
   render(): JSX.Element {
     return (
-      <Inline.Link>{this._line}</Inline.Link>
+      <Inline.Link unmount={() => this.unmount()}>{this._line}</Inline.Link>
     )
   }
 }
@@ -147,7 +153,7 @@ export class Bold extends InlineMarkdown {
   static override regexp = /\*\*((?!\*).)+\*\*/
   render(): JSX.Element {
     return (
-      <Inline.Bold>{this._line}</Inline.Bold>
+      <Inline.Bold unmount={() => this.unmount()}>{this._line}</Inline.Bold>
     )
   }
 }
@@ -156,7 +162,7 @@ export class Italic extends InlineMarkdown {
   static override regexp = /\*((?!\*).)+\*/
   render(): JSX.Element {
     return (
-      <Inline.Italic>{this._line}</Inline.Italic>
+      <Inline.Italic unmount={() => this.unmount()}>{this._line}</Inline.Italic>
     )
   }
 }
@@ -182,6 +188,7 @@ export class InlineImage extends InlineMarkdown {
   }
   override is(prev: InlineImage): boolean {
     if (prev._url === this._url) {
+      // When url is same, then it is considered as the same, but text should be updated.
       prev._text = this._text
       return true
     }
@@ -189,7 +196,7 @@ export class InlineImage extends InlineMarkdown {
   }
   render(): JSX.Element {
     return (
-      this._url ? <Inline.Image url={this._url} text={this._text} /> : <></>
+      <Inline.Image url={this._url} text={this._text} unmount={() => this.unmount()} />
     )
   }
 }
@@ -210,16 +217,30 @@ const InlineMarkdowns: InlineMarkdownTypes[] = [
   InlineImage,
 ]
 
-export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 'Image']: React.MemoExoticComponent<any>} = {
-  Default: React.memo((props: {children: string}) =>
-    <>
-      {props.children}
-    </>),
-  Code: React.memo((props: {children: string}) =>
-    <Text style={textStyles.markdownCode}>
-      {removeInlineMarkdown(props.children, 1)}
-    </Text>),
-  Link: React.memo((props: {children: string}) => {
+export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 'Image']: React.ComponentFactory<any, any>} = {
+  Default: (props: {children: string, unmount: () => void}) => {
+    React.useEffect(() => {
+      return () => props.unmount()
+    }, [])
+
+    return (
+      <>
+        {props.children}
+      </>
+    )
+  },
+  Code: (props: {children: string, unmount: () => void}) => {
+    React.useEffect(() => {
+      return () => props.unmount()
+    }, [])
+
+    return (
+      <Text style={textStyles.markdownCode}>
+        {removeInlineMarkdown(props.children, 1)}
+      </Text>
+    )
+  },
+  Link: (props: {children: string, unmount: () => void}) => {
     /** Get "link text" and "url" from string like "[link text](url)" */
     const {url, text} = React.useMemo(() => {
       let t: string | undefined
@@ -229,21 +250,39 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
       return {url, text}
     }, [props.children])
 
+    React.useEffect(() => {
+      return () => props.unmount()
+    }, [])
+
     return (
       <Text style={textStyles.link} onPress={() => WebBrowser.openBrowserAsync(url ?? '')}>
         {text}
       </Text>
     )
-  }),
-  Bold: React.memo((props: {children: string}) =>
-    <Text style={{fontWeight: 'bold'}}> {/* No need to prepare and/or define thicker weight font to make work */}
-      {removeInlineMarkdown(props.children, 2)}
-    </Text>),
-  Italic: React.memo((props: {children: string}) =>
-    <Text style={{fontStyle: 'italic'}}> {/* No need to prepare and/or define italic style font to make work */}
-      {removeInlineMarkdown(props.children, 1)}
-    </Text>),
-  Image: React.memo((props: {url: string, text: string}) => {
+  },
+  Bold: (props: {children: string, unmount: () => void}) => {
+    React.useEffect(() => {
+      return () => props.unmount()
+    }, [])
+
+    return (
+      <Text style={{fontWeight: 'bold'}}> {/* No need to prepare and/or define thicker weight font to make work */}
+        {removeInlineMarkdown(props.children, 2)}
+      </Text>
+    )
+  },
+  Italic: (props: {children: string, unmount: () => void}) => {
+    React.useEffect(() => {
+      return () => props.unmount()
+    }, [])
+
+    return (
+      <Text style={{fontStyle: 'italic'}}> {/* No need to prepare and/or define italic style font to make work */}
+        {removeInlineMarkdown(props.children, 1)}
+      </Text>
+    )
+  },
+  Image: (props: {url: string, text: string, unmount: () => void}) => {
     const windowWidth = useWindowDimensions().width
     const originalSize = useMemoizedImageSize(props.url)
 
@@ -260,8 +299,12 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
       return {width: originalWidth * scale, height: originalHeight * scale}
     }, [originalSize, windowWidth])
 
+    React.useEffect(() => {
+      return () => props.unmount()
+    }, [])
+
     return <Image source={{uri: props.url}} style={size} resizeMode="contain" accessibilityLabel={props.text ?? undefined} />
-  }),
+  },
 } as const
 
 const imageSizeMemo: {[url in string]: {width: number, height: number}} = {}
