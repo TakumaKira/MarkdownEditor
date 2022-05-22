@@ -9,6 +9,8 @@ export default function render(input: string): JSX.Element {
   // Re-use instances of Markdown when the line(s) are the same.
   const [blocks, setBlocks] = React.useState<Markdown[]>([])
   React.useEffect(() => {
+    Markdown.fragmentsMemo = Markdown.fragmentsMemo.filter(fragment => !fragment.isUnmounted)
+
     const newBlocks = blockLines(input.split('\n').filter(line => line !== ''))
     setBlocks(prevBlocks => {
       const stock = [...prevBlocks]
@@ -21,8 +23,6 @@ export default function render(input: string): JSX.Element {
         return newBlock
       })
     })
-
-    Markdown.fragmentsMemo = Markdown.fragmentsMemo.filter(fragment => !fragment.isUnmounted)
   }, [input])
 
   return (
