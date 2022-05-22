@@ -188,7 +188,8 @@ export class InlineImage extends InlineMarkdown {
   }
   override is(prev: InlineImage): boolean {
     if (prev._url === this._url) {
-      // When url is same, then it is considered as the same, but text should be updated.
+      // When url is same, then it is considered as the same, but line and text should be updated.
+      prev._line = this._line
       prev._text = this._text
       return true
     }
