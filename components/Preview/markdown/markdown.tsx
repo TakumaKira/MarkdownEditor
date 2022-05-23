@@ -1,10 +1,10 @@
 import * as WebBrowser from 'expo-web-browser'
 import React from "react"
-import { Image, useWindowDimensions } from 'react-native'
+import { Image } from 'react-native'
 import { v4 as uuidv4 } from 'uuid'
+import { PreviewContext } from '../../../contexts/previewContext'
 import textStyles from "../../../theme/textStyles"
 import { Text } from '../../common/withCustomFont'
-import { PREVIEW_PADDING_LEFT, PREVIEW_PADDING_RIGHT } from '../../EditorView.constants'
 
 type FoundMarkdownWithIndex = {
   index: number
@@ -284,7 +284,7 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
     )
   },
   Image: (props: {url: string, text: string, unmount: () => void}) => {
-    const windowWidth = useWindowDimensions().width
+    const {viewerWidth} = React.useContext(PreviewContext)
     const originalSize = useMemoizedImageSize(props.url)
 
     const size = React.useMemo<{width: number, height: number} | undefined>(() => {
@@ -292,18 +292,18 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
         return
       }
       const {width: originalWidth, height: originalHeight} = originalSize
-      const previewWidth = windowWidth / 2 - PREVIEW_PADDING_LEFT - PREVIEW_PADDING_RIGHT
-      if (originalWidth < previewWidth) {
+      if (originalWidth < viewerWidth) {
         return {width: originalWidth, height: originalHeight}
       }
-      const scale = previewWidth / originalWidth
+      const scale = viewerWidth / originalWidth
       return {width: originalWidth * scale, height: originalHeight * scale}
-    }, [originalSize, windowWidth])
+    }, [originalSize, viewerWidth])
 
     React.useEffect(() => {
       return () => props.unmount()
     }, [])
 
+    // TODO: Is there any way to cancel async function when this is unmounted before the async function was executed
     return <Image source={{uri: props.url}} style={size} resizeMode="contain" accessibilityLabel={props.text ?? undefined} />
   },
 } as const

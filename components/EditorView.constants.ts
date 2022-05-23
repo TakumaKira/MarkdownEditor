@@ -1,2 +1,0 @@
-export const PREVIEW_PADDING_LEFT = 23
-export const PREVIEW_PADDING_RIGHT = 24
