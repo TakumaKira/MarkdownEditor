@@ -98,7 +98,7 @@ export class OrderedList extends ListBlock {
   }
   render(): JSX.Element {
     return (
-      <Block.OrderedList>{JSON.stringify(this._lines)}</Block.OrderedList>
+      <Block.OrderedList>{this._lines}</Block.OrderedList>
     )
   }
 }
@@ -110,7 +110,7 @@ export class UnorderedList extends ListBlock {
   }
   render(): JSX.Element{
     return (
-      <Block.UnorderedList>{JSON.stringify(this._lines)}</Block.UnorderedList>
+      <Block.UnorderedList>{this._lines}</Block.UnorderedList>
     )
   }
 }
@@ -122,7 +122,7 @@ export class Quote extends ListBlock {
   }
   render(): JSX.Element{
     return (
-      <Block.Quote>{JSON.stringify(this._lines)}</Block.Quote>
+      <Block.Quote>{this._lines}</Block.Quote>
     )
   }
 }
@@ -138,14 +138,13 @@ const ListBlockMarkdowns: ListBlockMarkdownTypes[] = [
 ]
 
 const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExoticComponent<any>} = {
-  OrderedList: React.memo((props: {children: string}) => {
-    const lines: string[] = JSON.parse(props.children)
+  OrderedList: React.memo((props: {children: string[]}) => {
     const getNumber = (line: string): number => {
       return Number(OrderedList.regexp.exec(line)![0].replace('. ', ''))
     }
     /** Reserved width which can contain the number with longest width */
     const getWidth = () => {
-      const biggestNum = getNumber(lines[lines.length - 1])
+      const biggestNum = getNumber(props.children[props.children.length - 1])
       const digit = (biggestNum + '').length
       // a number letter has less than 8px, and dot has less than 2px
       return digit * 8 + 2
@@ -159,7 +158,7 @@ const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExot
     })
     return (
       <View style={textStyles.indent}>
-        {lines.map((line, i) => {
+        {props.children.map((line, i) => {
           return (
             <View
               style={[listStyles.itemContainer, i === 0 ? undefined : textStyles.indentedLines]}
@@ -174,8 +173,8 @@ const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExot
         })}
       </View>
     )
-  }),
-  UnorderedList: React.memo((props: {children: string}) => {
+  }, (prevProps, nextProps) => JSON.stringify(prevProps.children) === JSON.stringify(nextProps.children)),
+  UnorderedList: React.memo((props: {children: string[]}) => {
     const Bullet = React.memo(() => {
       return (
         <View style={[listStyles.itemHeaderContainer, listStyles.bulletContainer]}>
@@ -185,7 +184,7 @@ const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExot
     })
     return (
       <View style={textStyles.indent}>
-        {(JSON.parse(props.children) as string[]).map((line, i) =>
+        {props.children.map((line, i) =>
           <View
             style={[listStyles.itemContainer, i === 0 ? undefined : textStyles.indentedLines]}
             key={i}
@@ -198,10 +197,10 @@ const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExot
         )}
       </View>
     )
-  }),
-  Quote: React.memo((props: {children: string}) =>
+  }, (prevProps, nextProps) => JSON.stringify(prevProps.children) === JSON.stringify(nextProps.children)),
+  Quote: React.memo((props: {children: string[]}) =>
     <View style={textStyles.quoteBlock}>
-      {(JSON.parse(props.children) as string[]).map((line, i) =>
+      {props.children.map((line, i) =>
         <Text
           style={textStyles.previewParagraphBold}
           key={i}
@@ -210,7 +209,8 @@ const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExot
           <Markdown.FragmentRenderer>{line.replace(Quote.regexp, '')}</Markdown.FragmentRenderer>
         </Text>
       )}
-    </View>),
+    </View>,
+  (prevProps, nextProps) => JSON.stringify(prevProps.children) === JSON.stringify(nextProps.children)),
 } as const
 const listStyles = StyleSheet.create({
   itemContainer: {

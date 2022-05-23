@@ -29,7 +29,7 @@ Run ``yarn web``.(Or ``yarn ios``/``yarn android`` on your need. You need to set
 
 ### Run Storybook
 
-You need to set your local IP address like ``LOCAL_IP=xxx.xxx.xx.x`` within .env file at your root directory to run Storybook correctly.
+If you do not set ``LOCAL_IP`` variable, storybook will start on your local IP ``0.0.0.0``. Or, you also can explicitly set your local IP address like ``LOCAL_IP=xxx.xxx.xx.x`` within .env file at your root directory.
 
 Then run ``yarn storybook`` and you will see Storybook UI page, but stories won't show up at this point.
 

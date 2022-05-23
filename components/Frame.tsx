@@ -1,5 +1,5 @@
 import React, { Dispatch, SetStateAction } from 'react'
-import { Animated, StyleSheet, View, Dimensions } from 'react-native'
+import { Animated, StyleSheet, useWindowDimensions, View } from 'react-native'
 import { SIDEBAR_WIDTH } from './SideBar'
 
 const ANIM_DURATION = 500
@@ -9,9 +9,13 @@ const Frame = (props: {sideBar: () => JSX.Element, main: (props: {setShowSidebar
     sideBar: sidebar, main
   } = props
   const [showSidebar, setShowSidebar] = React.useState(false)
-  const windowWidth = Dimensions.get('window').width
+  const windowWidth = useWindowDimensions().width
   const containerWidthAnim = React.useRef(new Animated.Value(windowWidth)).current
   const sidebarWidthAnim = React.useRef(new Animated.Value(0)).current
+
+  React.useEffect(() => {
+    showSidebar ? showAnim() : hideAnim()
+  }, [showSidebar])
 
   const showAnim = () => {
     Animated.timing(sidebarWidthAnim, {
@@ -39,8 +43,17 @@ const Frame = (props: {sideBar: () => JSX.Element, main: (props: {setShowSidebar
   }
 
   React.useEffect(() => {
-    showSidebar ? showAnim() : hideAnim()
-  }, [showSidebar])
+    Animated.timing(sidebarWidthAnim, {
+      toValue: showSidebar ? SIDEBAR_WIDTH : 0,
+      duration: 0,
+      useNativeDriver: false
+    }).start()
+    Animated.timing(containerWidthAnim, {
+      toValue: showSidebar ? windowWidth + SIDEBAR_WIDTH : windowWidth,
+      duration: 0,
+      useNativeDriver: false
+    }).start()
+  }, [windowWidth])
 
   return (
     <Animated.View style={[styles.container, {width: containerWidthAnim}]}>
@@ -56,19 +69,14 @@ const Frame = (props: {sideBar: () => JSX.Element, main: (props: {setShowSidebar
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   sidebarContainer: {
-    height: '100%',
     overflow: 'hidden',
     alignItems: 'flex-end',
   },
   mainContainer: {
     flex: 1,
-    height: '100%',
   },
 })
 

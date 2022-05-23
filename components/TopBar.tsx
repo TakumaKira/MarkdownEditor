@@ -4,9 +4,11 @@ import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
 import { Text } from './common/withCustomFont'
 
+export const TOP_BAR_HEIGHT = 72
+
 const styles = StyleSheet.create({
   container: {
-    height: 72,
+    height: TOP_BAR_HEIGHT,
     backgroundColor: colors[800],
     flexDirection: 'row',
   },
