@@ -1,5 +1,5 @@
 import React from 'react'
-import { ScrollView, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native'
+import { Platform, ScrollView, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native'
 import HideIcon from '../assets/icon-hide-preview.svg'
 import ShowIcon from '../assets/icon-show-preview.svg'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    outlineStyle: 'none',
+    outlineStyle: Platform.OS === 'web' ? 'none' : undefined,
     paddingTop: 9,
     paddingBottom: 16,
     paddingLeft: 16,
