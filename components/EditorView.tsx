@@ -43,7 +43,11 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    outlineStyle: Platform.OS === 'web' ? 'none' : undefined,
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none'
+      }
+    }),
     paddingTop: 9,
     paddingBottom: 16,
     paddingLeft: 16,
