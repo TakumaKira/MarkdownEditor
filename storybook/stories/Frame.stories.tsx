@@ -5,7 +5,7 @@ import SideBar from '../../components/SideBar';
 
 storiesOf('Frame', module).add('to Storybook', () =>
   <Frame
-    sideBar={SideBar}
+    sidebar={SideBar}
     main={MainView}
   />
 );
