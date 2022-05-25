@@ -151,18 +151,18 @@ const DocumentTitle = () => {
       return
     }
     if (/\.md\s*$/.test(documentTitle)) {
-      setDocumentTitle(documentTitle => `${documentTitle.replace(/\s*$/, '')}`)
+      setDocumentTitle(documentTitle => `${documentTitle.replace(/^\s*/, '').replace(/\s*$/, '')}`)
       return
     }
     if (/\.m\s*$/.test(documentTitle)) {
-      setDocumentTitle(documentTitle => `${documentTitle.replace(/\s*$/, '')}d`)
+      setDocumentTitle(documentTitle => `${documentTitle.replace(/^\s*/, '').replace(/\s*$/, '')}d`)
       return
     }
     if (/\.\s*$/.test(documentTitle)) {
-      setDocumentTitle(documentTitle => `${documentTitle.replace(/\s*$/, '')}md`)
+      setDocumentTitle(documentTitle => `${documentTitle.replace(/^\s*/, '').replace(/\s*$/, '')}md`)
       return
     }
-    setDocumentTitle(documentTitle => `${documentTitle.replace(/\s*$/, '')}.md`)
+    setDocumentTitle(documentTitle => `${documentTitle.replace(/^\s*/, '').replace(/\s*$/, '')}.md`)
   }
 
   const [onFocus, setOnFocus] = React.useState(false)
