@@ -9,7 +9,7 @@ import 'react-native-get-random-values'
 const App = () => {
   return (
     <Frame
-      sideBar={SideBar}
+      sidebar={SideBar}
       main={MainView}
     />
   )
