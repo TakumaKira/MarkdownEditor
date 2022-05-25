@@ -1,8 +1,10 @@
 import React, { Dispatch, SetStateAction } from 'react'
 import { Animated, Platform, StyleSheet, TouchableOpacity, View } from 'react-native'
 import CloseIcon from '../assets/icon-close.svg'
+import DeleteIcon from '../assets/icon-delete.svg'
 import DocumentIcon from '../assets/icon-document.svg'
 import HamburgerIcon from '../assets/icon-menu.svg'
+import SaveIcon from '../assets/icon-save.svg'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
@@ -18,11 +20,16 @@ const styles = StyleSheet.create({
     height: TOP_BAR_HEIGHT,
     backgroundColor: colors[800],
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  hamburgerButton: {
-    alignSelf: 'stretch',
-    width: 72,
+  leftContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuButton: {
+    height: TOP_BAR_HEIGHT,
+    width: TOP_BAR_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors[700],
@@ -63,6 +70,32 @@ const styles = StyleSheet.create({
     backgroundColor: colors[100],
     marginTop: 5,
   },
+  rightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  deleteButton: {
+    marginRight: 13,
+    height: 40,
+    width: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  saveButton: {
+    marginRight: 16,
+    height: 40,
+    paddingLeft: 16,
+    paddingRight: 16,
+    backgroundColor: colors.Orange,
+    borderRadius: 4,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  saveButtonLabel: {
+    marginLeft: 8,
+    color: colors[100],
+  },
 })
 
 const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showSidebar: boolean}) => {
@@ -75,26 +108,32 @@ const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showS
 
   return (
     <View style={styles.container}>
-      <HamburgerButton toggle={() => setShowSidebar(value => !value)} isOpen={showSidebar} />
-      {mediaType === MediaType.DESKTOP &&
-        <>
-          <Title style={styles.title} />
-          <View style={styles.border} />
-        </>
-      }
-      <DocumentTitle />
+      <View style={styles.leftContainer}>
+        <MenuButton toggle={() => setShowSidebar(value => !value)} isOpen={showSidebar} />
+        {mediaType === MediaType.DESKTOP &&
+          <>
+            <Title style={styles.title} />
+            <View style={styles.border} />
+          </>
+        }
+        <DocumentTitle />
+      </View>
+      <View style={styles.rightContainer}>
+        <DeleteButton onPress={() => console.log('delete')} />
+        <SaveButton onPress={() => console.log('save')} />
+      </View>
     </View>
   )
 }
 
-const HamburgerButton = (props: {toggle: () => void, isOpen: boolean}) => {
+const MenuButton = (props: {toggle: () => void, isOpen: boolean}) => {
   const {
     toggle,
     isOpen,
   } = props
 
   return (
-    <TouchableOpacity onPress={toggle} style={styles.hamburgerButton}>
+    <TouchableOpacity onPress={toggle} style={styles.menuButton}>
       <SvgWrapper>
         {isOpen ? <CloseIcon /> : <HamburgerIcon />}
       </SvgWrapper>
@@ -107,6 +146,10 @@ const ANIM_DURATION = 200
 const DocumentTitle = () => {
   const [documentTitle, setDocumentTitle] = React.useState('')
   const addExtension = () => {
+    if (documentTitle.replace(/\s*/, '') === '') {
+      setDocumentTitle('Untitled Document.md')
+      return
+    }
     if (/\.md\s*$/.test(documentTitle)) {
       setDocumentTitle(documentTitle => `${documentTitle.replace(/\s*$/, '')}`)
       return
@@ -171,6 +214,37 @@ const DocumentTitle = () => {
         <Animated.View style={[styles.documentTitleInputUnderline, {width: borderBottomWidthAnim}]} />
       </View>
     </View>
+  )
+}
+
+const DeleteButton = (props: {onPress: () => void}) => {
+  const {
+    onPress,
+  } = props
+
+  return (
+    <TouchableOpacity onPress={onPress} style={styles.deleteButton}>
+      <SvgWrapper>
+        <DeleteIcon />
+      </SvgWrapper>
+    </TouchableOpacity>
+  )
+}
+
+const SaveButton = (props: {onPress: () => void}) => {
+  const {
+    onPress,
+  } = props
+
+  const mediaType = useMediaquery()
+
+  return (
+    <TouchableOpacity onPress={onPress} style={styles.saveButton}>
+      <SvgWrapper>
+        <SaveIcon />
+      </SvgWrapper>
+      {mediaType !== MediaType.MOBILE && <Text style={[styles.saveButtonLabel, textStyles.headingM]}>Save Changes</Text>}
+    </TouchableOpacity>
   )
 }
 
