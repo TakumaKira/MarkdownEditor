@@ -53,12 +53,16 @@ const styles = StyleSheet.create({
     paddingLeft: 16,
     paddingRight: 16,
   },
+  previewWrapper: {
+    alignItems: 'center',
+  },
   preview: {
     flex: 1,
     paddingTop: 22,
     paddingBottom: 122,
     paddingLeft: PREVIEW_PADDING_LEFT,
     paddingRight: PREVIEW_PADDING_RIGHT,
+    maxWidth: PREVIEW_PADDING_LEFT + 672 + PREVIEW_PADDING_RIGHT,
   },
   borderRight: {
     borderColor: colors[300],
@@ -175,7 +179,7 @@ const PreviewView = (props: {input: string, viewerWidth: number}) => {
     viewerWidth,
   } = props
   return (
-    <View style={styles.view}>
+    <View style={[styles.view, styles.previewWrapper]}>
       <Preview style={[styles.preview]} viewerWidth={viewerWidth}>{input}</Preview>
     </View>
   )
