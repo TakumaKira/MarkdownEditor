@@ -1,7 +1,8 @@
-import React from 'react'
-import { Animated, StyleSheet, useWindowDimensions, View } from 'react-native'
-import MainView from './MainView'
-import SideBar, { SIDEBAR_WIDTH } from './SideBar'
+import React from 'react';
+import { Animated, StatusBar, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import MainView from './MainView';
+import SideBar, { SIDEBAR_WIDTH } from './SideBar';
 
 const ANIM_DURATION = 500
 
@@ -13,6 +14,8 @@ const Frame = (props: {sidebar: typeof SideBar, main: typeof MainView}) => {
   const {width: windowWidth, height: windowHeight} = useWindowDimensions()
   const containerWidthAnim = React.useRef(new Animated.Value(windowWidth)).current
   const sidebarWidthAnim = React.useRef(new Animated.Value(0)).current
+  const {top: iosStatusbarHeight} = useSafeAreaInsets()
+  const androidStatusbarHeight = StatusBar.currentHeight ?? 0
 
   React.useEffect(() => {
     showSidebar ? showAnim() : hideAnim()
@@ -57,7 +60,7 @@ const Frame = (props: {sidebar: typeof SideBar, main: typeof MainView}) => {
   }, [windowWidth])
 
   return (
-    <Animated.View style={[styles.container, {width: containerWidthAnim, height: windowHeight}]}>
+    <Animated.View style={[styles.container, {width: containerWidthAnim, height: windowHeight - iosStatusbarHeight - androidStatusbarHeight}]}>
       <Animated.View style={[styles.sidebarContainer, {width: sidebarWidthAnim}]}>
         {sidebar()}
       </Animated.View>
