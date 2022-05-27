@@ -10,7 +10,7 @@ const Frame = (props: {sidebar: typeof SideBar, main: typeof MainView}) => {
     sidebar, main
   } = props
   const [showSidebar, setShowSidebar] = React.useState(false)
-  const windowWidth = useWindowDimensions().width
+  const {width: windowWidth, height: windowHeight} = useWindowDimensions()
   const containerWidthAnim = React.useRef(new Animated.Value(windowWidth)).current
   const sidebarWidthAnim = React.useRef(new Animated.Value(0)).current
 
@@ -57,7 +57,7 @@ const Frame = (props: {sidebar: typeof SideBar, main: typeof MainView}) => {
   }, [windowWidth])
 
   return (
-    <Animated.View style={[styles.container, {width: containerWidthAnim}]}>
+    <Animated.View style={[styles.container, {width: containerWidthAnim, height: windowHeight}]}>
       <Animated.View style={[styles.sidebarContainer, {width: sidebarWidthAnim}]}>
         {sidebar()}
       </Animated.View>
