@@ -1,17 +1,11 @@
 import Constants from 'expo-constants'
-import React from 'react'
-import Frame from './components/Frame'
-import MainView from './components/MainView'
-import SideBar from './components/SideBar'
-import StorybookUI from './storybook'
 import 'react-native-get-random-values'
+import MarkdownEditor from './components/MarkdownEditor'
+import StorybookUI from './storybook'
 
 const App = () => {
   return (
-    <Frame
-      sidebar={SideBar}
-      main={MainView}
-    />
+    <MarkdownEditor />
   )
 }
 

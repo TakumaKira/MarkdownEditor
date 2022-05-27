@@ -9,7 +9,7 @@ const styles = StyleSheet.create({
   },
 })
 
-const Title = (props: {style: StyleProp<TextStyle>}) => {
+const Title = (props: {style?: StyleProp<TextStyle>}) => {
   const {
     style,
   } = props

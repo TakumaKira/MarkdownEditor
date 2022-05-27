@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native'
 import { storiesOf } from '@storybook/react-native';
-import Modal from '../../components/Modal';
+import Modal from '../../components/common/Modal';
 
 const styles = StyleSheet.create({
   container: {
