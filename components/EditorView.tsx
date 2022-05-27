@@ -52,9 +52,10 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     paddingLeft: 16,
     paddingRight: 16,
+    textAlignVertical: 'top', // Need this for android
   },
   previewWrapper: {
-    alignItems: 'center',
+    alignItems: 'stretch',
   },
   preview: {
     flex: 1,
@@ -180,7 +181,7 @@ const PreviewView = (props: {input: string, viewerWidth: number}) => {
   } = props
   return (
     <View style={[styles.view, styles.previewWrapper]}>
-      <Preview style={[styles.preview]} viewerWidth={viewerWidth}>{input}</Preview>
+      <Preview style={styles.preview} viewerWidth={viewerWidth}>{input}</Preview>
     </View>
   )
 }
