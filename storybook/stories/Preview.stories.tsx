@@ -109,7 +109,7 @@ storiesOf('Preview', module)
   .add('Preview - Triple Inline Image test', () =>
     <Preview children={'test![small](https://picsum.photos/id/10/50)test![medium](https://picsum.photos/id/1000/200)test![large](https://picsum.photos/id/1002/300)test'} disableImageEscapeOnMobile={boolean('Disable Image Escape on iOS/Android', false)} />
   )
-  .add('Preview - Inline Link Image test', () =>
+  .add('Preview - Inline Image Link test', () =>
     <Preview children={'[![image](https://picsum.photos/id/10/50)](https://picsum.photos/id/10/50)'} />
   )
   .add('Preview - SVG Image test', () =>
