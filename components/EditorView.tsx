@@ -77,6 +77,18 @@ const EditorView = () => {
   const scrollViewHeight = windowHeight - TOP_BAR_HEIGHT - HEADER_HEIGHT
   const [isEditable, toggleIsEditable] = React.useState(true)
 
+  React.useEffect(() => {
+    const search = window?.location?.search
+    if (!search) {
+      return
+    }
+    const _input = new URLSearchParams(search).get('input')
+    if (!_input) {
+      return
+    }
+    setInput(decodeURIComponent(_input))
+  }, [])
+
   const mediaType = useMediaquery()
   const isMobile = React.useMemo(() => {
     return mediaType === MediaType.MOBILE

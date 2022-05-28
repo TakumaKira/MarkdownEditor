@@ -6,13 +6,16 @@ import render from './markdown'
 // TODO: Want a way to test if children doesn't do extra rendering.
 const Preview = React.memo((props: {children: string, style?: StyleProp<ViewStyle>, viewerWidth?: number, disableImageEscapeOnMobile?: boolean}) => {
   const {
+    children: input,
+    style,
     viewerWidth,
     disableImageEscapeOnMobile,
   } = props
+
   return (
-    <View style={props.style}>
-      <PreviewContext.Provider value={{viewerWidth, disableImageEscapeOnMobile}}>
-        {render(props.children)}
+    <View style={style}>
+      <PreviewContext.Provider value={{input, viewerWidth, disableImageEscapeOnMobile}}>
+        {render(input)}
       </PreviewContext.Provider>
     </View>
   )
