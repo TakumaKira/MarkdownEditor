@@ -1,8 +1,9 @@
 import * as WebBrowser from 'expo-web-browser'
 import React from "react"
-import { Image } from 'react-native'
+import { Image, Platform, Text as PureText, View } from 'react-native'
 import { v4 as uuidv4 } from 'uuid'
 import { PreviewContext } from '../../../contexts/previewContext'
+import colors from '../../../theme/colors'
 import textStyles from "../../../theme/textStyles"
 import { Text } from '../../common/withCustomFont'
 
@@ -225,9 +226,9 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
     }, [])
 
     return (
-      <>
+      <Text>
         {props.children}
-      </>
+      </Text>
     )
   },
   Code: (props: {children: string, unmount: () => void}) => {
@@ -284,7 +285,7 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
     )
   },
   Image: (props: {url: string, text: string, unmount: () => void}) => {
-    const {viewerWidth} = React.useContext(PreviewContext)
+    const {viewerWidth, disableImageEscapeOnMobile} = React.useContext(PreviewContext)
     const originalSize = useMemoizedImageSize(props.url)
 
     const size = React.useMemo<{width: number, height: number} | undefined>(() => {
@@ -292,7 +293,7 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
         return
       }
       const {width: originalWidth, height: originalHeight} = originalSize
-      if (originalWidth < viewerWidth) {
+      if (!viewerWidth || originalWidth < viewerWidth) {
         return {width: originalWidth, height: originalHeight}
       }
       const scale = viewerWidth / originalWidth
@@ -304,7 +305,12 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
     }, [])
 
     // TODO: Is there any way to cancel async function when this is unmounted before the async function was executed
-    return <Image source={{uri: props.url}} style={size} resizeMode="contain" accessibilityLabel={props.text ?? undefined} />
+    return ((!disableImageEscapeOnMobile && Platform.OS !== 'web')
+      ? <Text style={[textStyles.link, {color: colors[400]}]} onPress={() => WebBrowser.openBrowserAsync('https://markdown-editor-git-master-takumakira.vercel.app/')}>
+        {`[Markdown "![${props.text}](${props.url})" is escaped to avoid not the best rendering result of inline images in React Native on iOS/Android. Please check your result on web version of this app.]`}
+      </Text>
+      : <Image source={{uri: props.url}} style={size} resizeMode="contain" accessibilityLabel={props.text ?? undefined} />
+    )
   },
 } as const
 
