@@ -305,12 +305,12 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
       return () => props.unmount()
     }, [])
 
-    // TODO: Is there any way to cancel async function when this is unmounted before the async function was executed
+    // Currently, this escapes all image markdown on iOS/Android due to layout issue of inline image. When removing the escape, this should also support SVG on iOS/Android.
     return ((!disableImageEscapeOnMobile && Platform.OS !== 'web')
-      // TODO: Pass input to web version?
       ? <Text style={[textStyles.link, {color: colors[400]}]} onPress={() => WebBrowser.openBrowserAsync(`${Constants.manifest?.extra?.webVersionUrl}?input=${encodeURIComponent(input)}`)}>
         {`[Markdown "![${props.text}](${props.url})" is escaped to avoid not the best rendering result of inline images in React Native on iOS/Android. Please check your result on web version of this app.]`}
       </Text>
+      // TODO: Is there any way to cancel async function when this is unmounted before the async function was executed
       : <Image source={{uri: props.url}} style={size} resizeMode="contain" accessibilityLabel={props.text ?? undefined} />
     )
   },
