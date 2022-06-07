@@ -11,6 +11,16 @@ const Bullet = () => {
   return (<Text>・</Text>)
 }
 
+const imageSUrl = 'https://picsum.photos/id/10/50'
+const imageMUrl = 'https://picsum.photos/id/1000/200'
+const imageLUrl = 'https://picsum.photos/id/1002/300'
+const imageSMarkdown = `![imageS](${imageSUrl})`
+const imageMMarkdown = `![imageM](${imageMUrl})`
+const imageLMarkdown = `![imageL](${imageLUrl})`
+const svgUrl = 'https://img.shields.io/badge/license-MIT-blue.svg'
+const svgMarkdown = `![svg](${svgUrl})`
+const linkUrl = 'https://google.com'
+
 storiesOf('Preview', module)
   .add('Preview', () =>
     <Preview children={data[1].content} />
@@ -93,25 +103,25 @@ storiesOf('Preview', module)
   .add('Inline Image test with pure react native components', () =>
     <PureText>
       <>test</>
-      <Image source={{uri: 'https://picsum.photos/id/10/50'}} style={{width: 50, height: 50}} />
+      <Image source={{uri: imageSUrl}} style={{width: 50, height: 50}} />
       <>test</>
     </PureText>
   )
   // This already has some trouble with displaying inline image on iOS and android
   .add('Preview - Inline Image test', () =>
-    <Preview children={'test![image](https://picsum.photos/id/10/50)test'} disableImageEscapeOnMobile={boolean('Disable Image Escape on iOS/Android', false)} />
+    <Preview children={`test${imageSMarkdown}test`} disableImageEscapeOnMobile={boolean('Disable Image Escape on iOS/Android', false)} />
   )
   // This problem on android is not bearable
   .add('Preview - Double Inline Image test', () =>
-    <Preview children={'test![small](https://picsum.photos/id/10/50)test![medium](https://picsum.photos/id/1000/200)test'} disableImageEscapeOnMobile={boolean('Disable Image Escape on iOS/Android', false)} />
+    <Preview children={`test${imageSMarkdown}test${imageMMarkdown}test`} disableImageEscapeOnMobile={boolean('Disable Image Escape on iOS/Android', false)} />
   )
   // This breaks UI on iOS
   .add('Preview - Triple Inline Image test', () =>
-    <Preview children={'test![small](https://picsum.photos/id/10/50)test![medium](https://picsum.photos/id/1000/200)test![large](https://picsum.photos/id/1002/300)test'} disableImageEscapeOnMobile={boolean('Disable Image Escape on iOS/Android', false)} />
+    <Preview children={`test${imageSMarkdown}test${imageMMarkdown}test${imageLMarkdown}test`} disableImageEscapeOnMobile={boolean('Disable Image Escape on iOS/Android', false)} />
   )
   .add('Preview - SVG Image test', () =>
-    <Preview children={'test![svg](https://img.shields.io/badge/license-MIT-blue.svg)test'} disableImageEscapeOnMobile={boolean('Disable Image Escape on iOS/Android', false)} />
+    <Preview children={`test${svgMarkdown}test`} disableImageEscapeOnMobile={boolean('Disable Image Escape on iOS/Android', false)} />
   )
   .add('Preview - Inline Image Link test', () =>
-    <Preview children={'[![image](https://picsum.photos/id/10/50)](https://picsum.photos/id/10/50)'} />
+    <Preview children={`test[test${imageSMarkdown}**test**${imageSMarkdown}test](${linkUrl})test`} />
   )

@@ -1,7 +1,7 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native'
 import * as WebBrowser from 'expo-web-browser'
 import textStyles from '../../../theme/textStyles'
-import Markdown, { Bold, Default, Inline, InlineCode, Italic, Link } from './markdown'
+import Markdown, { Bold, Default, Inline, InlineCode, InlineImage, Italic, Link } from './markdown'
 
 describe('Markdown.splitByMarkdown', () => {
   test('return array of string or FoundMarkdown without any valid inline markdown', () => {
@@ -63,6 +63,12 @@ describe('InlineCode', () => {
   })
 })
 
+describe('Link', () => {
+  test('Link.regexp should return "[t](u)" if it tested with "[t](u)](u)"', () => {
+    expect(Link.regexp.exec('[t](u)](u)')?.[0]).toBe('[t](u)')
+  })
+})
+
 describe('Bold', () => {
   test('Bold.regexp should return "**t**" if it tested with "**t***"', () => {
     expect(Bold.regexp.exec('**t***')?.[0]).toBe('**t**')
@@ -72,6 +78,12 @@ describe('Bold', () => {
 describe('Italic', () => {
   test('Italic.regexp should return "*t*" if it tested with "*t**"', () => {
     expect(Italic.regexp.exec('*t**')?.[0]).toBe('*t*')
+  })
+})
+
+describe('InlineImage', () => {
+  test('InlineImage.regexp should return "![t](u)" if it tested with "![t](u)](u)"', () => {
+    expect(InlineImage.regexp.exec('![t](u)](u)')?.[0]).toBe('![t](u)')
   })
 })
 
