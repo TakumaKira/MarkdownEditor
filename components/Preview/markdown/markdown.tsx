@@ -1,8 +1,10 @@
+import Constants from 'expo-constants'
 import * as WebBrowser from 'expo-web-browser'
 import React from "react"
-import { Image } from 'react-native'
+import { Image, Platform } from 'react-native'
 import { v4 as uuidv4 } from 'uuid'
 import { PreviewContext } from '../../../contexts/previewContext'
+import colors from '../../../theme/colors'
 import textStyles from "../../../theme/textStyles"
 import { Text } from '../../common/withCustomFont'
 
@@ -88,19 +90,7 @@ export default abstract class Markdown {
     for (const _InlineMarkdownClass of InlineMarkdowns) {
       const result = _InlineMarkdownClass.regexp?.exec(line) ?? null
       if (result) {
-        // Initial result might include multiple markdown as like closing markdown was actually of second or third one,
-        // so check again with removing the last character which must be the part of the closing markdown.
-        let content = result[0]
-        let r: RegExpExecArray | null
-        // Look for shorter result till we could not find the new one.
-        while ((r = _InlineMarkdownClass.regexp?.exec(content.substring(0, content.length - 2)) ?? null) !== null) {
-          // If we got the result without the last character, it should be shorter result.
-          if (r) {
-            content = r[0]
-          }
-        }
-        // The original parameter of renderFragment can be fixed here.
-        results.push({InlineMarkdownClass: _InlineMarkdownClass, content, index: result.index})
+        results.push({InlineMarkdownClass: _InlineMarkdownClass, content: result[0], index: result.index})
       }
     }
     // We want to chose a type of markdown with the youngest start index.
@@ -141,10 +131,30 @@ export class InlineCode extends InlineMarkdown {
 }
 
 export class Link extends InlineMarkdown {
-  static override regexp = /\[.*\]\(.*\)/
+  static override regexp = /\[((((?!\[|\]).)*\[((?!\[|\]).)*\]((?!\[|\]).)*)|(((?!\[|\]).)*))*\]\(((?!\)).)*\)/
+
+  private _url: string
+  private _text: string
+  constructor(line: string) {
+    super(line)
+
+    /** Get "url" and "text" from string like "[link text](url)" */
+    let t: string | undefined
+    this._text = ((t = /^\[((((?!\[|\]).)*\[((?!\[|\]).)*\]((?!\[|\]).)*)|(((?!\[|\]).)*))*\]/.exec(this._line)?.[0]) && t.slice(1, -1)) ?? ''
+    this._url = t ? this._line.slice(t.length + 1, -1) : ''
+  }
+  override is(prev: Link): boolean {
+    if (prev._url === this._url) {
+      // When url is same, then it is considered as the same, but line and text should be updated.
+      prev._line = this._line
+      prev._text = this._text
+      return true
+    }
+    return false
+  }
   render(): JSX.Element {
     return (
-      <Inline.Link unmount={() => this.unmount()}>{this._line}</Inline.Link>
+      <Inline.Link url={this._url} unmount={() => this.unmount()}>{this._text}</Inline.Link>
     )
   }
 }
@@ -168,7 +178,7 @@ export class Italic extends InlineMarkdown {
 }
 
 export class InlineImage extends InlineMarkdown {
-  static override regexp = /\!\[.*\]\(.*\)/
+  static override regexp = /\!\[((?!\]).)*\]\(((?!\)).)*\)/
   private _url: string | null
   private _text: string | null
   constructor(line: string) {
@@ -177,12 +187,12 @@ export class InlineImage extends InlineMarkdown {
     /** Get "url" from string like "![link text](url)" */
     this._url = (() => {
       let u: string | undefined
-      const url = ((u = /\(.*\)/.exec(this._line)?.[0]) && removeInlineMarkdown(u, 1)) ?? null
+      const url = ((u = /\(((?!\)).)*\)/.exec(this._line)?.[0]) && removeInlineMarkdown(u, 1)) ?? null
       return url
     })()
     this._text = (() => {
       let t: string | undefined
-      const text = ((t = /\!\[.*\]/.exec(this._line)?.[0]) && removeInlineMarkdown(t.replace('!', ''), 1)) ?? null
+      const text = ((t = /\!\[((?!\]).)*\]/.exec(this._line)?.[0]) && removeInlineMarkdown(t.replace('!', ''), 1)) ?? null
       return text
     })()
   }
@@ -225,9 +235,9 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
     }, [])
 
     return (
-      <>
+      <Text>
         {props.children}
-      </>
+      </Text>
     )
   },
   Code: (props: {children: string, unmount: () => void}) => {
@@ -241,23 +251,14 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
       </Text>
     )
   },
-  Link: (props: {children: string, unmount: () => void}) => {
-    /** Get "link text" and "url" from string like "[link text](url)" */
-    const {url, text} = React.useMemo(() => {
-      let t: string | undefined
-      const text = ((t = /\[.*\]/.exec(props.children)?.[0]) && removeInlineMarkdown(t, 1)) ?? null
-      let u: string | undefined
-      const url = ((u = /\(.*\)/.exec(props.children)?.[0]) && removeInlineMarkdown(u, 1)) ?? null
-      return {url, text}
-    }, [props.children])
-
+  Link: (props: {url: string, children: string, unmount: () => void}) => {
     React.useEffect(() => {
       return () => props.unmount()
     }, [])
 
     return (
-      <Text style={textStyles.link} onPress={() => WebBrowser.openBrowserAsync(url ?? '')}>
-        {text}
+      <Text style={textStyles.link} onPress={() => WebBrowser.openBrowserAsync(props.url ?? '')}>
+        <Markdown.FragmentRenderer>{props.children}</Markdown.FragmentRenderer>
       </Text>
     )
   },
@@ -284,7 +285,7 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
     )
   },
   Image: (props: {url: string, text: string, unmount: () => void}) => {
-    const {viewerWidth} = React.useContext(PreviewContext)
+    const {input, viewerWidth, disableImageEscapeOnMobile} = React.useContext(PreviewContext)
     const originalSize = useMemoizedImageSize(props.url)
 
     const size = React.useMemo<{width: number, height: number} | undefined>(() => {
@@ -292,7 +293,7 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
         return
       }
       const {width: originalWidth, height: originalHeight} = originalSize
-      if (originalWidth < viewerWidth) {
+      if (!viewerWidth || originalWidth < viewerWidth) {
         return {width: originalWidth, height: originalHeight}
       }
       const scale = viewerWidth / originalWidth
@@ -303,8 +304,14 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
       return () => props.unmount()
     }, [])
 
-    // TODO: Is there any way to cancel async function when this is unmounted before the async function was executed
-    return <Image source={{uri: props.url}} style={size} resizeMode="contain" accessibilityLabel={props.text ?? undefined} />
+    // Currently, this escapes all image markdown on iOS/Android due to layout issue of inline image. When removing the escape, this should also support SVG on iOS/Android.
+    return ((!disableImageEscapeOnMobile && Platform.OS !== 'web')
+      ? <Text style={[textStyles.link, {color: colors[400]}]} onPress={() => WebBrowser.openBrowserAsync(`${Constants.manifest?.extra?.webVersionUrl}?input=${encodeURIComponent(input)}`)}>
+        {`[Markdown "![${props.text}](${props.url})" is escaped to avoid not the best rendering result of inline images in React Native on iOS/Android. Please check your result on web version of this app.]`}
+      </Text>
+      // TODO: Is there any way to cancel async function when this is unmounted before the async function was executed
+      : <Image source={{uri: props.url}} style={size} resizeMode="contain" accessibilityLabel={props.text ?? undefined} />
+    )
   },
 } as const
 

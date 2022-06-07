@@ -1,54 +1,22 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native'
 import * as WebBrowser from 'expo-web-browser'
 import textStyles from '../../../theme/textStyles'
-import Markdown, { Bold, Default, Inline, InlineCode, Italic, Link } from './markdown'
-import MultilineBlock, { BlockCode } from './multilineBlock'
+import Markdown, { Bold, Default, Inline, InlineCode, InlineImage, Italic, Link } from './markdown'
 
-jest.mock('uuid', () => ({v4: jest.fn()}))
-
-describe('MultilineBlock', () => {
-  test('MultilineBlock.find() returns intended result', () => {
-    const originalLines: string[] = [
-      'line 1',
-      '```',
-      'line 3',
-      'line 4',
-      '```',
-      'line 6',
-      '```',
-      'line 8',
-    ]
-    const expectedResult: (string | MultilineBlock)[] = [
-      'line 1',
-      new BlockCode([
-        'line 3',
-        'line 4',
-      ]),
-      'line 6',
-      '```',
-      'line 8',
-    ]
-    expect(MultilineBlock.find(originalLines)).toEqual(expectedResult)
-  })
-  test('returns empty array if passed empty array', () => {
-    expect(MultilineBlock.find([])).toEqual([])
-  })
-  test('supports empty block', () => {
-    expect(MultilineBlock.find(['```', '```'])).toEqual([new BlockCode([])])
-  })
-})
 describe('Markdown.splitByMarkdown', () => {
   test('return array of string or FoundMarkdown without any valid inline markdown', () => {
-    expect(Markdown.splitByMarkdown('this is `inline code` and click [this link](https://link.com) and this is `inline code`[this link](https://link.com)'))
-      .toEqual([
-        new Default('this is '),
-        new InlineCode('`inline code`'),
-        new Default(' and click '),
-        new Link('[this link](https://link.com)'),
-        new Default(' and this is '),
-        new InlineCode('`inline code`'),
-        new Link('[this link](https://link.com)'),
-      ])
+    const originalLine = 'this is `inline code` and click [this link](https://link.com) and this is `inline code`[this link](https://link.com)'
+    const expectedResult = [
+      new Default('this is '),
+      new InlineCode('`inline code`'),
+      new Default(' and click '),
+      new Link('[this link](https://link.com)'),
+      new Default(' and this is '),
+      new InlineCode('`inline code`'),
+      new Link('[this link](https://link.com)'),
+    ]
+    const result = Markdown.splitByMarkdown(originalLine)
+    result.forEach((r, i) => expect(r.is(expectedResult[i])).toBe(true))
   })
 })
 
@@ -95,6 +63,12 @@ describe('InlineCode', () => {
   })
 })
 
+describe('Link', () => {
+  test('Link.regexp should return "[t](u)" if it tested with "[t](u)](u)"', () => {
+    expect(Link.regexp.exec('[t](u)](u)')?.[0]).toBe('[t](u)')
+  })
+})
+
 describe('Bold', () => {
   test('Bold.regexp should return "**t**" if it tested with "**t***"', () => {
     expect(Bold.regexp.exec('**t***')?.[0]).toBe('**t**')
@@ -104,6 +78,12 @@ describe('Bold', () => {
 describe('Italic', () => {
   test('Italic.regexp should return "*t*" if it tested with "*t**"', () => {
     expect(Italic.regexp.exec('*t**')?.[0]).toBe('*t*')
+  })
+})
+
+describe('InlineImage', () => {
+  test('InlineImage.regexp should return "![t](u)" if it tested with "![t](u)](u)"', () => {
+    expect(InlineImage.regexp.exec('![t](u)](u)')?.[0]).toBe('![t](u)')
   })
 })
 
@@ -128,7 +108,7 @@ describe('Inline.Link', () => {
     const result = render(<Inline.Link>{"[" + text + "](" + url + ")"}</Inline.Link>)
     await waitFor(() => result.getByText(text))
     const snapshot = result.toJSON()
-    expect(snapshot.children).toEqual([text])
+    expect(snapshot.children[0].children[0].children[0]).toEqual(text)
     expect(snapshot.props.style).toEqual(textStyles.link)
   })
   test('link works correctly', async() => {

@@ -52,9 +52,10 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     paddingLeft: 16,
     paddingRight: 16,
+    textAlignVertical: 'top', // Need this for android
   },
   previewWrapper: {
-    alignItems: 'center',
+    alignItems: 'stretch',
   },
   preview: {
     flex: 1,
@@ -75,6 +76,18 @@ const EditorView = () => {
   const {height: windowHeight, width: windowWidth} = useWindowDimensions()
   const scrollViewHeight = windowHeight - TOP_BAR_HEIGHT - HEADER_HEIGHT
   const [isEditable, toggleIsEditable] = React.useState(true)
+
+  React.useEffect(() => {
+    const search = window?.location?.search
+    if (!search) {
+      return
+    }
+    const _input = new URLSearchParams(search).get('input')
+    if (!_input) {
+      return
+    }
+    setInput(decodeURIComponent(_input))
+  }, [])
 
   const mediaType = useMediaquery()
   const isMobile = React.useMemo(() => {
@@ -180,7 +193,7 @@ const PreviewView = (props: {input: string, viewerWidth: number}) => {
   } = props
   return (
     <View style={[styles.view, styles.previewWrapper]}>
-      <Preview style={[styles.preview]} viewerWidth={viewerWidth}>{input}</Preview>
+      <Preview style={styles.preview} viewerWidth={viewerWidth}>{input}</Preview>
     </View>
   )
 }
