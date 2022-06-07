@@ -4,10 +4,11 @@
 import { Platform } from "react-native";
 
 const SvgWrapper = (props: { children: JSX.Element }) => {
+  const {children} = props
   if (Platform.OS === 'web') {
-    return <img src={props.children.type} {...props.children.props} />
+    return <img src={children.type} {...children.props} />
   }
-  return props.children;
+  return children
 }
 
 export default SvgWrapper

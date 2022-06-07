@@ -1,5 +1,5 @@
 import React, { Dispatch, SetStateAction } from 'react'
-import { Animated, Platform, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { Animated, Platform, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native'
 import CloseIcon from '../assets/icon-close.svg'
 import DeleteIcon from '../assets/icon-delete.svg'
 import DocumentIcon from '../assets/icon-document.svg'
@@ -13,7 +13,6 @@ import { Text, TextInput } from './common/withCustomFont'
 import Title from './Title'
 
 export const TOP_BAR_HEIGHT = 72
-const BORDER_BOTTOM_WIDTH = 272
 
 const styles = StyleSheet.create({
   container: {
@@ -26,6 +25,10 @@ const styles = StyleSheet.create({
   leftContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexGrow: 1,
+    /** Use 2 lines below to check how input layout works */
+    // borderWidth: 1,
+    // borderColor: 'red',
   },
   menuButton: {
     height: TOP_BAR_HEIGHT,
@@ -50,6 +53,9 @@ const styles = StyleSheet.create({
   },
   textsContainer: {
     marginLeft: 17,
+    /** Use 2 lines below to check how input layout works */
+    // borderWidth: 1,
+    // borderColor: 'yellow',
   },
   documentTitleLabel: {
     color: colors[500],
@@ -63,7 +69,6 @@ const styles = StyleSheet.create({
       }
     }),
     color: colors[100],
-    minWidth: BORDER_BOTTOM_WIDTH,
   },
   documentTitleInputUnderline: {
     height: 1,
@@ -170,10 +175,15 @@ const DocumentTitle = () => {
     onFocus ? focusAnim() : blurAnim()
   }, [onFocus])
 
+  const mediaType = useMediaquery()
+  const {width: windowWidth} = useWindowDimensions()
+  const INPUT_MAX_WIDTH = 272
+  const inputWidth = React.useMemo(() => Math.min(windowWidth - (mediaType !== MediaType.MOBILE ? 355 : 255), INPUT_MAX_WIDTH), [windowWidth])
+
   const borderBottomWidthAnim = React.useRef(new Animated.Value(0)).current
   const focusAnim = () => {
     Animated.timing(borderBottomWidthAnim, {
-      toValue: BORDER_BOTTOM_WIDTH,
+      toValue: inputWidth,
       duration: ANIM_DURATION,
       useNativeDriver: false
     }).start()
@@ -194,8 +204,6 @@ const DocumentTitle = () => {
     addExtension()
   }
 
-  const mediaType = useMediaquery()
-
   return (
     <View style={styles.documentTitleContainer}>
       <SvgWrapper>
@@ -204,7 +212,7 @@ const DocumentTitle = () => {
       <View style={styles.textsContainer}>
         {mediaType !== MediaType.MOBILE && <Text style={[styles.documentTitleLabel, textStyles.bodyM]}>Document Name</Text>}
         <TextInput
-          style={[styles.documentTitleInput, textStyles.headingM]}
+          style={[styles.documentTitleInput, textStyles.headingM, {width: inputWidth}]}
           selectionColor={colors.Orange}
           value={documentTitle}
           onChangeText={setDocumentTitle}
