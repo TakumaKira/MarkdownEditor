@@ -1,10 +1,8 @@
 import React from 'react'
-import { SafeAreaProvider } from 'react-native-safe-area-context'
-import colors from '../theme/colors'
-import CustomStatusBar from './common/CustomStatusBar'
 import Confirmation from './Confirmation'
 import Frame from './Frame'
 import MainView from './MainView'
+import SafeArea from './SafeArea'
 import SideBar from './SideBar'
 
 const MarkdownEditor = () => {
@@ -16,8 +14,7 @@ const MarkdownEditor = () => {
   }
 
   return (
-    <SafeAreaProvider>
-      <CustomStatusBar backgroundColor={colors[900]} barStyle='light-content' />
+    <SafeArea>
       <Frame
         sidebar={SideBar}
         main={MainView}
@@ -29,7 +26,7 @@ const MarkdownEditor = () => {
         onPressButton={handleDelete}
         onPressBackground={() => setShowDeleteConfirmation(false)}
       />}
-    </SafeAreaProvider>
+    </SafeArea>
   )
 }
 
