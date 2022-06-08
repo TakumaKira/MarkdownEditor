@@ -131,7 +131,8 @@ export class InlineCode extends InlineMarkdown {
 }
 
 export class Link extends InlineMarkdown {
-  static override regexp = /\[((((?!\[|\]).)*\[((?!\[|\]).)*\]((?!\[|\]).)*)|(((?!\[|\]).)*))*\]\(((?!\)).)*\)/
+  /** This regular expression accepts strings which includes paired square brackets inside outer square brackets */
+  static override regexp = /\[((((?!\[|\]).)*\[((?!\[|\]).)*\]((?!\[|\]).)+)|(((?!\[|\]).)*))*\]\(((?!\)).)*\)/
 
   private _url: string
   private _text: string
