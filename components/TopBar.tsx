@@ -113,7 +113,7 @@ const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showS
     showSidebar,
   } = props
 
-  const {titleInput, mainInput} = useInputContext()
+  const {titleInput, mainInput, setShowDeleteConfirmation} = useInputContext()
   const dispatch = useAppDispatch()
   const mediaType = useMediaquery()
 
@@ -130,7 +130,7 @@ const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showS
         <DocumentTitle />
       </View>
       <View style={styles.rightContainer}>
-        <DeleteButton onPress={() => dispatch(deleteSelectedDocument())} />
+        <DeleteButton onPress={() => setShowDeleteConfirmation(true)} />
         <SaveButton onPress={() => dispatch(saveDocument({titleInput, mainInput}))} />
       </View>
     </View>
