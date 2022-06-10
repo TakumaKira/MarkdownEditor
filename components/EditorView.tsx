@@ -1,8 +1,12 @@
+import Constants from 'expo-constants'
 import React from 'react'
 import { Platform, ScrollView, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native'
 import HideIcon from '../assets/icon-hide-preview.svg'
 import ShowIcon from '../assets/icon-show-preview.svg'
+import { useInputContext } from '../contexts/inputContext'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
+import { selectSelectedDocument } from '../store/document'
+import { useAppSelector } from '../store/hooks'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
 import SvgWrapper from './common/SvgWrapper'
@@ -72,10 +76,11 @@ const styles = StyleSheet.create({
 })
 
 const EditorView = () => {
-  const [input, setInput] = React.useState('')
+  const {setTitleInput, mainInput, setMainInput} = useInputContext()
   const {height: windowHeight, width: windowWidth} = useWindowDimensions()
   const scrollViewHeight = windowHeight - TOP_BAR_HEIGHT - HEADER_HEIGHT
   const [isEditable, toggleIsEditable] = React.useState(true)
+  const selectedDocument = useAppSelector(selectSelectedDocument)
 
   React.useEffect(() => {
     const search = window?.location?.search
@@ -86,8 +91,15 @@ const EditorView = () => {
     if (!_input) {
       return
     }
-    setInput(decodeURIComponent(_input))
+    setTitleInput(Constants.manifest?.extra?.NEW_DOCUMENT_TITLE)
+    setMainInput(decodeURIComponent(_input))
   }, [])
+
+  React.useEffect(() => {
+    if (selectedDocument) {
+      setMainInput(selectedDocument.content)
+    }
+  }, [selectedDocument])
 
   const mediaType = useMediaquery()
   const isMobile = React.useMemo(() => {
@@ -124,8 +136,8 @@ const EditorView = () => {
       </View>
       <ScrollView style={{height: scrollViewHeight}}>
         <View style={[styles.viewContainer, {minHeight: scrollViewHeight}]}>
-          {showMarkdown && <MarkdownView showPreview={showPreview} input={input} setInput={setInput} />}
-          {showPreview && <PreviewView input={input} viewerWidth={viewerWidth} />}
+          {showMarkdown && <MarkdownView showPreview={showPreview} input={mainInput} setInput={setMainInput} />}
+          {showPreview && <PreviewView input={mainInput} viewerWidth={viewerWidth} />}
         </View>
       </ScrollView>
     </View>

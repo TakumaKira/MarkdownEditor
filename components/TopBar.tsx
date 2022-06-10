@@ -1,3 +1,4 @@
+import Constants from 'expo-constants'
 import React, { Dispatch, SetStateAction } from 'react'
 import { Animated, Platform, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native'
 import CloseIcon from '../assets/icon-close.svg'
@@ -5,7 +6,10 @@ import DeleteIcon from '../assets/icon-delete.svg'
 import DocumentIcon from '../assets/icon-document.svg'
 import HamburgerIcon from '../assets/icon-menu.svg'
 import SaveIcon from '../assets/icon-save.svg'
+import { useInputContext } from '../contexts/inputContext'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
+import { saveDocument, selectSelectedDocument } from '../store/document'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
 import SvgWrapper from './common/SvgWrapper'
@@ -109,6 +113,8 @@ const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showS
     showSidebar,
   } = props
 
+  const {titleInput, mainInput} = useInputContext()
+  const dispatch = useAppDispatch()
   const mediaType = useMediaquery()
 
   return (
@@ -125,7 +131,7 @@ const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showS
       </View>
       <View style={styles.rightContainer}>
         <DeleteButton onPress={() => console.log('delete')} />
-        <SaveButton onPress={() => console.log('save')} />
+        <SaveButton onPress={() => dispatch(saveDocument({titleInput, mainInput}))} />
       </View>
     </View>
   )
@@ -149,25 +155,32 @@ const MenuButton = (props: {toggle: () => void, isOpen: boolean}) => {
 const ANIM_DURATION = 200
 
 const DocumentTitle = () => {
-  const [documentTitle, setDocumentTitle] = React.useState('')
+  const selectedDocument = useAppSelector(selectSelectedDocument)
+  React.useEffect(() => {
+    if (selectedDocument) {
+      setTitleInput(selectedDocument.name)
+    }
+  }, [selectedDocument])
+
+  const {titleInput, setTitleInput} = useInputContext()
   const addExtension = () => {
-    if (documentTitle.replace(/\s*/, '') === '') {
-      setDocumentTitle('Untitled Document.md')
+    if (titleInput.replace(/\s*/, '') === '') {
+      setTitleInput(Constants.manifest?.extra?.NEW_DOCUMENT_TITLE)
       return
     }
-    if (/\.md\s*$/.test(documentTitle)) {
-      setDocumentTitle(documentTitle => `${documentTitle.replace(/^\s*/, '').replace(/\s*$/, '')}`)
+    if (/\.md\s*$/.test(titleInput)) {
+      setTitleInput(documentTitle => `${documentTitle.replace(/^\s*/, '').replace(/\s*$/, '')}`)
       return
     }
-    if (/\.m\s*$/.test(documentTitle)) {
-      setDocumentTitle(documentTitle => `${documentTitle.replace(/^\s*/, '').replace(/\s*$/, '')}d`)
+    if (/\.m\s*$/.test(titleInput)) {
+      setTitleInput(documentTitle => `${documentTitle.replace(/^\s*/, '').replace(/\s*$/, '')}d`)
       return
     }
-    if (/\.\s*$/.test(documentTitle)) {
-      setDocumentTitle(documentTitle => `${documentTitle.replace(/^\s*/, '').replace(/\s*$/, '')}md`)
+    if (/\.\s*$/.test(titleInput)) {
+      setTitleInput(documentTitle => `${documentTitle.replace(/^\s*/, '').replace(/\s*$/, '')}md`)
       return
     }
-    setDocumentTitle(documentTitle => `${documentTitle.replace(/^\s*/, '').replace(/\s*$/, '')}.md`)
+    setTitleInput(documentTitle => `${documentTitle.replace(/^\s*/, '').replace(/\s*$/, '')}.md`)
   }
 
   const [onFocus, setOnFocus] = React.useState(false)
@@ -214,8 +227,8 @@ const DocumentTitle = () => {
         <TextInput
           style={[styles.documentTitleInput, textStyles.headingM, {width: inputWidth}]}
           selectionColor={colors.Orange}
-          value={documentTitle}
-          onChangeText={setDocumentTitle}
+          value={titleInput}
+          onChangeText={setTitleInput}
           onFocus={handleFocus}
           onBlur={handleBlur}
         />

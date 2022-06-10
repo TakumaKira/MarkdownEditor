@@ -4,7 +4,7 @@ import React from 'react'
 import { Image, Text as PureText, View } from 'react-native'
 import { Text } from '../../components/common/withCustomFont'
 import Preview from '../../components/Preview'
-import * as data from '../../data.json'
+import { mockInitialDocuments } from '../../store/mockInitialData'
 import textStyles from '../../theme/textStyles'
 
 const Bullet = () => {
@@ -23,10 +23,10 @@ const linkUrl = 'https://google.com'
 
 storiesOf('Preview', module)
   .add('Preview', () =>
-    <Preview children={data[1].content} />
+    <Preview children={mockInitialDocuments[1].content} />
   )
   .add('Preview - input text', () =>
-    <>{data[1].content.split('\n').map((line, i) =>
+    <>{mockInitialDocuments[1].content.split('\n').map((line, i) =>
       <Text key={i}>{line}</Text>
     )}</>
   )

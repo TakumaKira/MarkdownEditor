@@ -8,6 +8,7 @@ export default {
       MOBILE_TABLET: 600,
       TABLET_DESKTOP: 1200,
     },
-    webVersionUrl: 'https://markdown-editor-git-master-takumakira.vercel.app/',
+    WEB_VERSION_URL: 'https://markdown-editor-git-master-takumakira.vercel.app/',
+    NEW_DOCUMENT_TITLE: 'Untitled Document.md',
   },
 }

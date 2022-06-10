@@ -6,6 +6,8 @@ import DocumentIcon from '../assets/icon-document.svg'
 import LightIconHighlight from '../assets/icon-light-mode-highlight.svg'
 import LightIcon from '../assets/icon-light-mode.svg'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
+import { newDocument, selectDocument } from '../store/document'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
 import SvgWrapper from './common/SvgWrapper'
@@ -57,7 +59,7 @@ const styles = StyleSheet.create({
   documentCardTextsContainer: {
     marginLeft: 16,
   },
-  createdAtLabel: {
+  lastUpdatedAtLabel: {
     color: colors[500],
   },
   nameLabel: {
@@ -88,125 +90,24 @@ const styles = StyleSheet.create({
   },
 })
 
-const data = [
-  {
-    "createdAt": "04-01-2022",
-    "name": "untitled-document.md",
-    "content": ""
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "welcome.md",
-    "content": "# Welcome to Markdown\n\nMarkdown is a lightweight markup language that you can use to add formatting elements to plaintext text documents.\n\n## How to use this?\n\n1. Write markdown in the markdown editor window\n2. See the rendered markdown in the preview window\n\n### Features\n\n- Create headings, paragraphs, links, blockquotes, inline-code, code blocks, and lists\n- Name and save the document to access again later\n- Choose between Light or Dark mode depending on your preference\n\n> This is an example of a blockquote. If you would like to learn more about markdown syntax, you can visit this [markdown cheatsheet](https://www.markdownguide.org/cheat-sheet/).\n\n#### Headings\n\nTo create a heading, add the hash sign (#) before the heading. The number of number signs you use should correspond to the heading level. You'll see in this guide that we've used all six heading levels (not necessarily in the correct way you should use headings!) to illustrate how they should look.\n\n##### Lists\n\nYou can see examples of ordered and unordered lists above.\n\n###### Code Blocks\n\nThis markdown editor allows for inline-code snippets, like this: `<p>I'm inline</p>`. It also allows for larger code blocks like this:\n\n```\n<main>\n  <h1>This is a larger code block</h1>\n</main>\n```"
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "untitled-document-untitled-document-untitled-document-untitled-document-untitled-document-untitled-document-untitled-document-untitled-document-untitled-document-untitled-document-untitled-document.md",
-    "content": ""
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "welcome.md",
-    "content": "# Welcome to Markdown\n\nMarkdown is a lightweight markup language that you can use to add formatting elements to plaintext text documents.\n\n## How to use this?\n\n1. Write markdown in the markdown editor window\n2. See the rendered markdown in the preview window\n\n### Features\n\n- Create headings, paragraphs, links, blockquotes, inline-code, code blocks, and lists\n- Name and save the document to access again later\n- Choose between Light or Dark mode depending on your preference\n\n> This is an example of a blockquote. If you would like to learn more about markdown syntax, you can visit this [markdown cheatsheet](https://www.markdownguide.org/cheat-sheet/).\n\n#### Headings\n\nTo create a heading, add the hash sign (#) before the heading. The number of number signs you use should correspond to the heading level. You'll see in this guide that we've used all six heading levels (not necessarily in the correct way you should use headings!) to illustrate how they should look.\n\n##### Lists\n\nYou can see examples of ordered and unordered lists above.\n\n###### Code Blocks\n\nThis markdown editor allows for inline-code snippets, like this: `<p>I'm inline</p>`. It also allows for larger code blocks like this:\n\n```\n<main>\n  <h1>This is a larger code block</h1>\n</main>\n```"
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "untitled-document.md",
-    "content": ""
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "welcome.md",
-    "content": "# Welcome to Markdown\n\nMarkdown is a lightweight markup language that you can use to add formatting elements to plaintext text documents.\n\n## How to use this?\n\n1. Write markdown in the markdown editor window\n2. See the rendered markdown in the preview window\n\n### Features\n\n- Create headings, paragraphs, links, blockquotes, inline-code, code blocks, and lists\n- Name and save the document to access again later\n- Choose between Light or Dark mode depending on your preference\n\n> This is an example of a blockquote. If you would like to learn more about markdown syntax, you can visit this [markdown cheatsheet](https://www.markdownguide.org/cheat-sheet/).\n\n#### Headings\n\nTo create a heading, add the hash sign (#) before the heading. The number of number signs you use should correspond to the heading level. You'll see in this guide that we've used all six heading levels (not necessarily in the correct way you should use headings!) to illustrate how they should look.\n\n##### Lists\n\nYou can see examples of ordered and unordered lists above.\n\n###### Code Blocks\n\nThis markdown editor allows for inline-code snippets, like this: `<p>I'm inline</p>`. It also allows for larger code blocks like this:\n\n```\n<main>\n  <h1>This is a larger code block</h1>\n</main>\n```"
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "untitled-document.md",
-    "content": ""
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "welcome.md",
-    "content": "# Welcome to Markdown\n\nMarkdown is a lightweight markup language that you can use to add formatting elements to plaintext text documents.\n\n## How to use this?\n\n1. Write markdown in the markdown editor window\n2. See the rendered markdown in the preview window\n\n### Features\n\n- Create headings, paragraphs, links, blockquotes, inline-code, code blocks, and lists\n- Name and save the document to access again later\n- Choose between Light or Dark mode depending on your preference\n\n> This is an example of a blockquote. If you would like to learn more about markdown syntax, you can visit this [markdown cheatsheet](https://www.markdownguide.org/cheat-sheet/).\n\n#### Headings\n\nTo create a heading, add the hash sign (#) before the heading. The number of number signs you use should correspond to the heading level. You'll see in this guide that we've used all six heading levels (not necessarily in the correct way you should use headings!) to illustrate how they should look.\n\n##### Lists\n\nYou can see examples of ordered and unordered lists above.\n\n###### Code Blocks\n\nThis markdown editor allows for inline-code snippets, like this: `<p>I'm inline</p>`. It also allows for larger code blocks like this:\n\n```\n<main>\n  <h1>This is a larger code block</h1>\n</main>\n```"
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "untitled-document.md",
-    "content": ""
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "welcome.md",
-    "content": "# Welcome to Markdown\n\nMarkdown is a lightweight markup language that you can use to add formatting elements to plaintext text documents.\n\n## How to use this?\n\n1. Write markdown in the markdown editor window\n2. See the rendered markdown in the preview window\n\n### Features\n\n- Create headings, paragraphs, links, blockquotes, inline-code, code blocks, and lists\n- Name and save the document to access again later\n- Choose between Light or Dark mode depending on your preference\n\n> This is an example of a blockquote. If you would like to learn more about markdown syntax, you can visit this [markdown cheatsheet](https://www.markdownguide.org/cheat-sheet/).\n\n#### Headings\n\nTo create a heading, add the hash sign (#) before the heading. The number of number signs you use should correspond to the heading level. You'll see in this guide that we've used all six heading levels (not necessarily in the correct way you should use headings!) to illustrate how they should look.\n\n##### Lists\n\nYou can see examples of ordered and unordered lists above.\n\n###### Code Blocks\n\nThis markdown editor allows for inline-code snippets, like this: `<p>I'm inline</p>`. It also allows for larger code blocks like this:\n\n```\n<main>\n  <h1>This is a larger code block</h1>\n</main>\n```"
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "untitled-document.md",
-    "content": ""
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "welcome.md",
-    "content": "# Welcome to Markdown\n\nMarkdown is a lightweight markup language that you can use to add formatting elements to plaintext text documents.\n\n## How to use this?\n\n1. Write markdown in the markdown editor window\n2. See the rendered markdown in the preview window\n\n### Features\n\n- Create headings, paragraphs, links, blockquotes, inline-code, code blocks, and lists\n- Name and save the document to access again later\n- Choose between Light or Dark mode depending on your preference\n\n> This is an example of a blockquote. If you would like to learn more about markdown syntax, you can visit this [markdown cheatsheet](https://www.markdownguide.org/cheat-sheet/).\n\n#### Headings\n\nTo create a heading, add the hash sign (#) before the heading. The number of number signs you use should correspond to the heading level. You'll see in this guide that we've used all six heading levels (not necessarily in the correct way you should use headings!) to illustrate how they should look.\n\n##### Lists\n\nYou can see examples of ordered and unordered lists above.\n\n###### Code Blocks\n\nThis markdown editor allows for inline-code snippets, like this: `<p>I'm inline</p>`. It also allows for larger code blocks like this:\n\n```\n<main>\n  <h1>This is a larger code block</h1>\n</main>\n```"
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "untitled-document.md",
-    "content": ""
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "welcome.md",
-    "content": "# Welcome to Markdown\n\nMarkdown is a lightweight markup language that you can use to add formatting elements to plaintext text documents.\n\n## How to use this?\n\n1. Write markdown in the markdown editor window\n2. See the rendered markdown in the preview window\n\n### Features\n\n- Create headings, paragraphs, links, blockquotes, inline-code, code blocks, and lists\n- Name and save the document to access again later\n- Choose between Light or Dark mode depending on your preference\n\n> This is an example of a blockquote. If you would like to learn more about markdown syntax, you can visit this [markdown cheatsheet](https://www.markdownguide.org/cheat-sheet/).\n\n#### Headings\n\nTo create a heading, add the hash sign (#) before the heading. The number of number signs you use should correspond to the heading level. You'll see in this guide that we've used all six heading levels (not necessarily in the correct way you should use headings!) to illustrate how they should look.\n\n##### Lists\n\nYou can see examples of ordered and unordered lists above.\n\n###### Code Blocks\n\nThis markdown editor allows for inline-code snippets, like this: `<p>I'm inline</p>`. It also allows for larger code blocks like this:\n\n```\n<main>\n  <h1>This is a larger code block</h1>\n</main>\n```"
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "untitled-document.md",
-    "content": ""
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "welcome.md",
-    "content": "# Welcome to Markdown\n\nMarkdown is a lightweight markup language that you can use to add formatting elements to plaintext text documents.\n\n## How to use this?\n\n1. Write markdown in the markdown editor window\n2. See the rendered markdown in the preview window\n\n### Features\n\n- Create headings, paragraphs, links, blockquotes, inline-code, code blocks, and lists\n- Name and save the document to access again later\n- Choose between Light or Dark mode depending on your preference\n\n> This is an example of a blockquote. If you would like to learn more about markdown syntax, you can visit this [markdown cheatsheet](https://www.markdownguide.org/cheat-sheet/).\n\n#### Headings\n\nTo create a heading, add the hash sign (#) before the heading. The number of number signs you use should correspond to the heading level. You'll see in this guide that we've used all six heading levels (not necessarily in the correct way you should use headings!) to illustrate how they should look.\n\n##### Lists\n\nYou can see examples of ordered and unordered lists above.\n\n###### Code Blocks\n\nThis markdown editor allows for inline-code snippets, like this: `<p>I'm inline</p>`. It also allows for larger code blocks like this:\n\n```\n<main>\n  <h1>This is a larger code block</h1>\n</main>\n```"
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "untitled-document.md",
-    "content": ""
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "welcome.md",
-    "content": "# Welcome to Markdown\n\nMarkdown is a lightweight markup language that you can use to add formatting elements to plaintext text documents.\n\n## How to use this?\n\n1. Write markdown in the markdown editor window\n2. See the rendered markdown in the preview window\n\n### Features\n\n- Create headings, paragraphs, links, blockquotes, inline-code, code blocks, and lists\n- Name and save the document to access again later\n- Choose between Light or Dark mode depending on your preference\n\n> This is an example of a blockquote. If you would like to learn more about markdown syntax, you can visit this [markdown cheatsheet](https://www.markdownguide.org/cheat-sheet/).\n\n#### Headings\n\nTo create a heading, add the hash sign (#) before the heading. The number of number signs you use should correspond to the heading level. You'll see in this guide that we've used all six heading levels (not necessarily in the correct way you should use headings!) to illustrate how they should look.\n\n##### Lists\n\nYou can see examples of ordered and unordered lists above.\n\n###### Code Blocks\n\nThis markdown editor allows for inline-code snippets, like this: `<p>I'm inline</p>`. It also allows for larger code blocks like this:\n\n```\n<main>\n  <h1>This is a larger code block</h1>\n</main>\n```"
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "untitled-document.md",
-    "content": ""
-  },
-  {
-    "createdAt": "04-01-2022",
-    "name": "welcome.md",
-    "content": "# Welcome to Markdown\n\nMarkdown is a lightweight markup language that you can use to add formatting elements to plaintext text documents.\n\n## How to use this?\n\n1. Write markdown in the markdown editor window\n2. See the rendered markdown in the preview window\n\n### Features\n\n- Create headings, paragraphs, links, blockquotes, inline-code, code blocks, and lists\n- Name and save the document to access again later\n- Choose between Light or Dark mode depending on your preference\n\n> This is an example of a blockquote. If you would like to learn more about markdown syntax, you can visit this [markdown cheatsheet](https://www.markdownguide.org/cheat-sheet/).\n\n#### Headings\n\nTo create a heading, add the hash sign (#) before the heading. The number of number signs you use should correspond to the heading level. You'll see in this guide that we've used all six heading levels (not necessarily in the correct way you should use headings!) to illustrate how they should look.\n\n##### Lists\n\nYou can see examples of ordered and unordered lists above.\n\n###### Code Blocks\n\nThis markdown editor allows for inline-code snippets, like this: `<p>I'm inline</p>`. It also allows for larger code blocks like this:\n\n```\n<main>\n  <h1>This is a larger code block</h1>\n</main>\n```"
-  },
-]
-
 const SideBar = () => {
   const mediaType = useMediaquery()
+  const documentList = useAppSelector(state => state.document.documentList)
+  const dispatch = useAppDispatch()
 
   return (
     <View style={styles.container}>
       {mediaType !== MediaType.DESKTOP && <Title style={styles.title} />}
       <Text style={[styles.myDocuments, textStyles.headingS]}>MY DOCUMENTS</Text>
-      <AddButton onPress={() => console.log('New document')} />
+      <AddButton onPress={() => dispatch(newDocument())} />
       <ScrollView style={styles.documentCardsContainer}>
-        {data.map(({createdAt, name}, i) =>
+        {[...documentList].sort(({lastUpdatedAt: a}, {lastUpdatedAt: b}) => a > b ? -1 : 1).map(({lastUpdatedAt, name, id}, i) =>
           <DocumentCard
             key={i}
-            createdAt={createdAt}
+            lastUpdatedAt={lastUpdatedAt}
             name={name}
             style={i === 0 ? undefined : styles.notFirstDocumentCard}
-            onPress={() => console.log(i)}
+            onPress={() => dispatch(selectDocument(id))}
           />
         )}
       </ScrollView>
@@ -227,9 +128,9 @@ const AddButton = (props: {onPress: () => void}) => {
   )
 }
 
-const DocumentCard = (props: {createdAt: string, name: string, style?: StyleProp<ViewStyle>, onPress: () => void}) => {
+const DocumentCard = (props: {lastUpdatedAt: string, name: string, style?: StyleProp<ViewStyle>, onPress: () => void}) => {
   const {
-    createdAt,
+    lastUpdatedAt,
     name,
     style,
     onPress,
@@ -243,23 +144,23 @@ const DocumentCard = (props: {createdAt: string, name: string, style?: StyleProp
         </SvgWrapper>
       </View>
       <View style={styles.documentCardTextsContainer}>
-        <Text style={[styles.createdAtLabel, textStyles.bodyM]}>{formatDate(createdAt)}</Text>
+        <Text style={[styles.lastUpdatedAtLabel, textStyles.bodyM]}>{formatDate(lastUpdatedAt)}</Text>
         <Text style={[styles.nameLabel, textStyles.headingM]}>{name}</Text>
       </View>
     </TouchableOpacity>
   )
 }
 
-/** Format date string from "04-01-2022" to "01 April 2022" */
-const formatDate = (createdAt: string): string => {
+/** Format date string from "2022-04-01T00:00:00.000Z" to "01 April 2022" */
+const formatDate = (dateStr: string): string => {
   try {
-    const [monthStr, dayStr, yearStr] = createdAt.split('-')
+    const [yearStr, monthStr, dayStr] = dateStr.split('T')[0].split('-')
     const months: Record<string, string> = {
       '01': 'January', '02': 'February', '03': 'March', '04': 'April', '05': 'May', '06': 'June', '07': 'July', '08': 'August', '09': 'September', '10': 'October', '11': 'November', '12': 'December'
     } as const
     return `${dayStr} ${months[monthStr]} ${yearStr}`
   } catch {
-    return createdAt
+    return dateStr
   }
 }
 

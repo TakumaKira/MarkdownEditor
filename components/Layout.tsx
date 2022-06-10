@@ -5,7 +5,7 @@ import MainView from './MainView'
 import SafeArea from './SafeArea'
 import SideBar from './SideBar'
 
-const MarkdownEditor = () => {
+const Layout = () => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = React.useState(true)
 
   const handleDelete = () => {
@@ -30,4 +30,4 @@ const MarkdownEditor = () => {
   )
 }
 
-export default MarkdownEditor
+export default Layout
