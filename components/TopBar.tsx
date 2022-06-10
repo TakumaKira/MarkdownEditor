@@ -6,7 +6,7 @@ import DeleteIcon from '../assets/icon-delete.svg'
 import DocumentIcon from '../assets/icon-document.svg'
 import HamburgerIcon from '../assets/icon-menu.svg'
 import SaveIcon from '../assets/icon-save.svg'
-import { useInputContext } from '../contexts/inputContext'
+import { ConfirmationState, useInputContext } from '../contexts/inputContext'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { deleteSelectedDocument, saveDocument, selectSelectedDocument } from '../store/document'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
@@ -113,7 +113,7 @@ const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showS
     showSidebar,
   } = props
 
-  const {titleInput, mainInput, setShowDeleteConfirmation} = useInputContext()
+  const {titleInput, mainInput, setConfirmationState} = useInputContext()
   const dispatch = useAppDispatch()
   const mediaType = useMediaquery()
 
@@ -130,7 +130,7 @@ const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showS
         <DocumentTitle />
       </View>
       <View style={styles.rightContainer}>
-        <DeleteButton onPress={() => setShowDeleteConfirmation(true)} />
+        <DeleteButton onPress={() => setConfirmationState({state: ConfirmationState.DELETE})} />
         <SaveButton onPress={() => dispatch(saveDocument({titleInput, mainInput}))} />
       </View>
     </View>

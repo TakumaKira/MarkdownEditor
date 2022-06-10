@@ -5,9 +5,10 @@ import DarkIcon from '../assets/icon-dark-mode.svg'
 import DocumentIcon from '../assets/icon-document.svg'
 import LightIconHighlight from '../assets/icon-light-mode-highlight.svg'
 import LightIcon from '../assets/icon-light-mode.svg'
+import { ConfirmationState, useInputContext } from '../contexts/inputContext'
 import { sortDocumentsFromNewest } from '../helpers/functions'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
-import { newDocument, selectDocument } from '../store/document'
+import { newDocument, selectDocument, selectSelectedDocument } from '../store/document'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
@@ -95,6 +96,18 @@ const SideBar = () => {
   const mediaType = useMediaquery()
   const documentList = useAppSelector(state => state.document.documentList)
   const dispatch = useAppDispatch()
+  const {titleInput, mainInput, setConfirmationState} = useInputContext()
+  const selectedDocument = useAppSelector(selectSelectedDocument)
+
+  const handlePressDocument = (id: string) => {
+    const hasEdit = (selectedDocument === null && (titleInput !== '' || mainInput !== ''))
+      || (selectedDocument !== null && (titleInput !== selectedDocument.name || mainInput !== selectedDocument.content))
+    if (hasEdit) {
+      setConfirmationState({state: ConfirmationState.LEAVE_UNSAVED_DOCUMENT, nextId: id})
+    } else {
+      dispatch(selectDocument(id))
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -104,11 +117,11 @@ const SideBar = () => {
       <ScrollView style={styles.documentCardsContainer}>
         {sortDocumentsFromNewest(documentList).map(({lastUpdatedAt, name, id}, i) =>
           <DocumentCard
-            key={i}
+            key={id}
             lastUpdatedAt={lastUpdatedAt}
             name={name}
             style={i === 0 ? undefined : styles.notFirstDocumentCard}
-            onPress={() => dispatch(selectDocument(id))}
+            onPress={() => handlePressDocument(id)}
           />
         )}
       </ScrollView>
