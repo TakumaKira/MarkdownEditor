@@ -62,6 +62,10 @@ const documentSlice = createSlice({
       state.selectedDocumentId = nextSelectedDocumentId
       state.documentList = state.documentList.filter(({id}) => id !== deletedDocumentId)
     },
+    selectLatestDocument: state => {
+      const sorted = sortDocumentsFromNewest(state.documentList)
+      state.selectedDocumentId = sorted[0].id
+    }
   }
 })
 
@@ -70,6 +74,7 @@ export const {
   selectDocument,
   saveDocument,
   deleteSelectedDocument,
+  selectLatestDocument,
 } = documentSlice.actions
 
 export const selectSelectedDocument = (state: {document: DocumentState}): Document | null =>
