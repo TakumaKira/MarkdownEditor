@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import Constants from 'expo-constants'
 import { v4 as uuidv4 } from 'uuid'
+import { sortDocumentsFromNewest } from '../helpers/functions'
 import { mockInitialDocuments } from './mockInitialData'
 
 export interface Document {
@@ -51,7 +52,16 @@ const documentSlice = createSlice({
         state.documentList[selectedDocumentIndex].content = action.payload.mainInput
         state.documentList[selectedDocumentIndex].lastUpdatedAt = new Date().toISOString()
       }
-    }
+    },
+    deleteSelectedDocument: state => {
+      const sorted = sortDocumentsFromNewest(state.documentList)
+      const selectedDocumentIndex = sorted.findIndex(({id}) => id === state.selectedDocumentId)
+      const nextSelectedDocumentIndex = selectedDocumentIndex === sorted.length - 1 ? selectedDocumentIndex - 1 : selectedDocumentIndex + 1
+      const nextSelectedDocumentId = sorted[nextSelectedDocumentIndex].id
+      const deletedDocumentId = state.selectedDocumentId
+      state.selectedDocumentId = nextSelectedDocumentId
+      state.documentList = state.documentList.filter(({id}) => id !== deletedDocumentId)
+    },
   }
 })
 
@@ -59,6 +69,7 @@ export const {
   newDocument,
   selectDocument,
   saveDocument,
+  deleteSelectedDocument,
 } = documentSlice.actions
 
 export const selectSelectedDocument = (state: {document: DocumentState}): Document | null =>

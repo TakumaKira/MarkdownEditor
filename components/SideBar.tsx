@@ -5,6 +5,7 @@ import DarkIcon from '../assets/icon-dark-mode.svg'
 import DocumentIcon from '../assets/icon-document.svg'
 import LightIconHighlight from '../assets/icon-light-mode-highlight.svg'
 import LightIcon from '../assets/icon-light-mode.svg'
+import { sortDocumentsFromNewest } from '../helpers/functions'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { newDocument, selectDocument } from '../store/document'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
@@ -101,7 +102,7 @@ const SideBar = () => {
       <Text style={[styles.myDocuments, textStyles.headingS]}>MY DOCUMENTS</Text>
       <AddButton onPress={() => dispatch(newDocument())} />
       <ScrollView style={styles.documentCardsContainer}>
-        {[...documentList].sort(({lastUpdatedAt: a}, {lastUpdatedAt: b}) => a > b ? -1 : 1).map(({lastUpdatedAt, name, id}, i) =>
+        {sortDocumentsFromNewest(documentList).map(({lastUpdatedAt, name, id}, i) =>
           <DocumentCard
             key={i}
             lastUpdatedAt={lastUpdatedAt}

@@ -8,7 +8,7 @@ import HamburgerIcon from '../assets/icon-menu.svg'
 import SaveIcon from '../assets/icon-save.svg'
 import { useInputContext } from '../contexts/inputContext'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
-import { saveDocument, selectSelectedDocument } from '../store/document'
+import { deleteSelectedDocument, saveDocument, selectSelectedDocument } from '../store/document'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
@@ -130,7 +130,7 @@ const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showS
         <DocumentTitle />
       </View>
       <View style={styles.rightContainer}>
-        <DeleteButton onPress={() => console.log('delete')} />
+        <DeleteButton onPress={() => dispatch(deleteSelectedDocument())} />
         <SaveButton onPress={() => dispatch(saveDocument({titleInput, mainInput}))} />
       </View>
     </View>
