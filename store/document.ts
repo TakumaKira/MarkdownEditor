@@ -2,7 +2,6 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import Constants from 'expo-constants'
 import { v4 as uuidv4 } from 'uuid'
 import { sortDocumentsFromNewest } from '../helpers/functions'
-import { mockInitialDocuments } from './mockInitialData'
 
 export interface Document {
   createdAt: string
@@ -15,10 +14,6 @@ interface DocumentState {
   documentList: Document[]
   selectedDocumentId: string | null
 }
-const initialState: DocumentState = {
-  documentList: mockInitialDocuments,
-  selectedDocumentId: null
-}
 
 const generateNewDocument = (): Document => ({
   createdAt: new Date().toISOString(),
@@ -27,6 +22,20 @@ const generateNewDocument = (): Document => ({
   content: '',
   id: uuidv4(),
 })
+
+const generateInitialDocuments = (): Document[] => {
+  return Constants.manifest?.extra?.INITIAL_DOCUMENTS?.map((document: {name: string, content: string}) => {
+    const newDocument = generateNewDocument()
+    newDocument.name = document.name
+    newDocument.content = document.content
+    return newDocument
+  })
+}
+
+const initialState: DocumentState = {
+  documentList: generateInitialDocuments(),
+  selectedDocumentId: null
+}
 
 const documentSlice = createSlice({
   name: 'document',
