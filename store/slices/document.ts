@@ -1,7 +1,8 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import Constants from 'expo-constants'
 import { v4 as uuidv4 } from 'uuid'
-import { sortDocumentsFromNewest } from '../helpers/functions'
+import { sortDocumentsFromNewest } from '../../helpers/functions'
+import { getData, storeData } from '../middlewares/asyncStorage'
 
 export interface Document {
   createdAt: string
@@ -10,7 +11,7 @@ export interface Document {
   content: string
   id: string
 }
-interface DocumentState {
+export interface DocumentState {
   documentList: Document[]
   selectedDocumentId: string | null
 }
@@ -33,9 +34,14 @@ const generateInitialDocuments = (): Document[] => {
 }
 
 const initialState: DocumentState = {
-  documentList: generateInitialDocuments(),
+  documentList: [],
   selectedDocumentId: null
 }
+
+export const getDataFromAsyncStorage = createAsyncThunk(
+  'document/getDataFromAsyncStorage',
+  getData
+)
 
 const documentSlice = createSlice({
   name: 'document',
@@ -48,6 +54,10 @@ const documentSlice = createSlice({
     },
     selectDocument: (state, action: PayloadAction<string>) => {
       state.selectedDocumentId = action.payload
+    },
+    /** Used only for load input from url params */
+    deselectDocument: state => {
+      state.selectedDocumentId = null
     },
     saveDocument: (state, action: PayloadAction<{titleInput: string, mainInput: string}>) => {
       if (!state.selectedDocumentId) {
@@ -71,16 +81,30 @@ const documentSlice = createSlice({
       state.selectedDocumentId = nextSelectedDocumentId
       state.documentList = state.documentList.filter(({id}) => id !== deletedDocumentId)
     },
+    /** Used only for right after loaded and any document not selected yet despite of not loaded from url params */
     selectLatestDocument: state => {
       const sorted = sortDocumentsFromNewest(state.documentList)
       state.selectedDocumentId = sorted[0].id
-    }
+    },
+  },
+  extraReducers: builder => {
+    builder.addCase(getDataFromAsyncStorage.fulfilled, (state, action) => {
+      const restored = action.payload
+      if (restored) {
+        state.documentList = restored.document.documentList
+        state.selectedDocumentId = restored.document.selectedDocumentId
+      } else {
+        state.documentList = generateInitialDocuments()
+        storeData({document: state})
+      }
+    })
   }
 })
 
 export const {
   newDocument,
   selectDocument,
+  deselectDocument,
   saveDocument,
   deleteSelectedDocument,
   selectLatestDocument,

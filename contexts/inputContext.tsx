@@ -1,7 +1,7 @@
 import Constants from 'expo-constants'
 import React from "react"
-import { selectLatestDocument, selectSelectedDocument } from "../store/document"
 import { useAppDispatch, useAppSelector } from "../store/hooks"
+import { deselectDocument, getDataFromAsyncStorage, selectLatestDocument, selectSelectedDocument } from "../store/slices/document"
 
 export type ConfirmationStateProps = {
   state: ConfirmationState.NONE | ConfirmationState.DELETE
@@ -39,17 +39,21 @@ export const InputContextProvider = (props: {children: React.ReactNode}): JSX.El
     if (!_input) {
       return false
     }
+    dispatch(deselectDocument())
     setTitleInput(Constants.manifest?.extra?.NEW_DOCUMENT_TITLE)
     setMainInput(decodeURIComponent(_input))
     return true
   }
   const dispatch = useAppDispatch()
+  const selectedDocumentId = useAppSelector(state => state.document.selectedDocumentId)
   React.useEffect(() => {
-    const loadedFromUrlParams = loadInputFromUrlParams()
-    if (loadedFromUrlParams) {
-      return
-    }
-    dispatch(selectLatestDocument())
+    (async() => {
+      await dispatch(getDataFromAsyncStorage()).unwrap()
+      const loadedFromUrlParams = loadInputFromUrlParams()
+      if (!loadedFromUrlParams && !selectedDocumentId) {
+        dispatch(selectLatestDocument())
+      }
+    })()
   }, [])
 
   const selectedDocument = useAppSelector(selectSelectedDocument)

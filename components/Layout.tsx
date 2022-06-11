@@ -1,6 +1,6 @@
 import React from 'react'
 import { ConfirmationState, useInputContext } from '../contexts/inputContext'
-import { deleteSelectedDocument, selectDocument } from '../store/document'
+import { deleteSelectedDocument, selectDocument } from '../store/slices/document'
 import { useAppDispatch } from '../store/hooks'
 import Confirmation from './Confirmation'
 import Frame from './Frame'
