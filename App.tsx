@@ -1,11 +1,18 @@
 import Constants from 'expo-constants'
 import 'react-native-get-random-values'
-import MarkdownEditor from './components/MarkdownEditor'
+import { Provider } from 'react-redux'
+import Layout from './components/Layout'
+import store from './store'
 import StorybookUI from './storybook'
+import { InputContextProvider } from './contexts/inputContext'
 
-const App = () => {
+export const App = () => {
   return (
-    <MarkdownEditor />
+    <Provider store={store}>
+      <InputContextProvider>
+        <Layout />
+      </InputContextProvider>
+    </Provider>
   )
 }
 

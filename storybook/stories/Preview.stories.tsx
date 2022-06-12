@@ -1,10 +1,10 @@
 import { boolean } from '@storybook/addon-knobs'
 import { storiesOf } from '@storybook/react-native'
+import Constants from 'expo-constants'
 import React from 'react'
 import { Image, Text as PureText, View } from 'react-native'
 import { Text } from '../../components/common/withCustomFont'
 import Preview from '../../components/Preview'
-import * as data from '../../data.json'
 import textStyles from '../../theme/textStyles'
 
 const Bullet = () => {
@@ -23,10 +23,10 @@ const linkUrl = 'https://google.com'
 
 storiesOf('Preview', module)
   .add('Preview', () =>
-    <Preview children={data[1].content} />
+    <Preview children={(Constants.manifest?.extra?.INITIAL_DOCUMENTS?.[0]?.content as string)} />
   )
   .add('Preview - input text', () =>
-    <>{data[1].content.split('\n').map((line, i) =>
+    <>{(Constants.manifest?.extra?.INITIAL_DOCUMENTS?.[0]?.content as string).split('\n').map((line, i) =>
       <Text key={i}>{line}</Text>
     )}</>
   )
