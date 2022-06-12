@@ -95,16 +95,6 @@ const EditorView = () => {
       : true
   }, [isEditable, isMobile])
 
-  const viewerWidth = React.useMemo(() => {
-    if (!showPreview) {
-      return 0
-    }
-    if (showMarkdown) {
-      return windowWidth / 2 - 1 - PREVIEW_PADDING_LEFT - PREVIEW_PADDING_RIGHT
-    }
-    return windowWidth - PREVIEW_PADDING_LEFT - PREVIEW_PADDING_RIGHT
-  }, [windowWidth, showMarkdown, showPreview])
-
   return (
     <View>
       <View style={styles.headerContainer}>
@@ -114,7 +104,7 @@ const EditorView = () => {
       <ScrollView style={{height: scrollViewHeight}}>
         <View style={[styles.viewContainer, {minHeight: scrollViewHeight}]}>
           {showMarkdown && <MarkdownView showPreview={showPreview} input={mainInput} setInput={setMainInput} />}
-          {showPreview && <PreviewView input={mainInput} viewerWidth={viewerWidth} />}
+          {showPreview && <PreviewView input={mainInput} />}
         </View>
       </ScrollView>
     </View>
@@ -175,14 +165,13 @@ const PreviewHeader = (props: {isEditable: boolean, toggleMarkdown: () => void})
     </View>
   )
 }
-const PreviewView = (props: {input: string, viewerWidth: number}) => {
+const PreviewView = (props: {input: string}) => {
   const {
     input,
-    viewerWidth,
   } = props
   return (
     <View style={[styles.view, styles.previewWrapper]}>
-      <Preview style={styles.preview} viewerWidth={viewerWidth}>{input}</Preview>
+      <Preview style={styles.preview}>{input}</Preview>
     </View>
   )
 }

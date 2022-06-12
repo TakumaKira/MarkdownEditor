@@ -1,7 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Middleware } from "@reduxjs/toolkit";
-import Constants from 'expo-constants';
 import { RootState } from "..";
+import { storeData } from "../../helpers/asyncStorage";
 import { deleteSelectedDocument, newDocument, saveDocument, selectDocument, selectLatestDocument } from "../slices/document";
 
 export const asyncStorageMiddleware: Middleware<{}, RootState> = store => next => action => {
@@ -16,23 +15,5 @@ export const asyncStorageMiddleware: Middleware<{}, RootState> = store => next =
     || action.type === selectLatestDocument.type
   ) {
     storeData(store.getState())
-  }
-}
-
-export const storeData = async (value: RootState) => {
-  try {
-    const jsonValue = JSON.stringify(value)
-    await AsyncStorage.setItem(Constants.manifest?.extra?.STATE_STORAGE_KEY, jsonValue)
-  } catch (e) {
-    console.error(e)
-  }
-}
-export const getData = async (): Promise<RootState | null> => {
-  try {
-    const jsonValue = await AsyncStorage.getItem(Constants.manifest?.extra?.STATE_STORAGE_KEY)
-    return jsonValue != null ? JSON.parse(jsonValue) : null;
-  } catch(e) {
-    console.error(e)
-    return null
   }
 }
