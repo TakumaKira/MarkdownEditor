@@ -21,6 +21,8 @@ type InputContextState = {
   setTitleInput: React.Dispatch<React.SetStateAction<string>>
   confirmationState: ConfirmationStateProps
   setConfirmationState: React.Dispatch<React.SetStateAction<ConfirmationStateProps>>
+  isDark: boolean
+  setIsDark: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 export const InputContext = React.createContext({} as InputContextState)
@@ -29,6 +31,7 @@ export const InputContextProvider = (props: {children: React.ReactNode}): JSX.El
   const [titleInput, setTitleInput] = React.useState('')
   const [mainInput, setMainInput] = React.useState('')
   const [confirmationState, setConfirmationState] = React.useState<ConfirmationStateProps>({state: ConfirmationState.NONE})
+  const [isDark, setIsDark] = React.useState<boolean>(Constants.manifest?.extra?.INITIAL_THEME_IS_DARK)
 
   const dispatch = useAppDispatch()
   React.useEffect(() => {
@@ -59,7 +62,7 @@ export const InputContextProvider = (props: {children: React.ReactNode}): JSX.El
   }, [selectedDocument])
 
   return (
-    <InputContext.Provider value={{titleInput, setTitleInput, mainInput, setMainInput, confirmationState, setConfirmationState}}>
+    <InputContext.Provider value={{titleInput, setTitleInput, mainInput, setMainInput, confirmationState, setConfirmationState, isDark, setIsDark}}>
       {props.children}
     </InputContext.Provider>
   )

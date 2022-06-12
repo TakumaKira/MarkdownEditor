@@ -125,7 +125,7 @@ const SideBar = () => {
           />
         )}
       </ScrollView>
-      <ThemeToggle initialIsDark={false} />
+      <ThemeToggle />
     </View>
   )
 }
@@ -178,12 +178,8 @@ const formatDate = (dateStr: string): string => {
   }
 }
 
-const ThemeToggle = (props: {initialIsDark: boolean}) => {
-  const {
-    initialIsDark,
-  } = props
-
-  const [isDark, setIsDark] = React.useState<boolean>(initialIsDark)
+const ThemeToggle = () => {
+  const {isDark, setIsDark} = useInputContext()
 
   return (
     <View style={styles.themeToggleContainer}>
