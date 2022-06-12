@@ -1,8 +1,8 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import Constants from 'expo-constants'
 import { v4 as uuidv4 } from 'uuid'
+import { getData, storeData } from '../../helpers/asyncStorage'
 import { sortDocumentsFromNewest } from '../../helpers/functions'
-import { getData, storeData } from '../middlewares/asyncStorage'
 
 export interface Document {
   createdAt: string
