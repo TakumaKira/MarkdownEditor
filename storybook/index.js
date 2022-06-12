@@ -21,7 +21,8 @@ configure(() => {
 const StorybookUIRoot = Constants.manifest?.extra?.loadStorybook
   ? getStorybookUI({
     host: Constants.manifest?.extra?.localIp,
-    port: '7007'
+    port: '7007',
+    asyncStorage: require('@react-native-async-storage/async-storage').default,
   })
   : {}
 
