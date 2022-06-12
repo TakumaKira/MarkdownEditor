@@ -30,31 +30,26 @@ export const InputContextProvider = (props: {children: React.ReactNode}): JSX.El
   const [mainInput, setMainInput] = React.useState('')
   const [confirmationState, setConfirmationState] = React.useState<ConfirmationStateProps>({state: ConfirmationState.NONE})
 
-  const loadInputFromUrlParams = (): boolean => {
+  const dispatch = useAppDispatch()
+  React.useEffect(() => {
+    (async() => {
+      await dispatch(getDataFromAsyncStorage()).unwrap()
+      tryLoadingInputFromUrlParams()
+    })()
+  }, [])
+  const tryLoadingInputFromUrlParams = () => {
     const search = window?.location?.search
     if (!search) {
-      return false
+      return
     }
     const _input = new URLSearchParams(search).get('input')
     if (!_input) {
-      return false
+      return
     }
     dispatch(deselectDocument())
     setTitleInput(Constants.manifest?.extra?.NEW_DOCUMENT_TITLE)
     setMainInput(decodeURIComponent(_input))
-    return true
   }
-  const dispatch = useAppDispatch()
-  const selectedDocumentId = useAppSelector(state => state.document.selectedDocumentId)
-  React.useEffect(() => {
-    (async() => {
-      await dispatch(getDataFromAsyncStorage()).unwrap()
-      const loadedFromUrlParams = loadInputFromUrlParams()
-      if (!loadedFromUrlParams && !selectedDocumentId) {
-        dispatch(selectLatestDocument())
-      }
-    })()
-  }, [])
 
   const selectedDocument = useAppSelector(selectSelectedDocument)
   React.useEffect(() => {

@@ -84,7 +84,7 @@ const documentSlice = createSlice({
     /** Used only for right after loaded and any document not selected yet despite of not loaded from url params */
     selectLatestDocument: state => {
       const sorted = sortDocumentsFromNewest(state.documentList)
-      state.selectedDocumentId = sorted[0].id
+      state.selectedDocumentId = sorted[0]?.id || null
     },
   },
   extraReducers: builder => {
@@ -95,6 +95,7 @@ const documentSlice = createSlice({
         state.selectedDocumentId = restored.document.selectedDocumentId
       } else {
         state.documentList = generateInitialDocuments()
+        state.selectedDocumentId = state.documentList?.[0].id || null
         storeData({document: state})
       }
     })
