@@ -2,6 +2,7 @@ import { Middleware } from "@reduxjs/toolkit";
 import { RootState } from "..";
 import { storeData } from "../../helpers/asyncStorage";
 import { deleteSelectedDocument, newDocument, saveDocument, selectDocument, selectLatestDocument } from "../slices/document";
+import { toggleTheme } from "../slices/theme";
 
 export const asyncStorageMiddleware: Middleware<{}, RootState> = store => next => action => {
   next(action)
@@ -14,6 +15,12 @@ export const asyncStorageMiddleware: Middleware<{}, RootState> = store => next =
     || action.type === deleteSelectedDocument.type
     || action.type === selectLatestDocument.type
   ) {
-    storeData(store.getState())
+    storeData('document', store.getState().document)
+  }
+
+  if (
+    action.type === toggleTheme.type
+  ) {
+    storeData('theme', store.getState().theme)
   }
 }

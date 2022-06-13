@@ -10,6 +10,7 @@ import { sortDocumentsFromNewest } from '../helpers/functions'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { newDocument, selectDocument } from '../store/slices/document'
+import { toggleTheme } from '../store/slices/theme'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
 import SvgWrapper from './common/SvgWrapper'
@@ -177,14 +178,16 @@ const formatDate = (dateStr: string): string => {
 }
 
 const ThemeToggle = () => {
-  const {isDark, setIsDark} = useInputContext()
+  const isDark = useAppSelector(state => state.theme.selectedColorSchemeIsDark)
+  const dispatch = useAppDispatch()
+  const toggleIsDark = () => dispatch(toggleTheme())
 
   return (
     <View style={styles.themeToggleContainer}>
       <SvgWrapper>
        {isDark ? <DarkIconHighlight /> : <DarkIcon />}
       </SvgWrapper>
-      <ToggleSwitch initialIsLeft={isDark} isLeft={isDark} setIsLeft={setIsDark} />
+      <ToggleSwitch initialIsLeft={isDark ?? false} isLeft={isDark ?? false} toggleIsLeft={toggleIsDark} />
       <SvgWrapper>
         {isDark ? <LightIcon /> : <LightIconHighlight />}
       </SvgWrapper>
@@ -196,11 +199,11 @@ const ANIM_DURATION = 200
 const IS_LEFT_MARGIN_LEFT = 6
 const IS_RIGHT_MARGIN_LEFT = 30
 
-const ToggleSwitch = (props: {initialIsLeft: boolean, isLeft: boolean, setIsLeft: React.Dispatch<React.SetStateAction<boolean>>}) => {
+const ToggleSwitch = (props: {initialIsLeft: boolean, isLeft: boolean, toggleIsLeft: () => void}) => {
   const {
     initialIsLeft,
     isLeft,
-    setIsLeft,
+    toggleIsLeft,
   } = props
 
   const marginLeftAnim = React.useRef(new Animated.Value(initialIsLeft ? IS_LEFT_MARGIN_LEFT : IS_RIGHT_MARGIN_LEFT)).current
@@ -225,7 +228,7 @@ const ToggleSwitch = (props: {initialIsLeft: boolean, isLeft: boolean, setIsLeft
   }
 
   return (
-    <TouchableWithoutFeedback onPress={() => setIsLeft(isLeft => !isLeft)}>
+    <TouchableWithoutFeedback onPress={() => toggleIsLeft()}>
       <View style={styles.toggleSwitch}>
         <Animated.View style={[styles.toggleSlider, {marginLeft: marginLeftAnim}]} />
       </View>

@@ -2,7 +2,8 @@ import Constants from 'expo-constants'
 import React from "react"
 import { Appearance } from 'react-native'
 import { useAppDispatch, useAppSelector } from "../store/hooks"
-import { deselectDocument, getDataFromAsyncStorage, selectSelectedDocument } from "../store/slices/document"
+import { deselectDocument, getDocumentStateFromAsyncStorage, selectSelectedDocument } from "../store/slices/document"
+import { getThemeStateFromAsyncStorage } from '../store/slices/theme'
 
 export type ConfirmationStateProps = {
   state: ConfirmationState.NONE | ConfirmationState.DELETE
@@ -22,8 +23,6 @@ type InputContextState = {
   setTitleInput: React.Dispatch<React.SetStateAction<string>>
   confirmationState: ConfirmationStateProps
   setConfirmationState: React.Dispatch<React.SetStateAction<ConfirmationStateProps>>
-  isDark: boolean
-  setIsDark: React.Dispatch<React.SetStateAction<boolean>>
   hasEdit: boolean
 }
 
@@ -33,15 +32,14 @@ export const InputContextProvider = (props: {children: React.ReactNode}): JSX.El
   const [titleInput, setTitleInput] = React.useState('')
   const [mainInput, setMainInput] = React.useState('')
   const [confirmationState, setConfirmationState] = React.useState<ConfirmationStateProps>({state: ConfirmationState.NONE})
-  /** Appearance.getColorScheme() only gets initial value */
-  const [isDark, setIsDark] = React.useState<boolean>(Appearance.getColorScheme() === 'dark')
 
   const dispatch = useAppDispatch()
   React.useEffect(() => {
     (async() => {
-      await dispatch(getDataFromAsyncStorage()).unwrap()
+      await dispatch(getDocumentStateFromAsyncStorage()).unwrap()
       tryLoadingInputFromUrlParams()
     })()
+    dispatch(getThemeStateFromAsyncStorage())
   }, [])
   const tryLoadingInputFromUrlParams = () => {
     const search = window?.location?.search
@@ -82,7 +80,7 @@ export const InputContextProvider = (props: {children: React.ReactNode}): JSX.El
   }, [handleBeforeUnloadEvent])
 
   return (
-    <InputContext.Provider value={{titleInput, setTitleInput, mainInput, setMainInput, confirmationState, setConfirmationState, isDark, setIsDark, hasEdit}}>
+    <InputContext.Provider value={{titleInput, setTitleInput, mainInput, setMainInput, confirmationState, setConfirmationState, hasEdit}}>
       {props.children}
     </InputContext.Provider>
   )

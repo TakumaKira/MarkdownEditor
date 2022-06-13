@@ -4,6 +4,7 @@ import HideIcon from '../assets/icon-hide-preview.svg'
 import ShowIcon from '../assets/icon-show-preview.svg'
 import { useInputContext } from '../contexts/inputContext'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
+import { useAppSelector } from '../store/hooks'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
 import SvgWrapper from './common/SvgWrapper'
@@ -74,7 +75,7 @@ const styles = StyleSheet.create({
 
 const EditorView = () => {
   const {mainInput, setMainInput} = useInputContext()
-  const {height: windowHeight, width: windowWidth} = useWindowDimensions()
+  const {height: windowHeight} = useWindowDimensions()
   const scrollViewHeight = windowHeight - TOP_BAR_HEIGHT - HEADER_HEIGHT
   const [isEditable, toggleIsEditable] = React.useState(true)
 
@@ -94,6 +95,9 @@ const EditorView = () => {
       ? !isEditable
       : true
   }, [isEditable, isMobile])
+
+  const isDark = useAppSelector(state => state.theme.selectedColorSchemeIsDark)
+  console.log(isDark)
 
   return (
     <View>
