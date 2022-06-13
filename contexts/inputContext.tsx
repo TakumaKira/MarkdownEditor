@@ -1,7 +1,8 @@
 import Constants from 'expo-constants'
 import React from "react"
+import { Appearance } from 'react-native'
 import { useAppDispatch, useAppSelector } from "../store/hooks"
-import { deselectDocument, getDataFromAsyncStorage, selectLatestDocument, selectSelectedDocument } from "../store/slices/document"
+import { deselectDocument, getDataFromAsyncStorage, selectSelectedDocument } from "../store/slices/document"
 
 export type ConfirmationStateProps = {
   state: ConfirmationState.NONE | ConfirmationState.DELETE
@@ -31,7 +32,8 @@ export const InputContextProvider = (props: {children: React.ReactNode}): JSX.El
   const [titleInput, setTitleInput] = React.useState('')
   const [mainInput, setMainInput] = React.useState('')
   const [confirmationState, setConfirmationState] = React.useState<ConfirmationStateProps>({state: ConfirmationState.NONE})
-  const [isDark, setIsDark] = React.useState<boolean>(Constants.manifest?.extra?.INITIAL_THEME_IS_DARK)
+  /** Appearance.getColorScheme() only gets initial value */
+  const [isDark, setIsDark] = React.useState<boolean>(Appearance.getColorScheme() === 'dark')
 
   const dispatch = useAppDispatch()
   React.useEffect(() => {

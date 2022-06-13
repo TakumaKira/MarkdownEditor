@@ -17,6 +17,5 @@ export default {
       },
     ],
     STATE_STORAGE_KEY: 'MARKDOWN_EDITOR_STATE',
-    INITIAL_THEME_IS_DARK: false,
   },
 }
