@@ -24,6 +24,7 @@ type InputContextState = {
   setConfirmationState: React.Dispatch<React.SetStateAction<ConfirmationStateProps>>
   isDark: boolean
   setIsDark: React.Dispatch<React.SetStateAction<boolean>>
+  hasEdit: boolean
 }
 
 export const InputContext = React.createContext({} as InputContextState)
@@ -63,8 +64,25 @@ export const InputContextProvider = (props: {children: React.ReactNode}): JSX.El
     }
   }, [selectedDocument])
 
+  const hasEdit = React.useMemo(() => {
+    return (selectedDocument === null && (titleInput !== '' || mainInput !== ''))
+      || (selectedDocument !== null && (titleInput !== selectedDocument.name || mainInput !== selectedDocument.content))
+  }, [selectedDocument, titleInput, mainInput])
+
+  const handleBeforeUnloadEvent = React.useCallback((event: BeforeUnloadEvent): void => {
+    event.preventDefault()
+    if (!hasEdit) {
+      return
+    }
+    event.returnValue = true
+  }, [hasEdit])
+  React.useEffect(() => {
+    window.addEventListener('beforeunload', handleBeforeUnloadEvent)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnloadEvent)
+  }, [handleBeforeUnloadEvent])
+
   return (
-    <InputContext.Provider value={{titleInput, setTitleInput, mainInput, setMainInput, confirmationState, setConfirmationState, isDark, setIsDark}}>
+    <InputContext.Provider value={{titleInput, setTitleInput, mainInput, setMainInput, confirmationState, setConfirmationState, isDark, setIsDark, hasEdit}}>
       {props.children}
     </InputContext.Provider>
   )

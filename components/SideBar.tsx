@@ -9,7 +9,7 @@ import { ConfirmationState, useInputContext } from '../contexts/inputContext'
 import { sortDocumentsFromNewest } from '../helpers/functions'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { newDocument, selectDocument, selectSelectedDocument } from '../store/slices/document'
+import { newDocument, selectDocument } from '../store/slices/document'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
 import SvgWrapper from './common/SvgWrapper'
@@ -96,12 +96,10 @@ const SideBar = () => {
   const mediaType = useMediaquery()
   const documentList = useAppSelector(state => state.document.documentList)
   const dispatch = useAppDispatch()
-  const {titleInput, mainInput, setConfirmationState} = useInputContext()
-  const selectedDocument = useAppSelector(selectSelectedDocument)
+  const {setConfirmationState} = useInputContext()
+  const {hasEdit} = useInputContext()
 
   const handlePressDocument = (id: string) => {
-    const hasEdit = (selectedDocument === null && (titleInput !== '' || mainInput !== ''))
-      || (selectedDocument !== null && (titleInput !== selectedDocument.name || mainInput !== selectedDocument.content))
     if (hasEdit) {
       setConfirmationState({state: ConfirmationState.LEAVE_UNSAVED_DOCUMENT, nextId: id})
     } else {
