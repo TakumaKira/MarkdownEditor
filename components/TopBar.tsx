@@ -1,15 +1,17 @@
 import Constants from 'expo-constants'
 import React, { Dispatch, SetStateAction } from 'react'
 import { Animated, Platform, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native'
+import { useHover } from 'react-native-web-hooks'
 import CloseIcon from '../assets/icon-close.svg'
 import DeleteIcon from '../assets/icon-delete.svg'
 import DocumentIcon from '../assets/icon-document.svg'
 import HamburgerIcon from '../assets/icon-menu.svg'
 import SaveIcon from '../assets/icon-save.svg'
 import { ConfirmationState, useInputContext } from '../contexts/inputContext'
+import useAnimatedColor from '../hooks/useAnimatedColor'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
-import { deleteSelectedDocument, saveDocument, selectSelectedDocument } from '../store/slices/document'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { saveDocument, selectSelectedDocument } from '../store/slices/document'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
 import SvgWrapper from './common/SvgWrapper'
@@ -259,12 +261,18 @@ const SaveButton = (props: {onPress: () => void}) => {
 
   const mediaType = useMediaquery()
 
+  const ref = React.useRef(null)
+  const isHovered = useHover(ref)
+  const interpolatedBgColor = useAnimatedColor(isHovered, ANIM_DURATION, 'rgb(228, 102, 67)', 'rgb(243, 151, 101)')
+
   return (
-    <TouchableOpacity onPress={onPress} style={styles.saveButton}>
-      <SvgWrapper>
-        <SaveIcon />
-      </SvgWrapper>
-      {mediaType !== MediaType.MOBILE && <Text style={[styles.saveButtonLabel, textStyles.headingM]}>Save Changes</Text>}
+    <TouchableOpacity onPress={onPress} ref={ref}>
+      <Animated.View style={[styles.saveButton, {backgroundColor: interpolatedBgColor}]}>
+        <SvgWrapper>
+          <SaveIcon />
+        </SvgWrapper>
+        {mediaType !== MediaType.MOBILE && <Text style={[styles.saveButtonLabel, textStyles.headingM]}>Save Changes</Text>}
+      </Animated.View>
     </TouchableOpacity>
   )
 }

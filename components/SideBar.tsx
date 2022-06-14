@@ -1,5 +1,6 @@
 import React from 'react'
 import { Animated, ScrollView, StyleProp, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewStyle } from 'react-native'
+import { useHover } from 'react-native-web-hooks'
 import DarkIconHighlight from '../assets/icon-dark-mode-highlight.svg'
 import DarkIcon from '../assets/icon-dark-mode.svg'
 import DocumentIcon from '../assets/icon-document.svg'
@@ -7,6 +8,7 @@ import LightIconHighlight from '../assets/icon-light-mode-highlight.svg'
 import LightIcon from '../assets/icon-light-mode.svg'
 import { ConfirmationState, useInputContext } from '../contexts/inputContext'
 import { sortDocumentsFromNewest } from '../helpers/functions'
+import useAnimatedColor from '../hooks/useAnimatedColor'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { newDocument, selectDocument } from '../store/slices/document'
@@ -134,9 +136,15 @@ const AddButton = (props: {onPress: () => void}) => {
     onPress,
   } = props
 
+  const ref = React.useRef(null)
+  const isHovered = useHover(ref)
+  const interpolatedBgColor = useAnimatedColor(isHovered, ANIM_DURATION, 'rgb(228, 102, 67)', 'rgb(243, 151, 101)')
+
   return (
-    <TouchableOpacity onPress={onPress} style={styles.addButton}>
-      <Text style={[styles.addButtonLabel, textStyles.headingM]}>+ New Document</Text>
+    <TouchableOpacity onPress={onPress} ref={ref}>
+      <Animated.View style={[styles.addButton, {backgroundColor: interpolatedBgColor}]}>
+        <Text style={[styles.addButtonLabel, textStyles.headingM]}>+ New Document</Text>
+      </Animated.View>
     </TouchableOpacity>
   )
 }
