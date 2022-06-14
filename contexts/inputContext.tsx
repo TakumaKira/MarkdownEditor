@@ -67,17 +67,18 @@ export const InputContextProvider = (props: {children: React.ReactNode}): JSX.El
       || (selectedDocument !== null && (titleInput !== selectedDocument.name || mainInput !== selectedDocument.content))
   }, [selectedDocument, titleInput, mainInput])
 
-  const handleBeforeUnloadEvent = React.useCallback((event: BeforeUnloadEvent): void => {
+  const confirmUnsavedDocument = React.useCallback((event: BeforeUnloadEvent): void => {
     event.preventDefault()
     if (!hasEdit) {
       return
     }
+    // This shows confirmation dialog.
     event.returnValue = true
   }, [hasEdit])
   React.useEffect(() => {
-    window.addEventListener('beforeunload', handleBeforeUnloadEvent)
-    return () => window.removeEventListener('beforeunload', handleBeforeUnloadEvent)
-  }, [handleBeforeUnloadEvent])
+    window.addEventListener('beforeunload', confirmUnsavedDocument)
+    return () => window.removeEventListener('beforeunload', confirmUnsavedDocument)
+  }, [confirmUnsavedDocument])
 
   return (
     <InputContext.Provider value={{titleInput, setTitleInput, mainInput, setMainInput, confirmationState, setConfirmationState, hasEdit}}>
