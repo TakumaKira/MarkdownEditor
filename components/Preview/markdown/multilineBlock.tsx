@@ -1,6 +1,9 @@
 import React from 'react'
 import { View } from 'react-native'
+import { useAppSelector } from '../../../store/hooks'
+import { selectColorScheme } from '../../../store/slices/theme'
 import textStyles from '../../../theme/textStyles'
+import themeColors from '../../../theme/themeColors'
 import { Text } from '../../common/withCustomFont'
 import Markdown from './markdown'
 
@@ -71,16 +74,20 @@ const MultilineBlockMarkdowns: MultilineBlockMarkdownTypes[] = [
 ]
 
 const Multiline: {[key in 'BlockCode']: React.MemoExoticComponent<any>} = {
-  BlockCode: React.memo((props: {children: string[]}) =>
-    <View style={textStyles.codeBlock}>
-      {props.children.map((line, i) =>
-        <Text
-          style={textStyles.markdownCode}
-          key={i}
-        >
-          {line}
-        </Text>
-      )}
-    </View>,
+  BlockCode: React.memo((props: {children: string[]}) => {
+    const colorScheme = useAppSelector(selectColorScheme)
+    return (
+      <View style={[textStyles.codeBlock, themeColors[colorScheme].blockBg]}>
+        {props.children.map((line, i) =>
+          <Text
+            style={[textStyles.markdownCode, themeColors[colorScheme].previewMarkdown]}
+            key={i}
+          >
+            {line}
+          </Text>
+        )}
+      </View>
+    )
+  },
   (prevProps, nextProps) => JSON.stringify(prevProps.children) === JSON.stringify(nextProps.children)),
 } as const

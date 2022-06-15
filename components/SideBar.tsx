@@ -1,3 +1,4 @@
+import Constants from 'expo-constants'
 import React from 'react'
 import { Animated, ScrollView, StyleProp, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewStyle } from 'react-native'
 import { useHover } from 'react-native-web-hooks'
@@ -138,7 +139,7 @@ const AddButton = (props: {onPress: () => void}) => {
 
   const ref = React.useRef(null)
   const isHovered = useHover(ref)
-  const interpolatedBgColor = useAnimatedColor(isHovered, ANIM_DURATION, 'rgb(228, 102, 67)', 'rgb(243, 151, 101)')
+  const interpolatedBgColor = useAnimatedColor(isHovered, Constants.manifest?.extra?.BUTTON_COLOR_ANIM_DURATION, 'rgb(228, 102, 67)', 'rgb(243, 151, 101)')
 
   return (
     <TouchableOpacity onPress={onPress} ref={ref}>
@@ -203,7 +204,7 @@ const ThemeToggle = () => {
   )
 }
 
-const ANIM_DURATION = 200
+const TOGGLE_SWITCH_ANIM_DURATION = 200
 const IS_LEFT_MARGIN_LEFT = 6
 const IS_RIGHT_MARGIN_LEFT = 30
 
@@ -223,14 +224,14 @@ const ToggleSwitch = (props: {initialIsLeft: boolean, isLeft: boolean, toggleIsL
   const toLeftAnim = () => {
     Animated.timing(marginLeftAnim, {
       toValue: IS_LEFT_MARGIN_LEFT,
-      duration: ANIM_DURATION,
+      duration: TOGGLE_SWITCH_ANIM_DURATION,
       useNativeDriver: false
     }).start()
   }
   const toRightAnim = () => {
     Animated.timing(marginLeftAnim, {
       toValue: IS_RIGHT_MARGIN_LEFT,
-      duration: ANIM_DURATION,
+      duration: TOGGLE_SWITCH_ANIM_DURATION,
       useNativeDriver: false
     }).start()
   }

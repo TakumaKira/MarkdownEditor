@@ -12,8 +12,10 @@ import useAnimatedColor from '../hooks/useAnimatedColor'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { saveDocument, selectSelectedDocument } from '../store/slices/document'
+import { selectColorScheme } from '../store/slices/theme'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
+import themeColors from '../theme/themeColors'
 import SvgWrapper from './common/SvgWrapper'
 import { Text, TextInput } from './common/withCustomFont'
 import Title from './Title'
@@ -41,7 +43,6 @@ const styles = StyleSheet.create({
     width: TOP_BAR_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors[700],
   },
   title: {
     marginLeft: 24,
@@ -62,9 +63,6 @@ const styles = StyleSheet.create({
     /** Use 2 lines below to check how input layout works */
     // borderWidth: 1,
     // borderColor: 'yellow',
-  },
-  documentTitleLabel: {
-    color: colors[500],
   },
   documentTitleInput: {
     marginTop: 3,
@@ -145,16 +143,22 @@ const MenuButton = (props: {toggle: () => void, isOpen: boolean}) => {
     isOpen,
   } = props
 
+  const ref = React.useRef(null)
+  const isHovered = useHover(ref)
+  const interpolatedBgColor = useAnimatedColor(isHovered, 0, 'rgba(53, 57, 63, 1))', 'rgb(228, 102, 67)')
+
   return (
-    <TouchableOpacity onPress={toggle} style={styles.menuButton}>
-      <SvgWrapper>
-        {isOpen ? <CloseIcon /> : <HamburgerIcon />}
-      </SvgWrapper>
+    <TouchableOpacity onPress={toggle} ref={ref}>
+      <Animated.View style={[styles.menuButton, {backgroundColor: interpolatedBgColor}]}>
+        <SvgWrapper>
+          {isOpen ? <CloseIcon /> : <HamburgerIcon />}
+        </SvgWrapper>
+      </Animated.View>
     </TouchableOpacity>
   )
 }
 
-const ANIM_DURATION = 200
+const BORDER_BOTTOM_WIDTH_ANIM_DURATION = 200
 
 const DocumentTitle = () => {
   const selectedDocument = useAppSelector(selectSelectedDocument)
@@ -195,18 +199,20 @@ const DocumentTitle = () => {
   const INPUT_MAX_WIDTH = 272
   const inputWidth = React.useMemo(() => Math.min(windowWidth - (mediaType !== MediaType.MOBILE ? 355 : 255), INPUT_MAX_WIDTH), [windowWidth])
 
+  const colorScheme = useAppSelector(selectColorScheme)
+
   const borderBottomWidthAnim = React.useRef(new Animated.Value(0)).current
   const focusAnim = () => {
     Animated.timing(borderBottomWidthAnim, {
       toValue: inputWidth,
-      duration: ANIM_DURATION,
+      duration: BORDER_BOTTOM_WIDTH_ANIM_DURATION,
       useNativeDriver: false
     }).start()
   }
   const blurAnim = () => {
     Animated.timing(borderBottomWidthAnim, {
       toValue: 0,
-      duration: ANIM_DURATION,
+      duration: BORDER_BOTTOM_WIDTH_ANIM_DURATION,
       useNativeDriver: false
     }).start()
   }
@@ -225,7 +231,7 @@ const DocumentTitle = () => {
         <DocumentIcon />
       </SvgWrapper>
       <View style={styles.textsContainer}>
-        {mediaType !== MediaType.MOBILE && <Text style={[styles.documentTitleLabel, textStyles.bodyM]}>Document Name</Text>}
+        {mediaType !== MediaType.MOBILE && <Text style={[textStyles.bodyM, themeColors[colorScheme].documentTitleLabel]}>Document Name</Text>}
         <TextInput
           style={[styles.documentTitleInput, textStyles.headingM, {width: inputWidth}]}
           selectionColor={colors.Orange}
@@ -263,7 +269,7 @@ const SaveButton = (props: {onPress: () => void}) => {
 
   const ref = React.useRef(null)
   const isHovered = useHover(ref)
-  const interpolatedBgColor = useAnimatedColor(isHovered, ANIM_DURATION, 'rgb(228, 102, 67)', 'rgb(243, 151, 101)')
+  const interpolatedBgColor = useAnimatedColor(isHovered, Constants.manifest?.extra?.BUTTON_COLOR_ANIM_DURATION, 'rgb(228, 102, 67)', 'rgb(243, 151, 101)')
 
   return (
     <TouchableOpacity onPress={onPress} ref={ref}>

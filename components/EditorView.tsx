@@ -2,11 +2,14 @@ import React from 'react'
 import { Platform, ScrollView, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native'
 import HideIcon from '../assets/icon-hide-preview.svg'
 import ShowIcon from '../assets/icon-show-preview.svg'
+import HideIconDark from '../assets/icon-hide-preview-for-dark-mode.svg'
+import ShowIconDark from '../assets/icon-show-preview-for-dark-mode.svg'
 import { useInputContext } from '../contexts/inputContext'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppSelector } from '../store/hooks'
-import colors from '../theme/colors'
+import { selectColorScheme } from '../store/slices/theme'
 import textStyles from '../theme/textStyles'
+import themeColors from '../theme/themeColors'
 import SvgWrapper from './common/SvgWrapper'
 import { Text, TextInput } from './common/withCustomFont'
 import Preview from './Preview'
@@ -23,13 +26,11 @@ const styles = StyleSheet.create({
   header: {
     flex: 1,
     height: HEADER_HEIGHT,
-    backgroundColor: colors[200],
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   headerText: {
-    color: colors[500],
     marginLeft: 16,
   },
   showPreviewButton: {
@@ -68,7 +69,6 @@ const styles = StyleSheet.create({
     maxWidth: PREVIEW_PADDING_LEFT + 672 + PREVIEW_PADDING_RIGHT,
   },
   borderRight: {
-    borderColor: colors[300],
     borderRightWidth: 1,
   },
 })
@@ -96,9 +96,6 @@ const EditorView = () => {
       : true
   }, [isEditable, isMobile])
 
-  const isDark = useAppSelector(state => state.theme.selectedColorSchemeIsDark)
-  console.log(isDark)
-
   return (
     <View>
       <View style={styles.headerContainer}>
@@ -121,9 +118,12 @@ const MarkdownHeader = (props: {showPreview: boolean, isMobile: boolean, toggleM
     isMobile,
     toggleMarkdown,
   } = props
+
+  const colorScheme = useAppSelector(selectColorScheme)
+
   return (
-    <View style={[styles.header, showPreview ? styles.borderRight : undefined]}>
-      <Text style={[styles.headerText, textStyles.headingS]}>MARKDOWN</Text>
+    <View style={[styles.header, showPreview ? styles.borderRight : undefined, themeColors[colorScheme].editorHeaderBg, themeColors[colorScheme].editorSeparator]}>
+      <Text style={[styles.headerText, themeColors[colorScheme].editorHeaderText, textStyles.headingS]}>MARKDOWN</Text>
       {isMobile &&
         <TouchableOpacity style={styles.showPreviewButton} onPress={toggleMarkdown}>
           <SvgWrapper>
@@ -140,11 +140,14 @@ const MarkdownView = (props: {showPreview: boolean, input: string, setInput: Rea
     input,
     setInput,
   } = props
+
+  const colorScheme = useAppSelector(selectColorScheme)
+
   return (
-    <View style={[styles.view, showPreview ? styles.borderRight : undefined]}>
+    <View style={[styles.view, showPreview ? styles.borderRight : undefined, themeColors[colorScheme].editorBg, themeColors[colorScheme].editorSeparator]}>
       <TextInput
         multiline
-        style={[styles.textInput, textStyles.markdownCode]}
+        style={[styles.textInput, textStyles.markdownCode, themeColors[colorScheme].editorMarkdown]}
         value={input}
         onChangeText={setInput}
         autoCapitalize='none'
@@ -158,12 +161,18 @@ const PreviewHeader = (props: {isEditable: boolean, toggleMarkdown: () => void})
     isEditable,
     toggleMarkdown,
   } = props
+
+  const colorScheme = useAppSelector(selectColorScheme)
+
   return (
-    <View style={styles.header}>
-      <Text style={[styles.headerText, textStyles.headingS]}>PREVIEW</Text>
+    <View style={[styles.header, themeColors[colorScheme].editorHeaderBg]}>
+      <Text style={[styles.headerText, themeColors[colorScheme].editorHeaderText, textStyles.headingS]}>PREVIEW</Text>
       <TouchableOpacity style={styles.showPreviewButton} onPress={toggleMarkdown}>
         <SvgWrapper>
-          {isEditable ? <ShowIcon /> : <HideIcon />}
+          {isEditable
+            ? colorScheme === 'dark' ? <ShowIconDark /> : <ShowIcon />
+            : colorScheme === 'dark' ? <HideIconDark /> : <HideIcon />
+          }
         </SvgWrapper>
       </TouchableOpacity>
     </View>
@@ -173,8 +182,11 @@ const PreviewView = (props: {input: string}) => {
   const {
     input,
   } = props
+
+  const colorScheme = useAppSelector(selectColorScheme)
+
   return (
-    <View style={[styles.view, styles.previewWrapper]}>
+    <View style={[styles.view, styles.previewWrapper, themeColors[colorScheme].editorBg]}>
       <Preview style={styles.preview}>{input}</Preview>
     </View>
   )

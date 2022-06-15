@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
-import { Appearance, ColorSchemeName } from "react-native"
+import { Appearance } from "react-native"
 import { getData, storeData } from "../../helpers/asyncStorage"
 
 export interface ThemeState {
@@ -49,5 +49,8 @@ const themeSlice = createSlice({
 export const {
   toggleTheme,
 } = themeSlice.actions
+
+export const selectColorScheme = (state: {theme: ThemeState}): 'light' | 'dark' =>
+  state.theme.selectedColorSchemeIsDark ? 'dark' : 'light'
 
 export default themeSlice.reducer

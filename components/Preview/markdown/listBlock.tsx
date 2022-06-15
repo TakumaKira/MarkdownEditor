@@ -1,7 +1,10 @@
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
+import { useAppSelector } from '../../../store/hooks'
+import { selectColorScheme } from '../../../store/slices/theme'
 import colors from '../../../theme/colors'
 import textStyles from '../../../theme/textStyles'
+import themeColors from '../../../theme/themeColors'
 import { Text } from '../../common/withCustomFont'
 import Markdown from './markdown'
 import MultilineBlock from "./multilineBlock"
@@ -149,10 +152,11 @@ const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExot
       // a number letter has less than 8px, and dot has less than 2px
       return digit * 8 + 2
     }
+    const colorScheme = useAppSelector(selectColorScheme)
     const ListNumber = React.memo((props: {children: number}) => {
       return (
         <View style={[listStyles.itemHeaderContainer, listStyles.numberContainer, {width: getWidth()}]}>
-          <Text style={textStyles.previewParagraph}>{props.children}.</Text>
+          <Text style={[textStyles.previewParagraph, themeColors[colorScheme].previewParagraph]}>{props.children}.</Text>
         </View>
       )
     })
@@ -165,7 +169,7 @@ const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExot
               key={i}
             >
               <ListNumber>{getNumber(line)}</ListNumber>
-              <Text style={textStyles.previewParagraph}>
+              <Text style={[textStyles.previewParagraph, themeColors[colorScheme].previewParagraph]}>
                 <Markdown.FragmentRenderer>{line.replace(OrderedList.regexp, '')}</Markdown.FragmentRenderer>
               </Text>
             </View>
@@ -175,6 +179,7 @@ const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExot
     )
   }, (prevProps, nextProps) => JSON.stringify(prevProps.children) === JSON.stringify(nextProps.children)),
   UnorderedList: React.memo((props: {children: string[]}) => {
+    const colorScheme = useAppSelector(selectColorScheme)
     const Bullet = React.memo(() => {
       return (
         <View style={[listStyles.itemHeaderContainer, listStyles.bulletContainer]}>
@@ -190,7 +195,7 @@ const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExot
             key={i}
           >
             <Bullet />
-            <Text style={textStyles.previewParagraph}>
+            <Text style={[textStyles.previewParagraph, themeColors[colorScheme].previewParagraph]}>
               <Markdown.FragmentRenderer>{line.replace(UnorderedList.regexp, '')}</Markdown.FragmentRenderer>
             </Text>
           </View>
@@ -198,18 +203,22 @@ const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExot
       </View>
     )
   }, (prevProps, nextProps) => JSON.stringify(prevProps.children) === JSON.stringify(nextProps.children)),
-  Quote: React.memo((props: {children: string[]}) =>
-    <View style={textStyles.quoteBlock}>
-      {props.children.map((line, i) =>
-        <Text
-          style={textStyles.previewParagraphBold}
-          key={i}
-        >
-          <View style={quoteStyles.viewMarker} />
-          <Markdown.FragmentRenderer>{line.replace(Quote.regexp, '')}</Markdown.FragmentRenderer>
-        </Text>
-      )}
-    </View>,
+  Quote: React.memo((props: {children: string[]}) => {
+    const colorScheme = useAppSelector(selectColorScheme)
+    return (
+      <View style={[textStyles.quoteBlock, themeColors[colorScheme].blockBg]}>
+        {props.children.map((line, i) =>
+          <Text
+            style={[textStyles.previewParagraphBold, themeColors[colorScheme].previewParagraphBold]}
+            key={i}
+          >
+            <View style={quoteStyles.viewMarker} />
+            <Markdown.FragmentRenderer>{line.replace(Quote.regexp, '')}</Markdown.FragmentRenderer>
+          </Text>
+        )}
+      </View>
+    )
+  },
   (prevProps, nextProps) => JSON.stringify(prevProps.children) === JSON.stringify(nextProps.children)),
 } as const
 const listStyles = StyleSheet.create({
