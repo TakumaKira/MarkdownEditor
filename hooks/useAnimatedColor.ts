@@ -1,7 +1,11 @@
 import React from "react"
-import { Animated } from "react-native"
+import { Animated, ColorValue } from "react-native"
 
-const useAnimatedColor = (isOn: boolean, duration: number, offColorRGB: string, onColorRGB: string) => {
+/**
+ * @param offColorRGB @type {ColorValue} 'rgb(r, g, b)' type value only
+ * @param onColorRGB @type {ColorValue} 'rgb(r, g, b)' type value only
+ */
+const useAnimatedColor = (isOn: boolean, duration: number, offColorRGB: ColorValue, onColorRGB: ColorValue): Animated.AnimatedInterpolation => {
   const [colorAnimation] = React.useState(new Animated.Value(0))
   React.useEffect(() => {
     if (isOn) {
@@ -20,7 +24,7 @@ const useAnimatedColor = (isOn: boolean, duration: number, offColorRGB: string, 
   }, [isOn])
   const colorInterpolation = colorAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange:[offColorRGB , onColorRGB]
+    outputRange:[offColorRGB as string, onColorRGB as string]
   })
   return colorInterpolation
 }

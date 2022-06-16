@@ -145,7 +145,7 @@ const MenuButton = (props: {toggle: () => void, isOpen: boolean}) => {
 
   const ref = React.useRef(null)
   const isHovered = useHover(ref)
-  const interpolatedBgColor = useAnimatedColor(isHovered, 0, 'rgba(53, 57, 63, 1))', 'rgb(228, 102, 67)')
+  const interpolatedBgColor = useAnimatedColor(isHovered, 0, colors[700], colors.Orange)
 
   return (
     <TouchableOpacity onPress={toggle} ref={ref}>
@@ -269,7 +269,7 @@ const SaveButton = (props: {onPress: () => void}) => {
 
   const ref = React.useRef(null)
   const isHovered = useHover(ref)
-  const interpolatedBgColor = useAnimatedColor(isHovered, Constants.manifest?.extra?.BUTTON_COLOR_ANIM_DURATION, 'rgb(228, 102, 67)', 'rgb(243, 151, 101)')
+  const interpolatedBgColor = useAnimatedColor(isHovered, Constants.manifest?.extra?.BUTTON_COLOR_ANIM_DURATION, colors.Orange, colors.OrangeHover)
 
   return (
     <TouchableOpacity onPress={onPress} ref={ref}>

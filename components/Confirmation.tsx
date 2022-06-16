@@ -50,7 +50,7 @@ const Confirmation = (props: {title: string, message: string, buttonLabel: strin
 
   const ref = React.useRef(null)
   const isHovered = useHover(ref)
-  const interpolatedBgColor = useAnimatedColor(isHovered, Constants.manifest?.extra?.BUTTON_COLOR_ANIM_DURATION, 'rgb(228, 102, 67)', 'rgb(243, 151, 101)')
+  const interpolatedBgColor = useAnimatedColor(isHovered, Constants.manifest?.extra?.BUTTON_COLOR_ANIM_DURATION, colors.Orange, colors.OrangeHover)
 
   return (
     <Modal onPressBackground={onPressBackground}>
