@@ -1,6 +1,8 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native'
 import * as WebBrowser from 'expo-web-browser'
+import * as hooks from '../../../store/hooks'
 import textStyles from '../../../theme/textStyles'
+import themeColors from '../../../theme/themeColors'
 import Markdown, { Bold, Default, Inline, InlineCode, InlineImage, Italic, Link } from './markdown'
 
 describe('Markdown.splitByMarkdown', () => {
@@ -89,12 +91,15 @@ describe('InlineImage', () => {
 
 describe('Inline.Code', () => {
   test('render text correctly', async() => {
+    const colorScheme = 'light'
+    const mockUseAppSelector = jest.spyOn(hooks, 'useAppSelector')
+    mockUseAppSelector.mockImplementation(() => colorScheme)
     const text = 'text'
     const result = render(<Inline.Code>{"`" + text + "`"}</Inline.Code>)
     await waitFor(() => result.getByText(text))
     const snapshot = result.toJSON()
     expect(snapshot.children).toEqual([text])
-    expect(snapshot.props.style).toEqual(textStyles.markdownCode)
+    expect(snapshot.props.style).toEqual([textStyles.markdownCode, themeColors[colorScheme].previewMarkdown])
   })
 })
 describe('Inline.Link', () => {
