@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MainView from './MainView';
 import SideBar, { SIDEBAR_WIDTH } from './SideBar';
 
-const ANIM_DURATION = 500
+const SIDE_MENU_ANIM_DURATION = 500
 
 const Frame = (props: {sidebar: typeof SideBar, main: typeof MainView}) => {
   const {
@@ -24,24 +24,24 @@ const Frame = (props: {sidebar: typeof SideBar, main: typeof MainView}) => {
   const showAnim = () => {
     Animated.timing(sidebarWidthAnim, {
       toValue: SIDEBAR_WIDTH,
-      duration: ANIM_DURATION,
+      duration: SIDE_MENU_ANIM_DURATION,
       useNativeDriver: false
     }).start()
     Animated.timing(containerWidthAnim, {
       toValue: windowWidth + SIDEBAR_WIDTH,
-      duration: ANIM_DURATION,
+      duration: SIDE_MENU_ANIM_DURATION,
       useNativeDriver: false
     }).start()
   }
   const hideAnim = () => {
     Animated.timing(sidebarWidthAnim, {
       toValue: 0,
-      duration: ANIM_DURATION,
+      duration: SIDE_MENU_ANIM_DURATION,
       useNativeDriver: false
     }).start()
     Animated.timing(containerWidthAnim, {
       toValue: windowWidth,
-      duration: ANIM_DURATION,
+      duration: SIDE_MENU_ANIM_DURATION,
       useNativeDriver: false
     }).start()
   }

@@ -1,13 +1,18 @@
 import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native'
+import { useAppSelector } from '../../store/hooks'
+import { selectColorScheme } from '../../store/slices/theme'
+import themeColors from '../../theme/themeColors'
 
 const styles = StyleSheet.create({
-  container: {
+  fullscreen: {
     position: 'absolute',
     width: '100%',
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'hsla(225, 9%, 9%, 0.5)',
+  },
+  background: {
+    opacity: 0.5,
   },
 })
 
@@ -16,9 +21,13 @@ const Modal = (props: {children: JSX.Element, onPressBackground: () => void}) =>
     children,
     onPressBackground,
   } = props
+
+  const colorScheme = useAppSelector(selectColorScheme)
+
   return (
     <TouchableWithoutFeedback onPress={onPressBackground}>
-      <View style={styles.container}>
+      <View style={styles.fullscreen}>
+        <View style={[styles.fullscreen, styles.background, themeColors[colorScheme].modalBackgroundColor]} />
         {children}
       </View>
     </TouchableWithoutFeedback>

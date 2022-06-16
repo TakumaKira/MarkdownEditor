@@ -1,5 +1,7 @@
+import Constants from 'expo-constants'
 import React from 'react'
 import { Animated, ScrollView, StyleProp, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewStyle } from 'react-native'
+import { useHover } from 'react-native-web-hooks'
 import DarkIconHighlight from '../assets/icon-dark-mode-highlight.svg'
 import DarkIcon from '../assets/icon-dark-mode.svg'
 import DocumentIcon from '../assets/icon-document.svg'
@@ -7,9 +9,11 @@ import LightIconHighlight from '../assets/icon-light-mode-highlight.svg'
 import LightIcon from '../assets/icon-light-mode.svg'
 import { ConfirmationState, useInputContext } from '../contexts/inputContext'
 import { sortDocumentsFromNewest } from '../helpers/functions'
+import useAnimatedColor from '../hooks/useAnimatedColor'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { newDocument, selectDocument, selectSelectedDocument } from '../store/slices/document'
+import { newDocument, selectDocument } from '../store/slices/document'
+import { toggleTheme } from '../store/slices/theme'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
 import SvgWrapper from './common/SvgWrapper'
@@ -96,12 +100,10 @@ const SideBar = () => {
   const mediaType = useMediaquery()
   const documentList = useAppSelector(state => state.document.documentList)
   const dispatch = useAppDispatch()
-  const {titleInput, mainInput, setConfirmationState} = useInputContext()
-  const selectedDocument = useAppSelector(selectSelectedDocument)
+  const {setConfirmationState} = useInputContext()
+  const {hasEdit} = useInputContext()
 
   const handlePressDocument = (id: string) => {
-    const hasEdit = (selectedDocument === null && (titleInput !== '' || mainInput !== ''))
-      || (selectedDocument !== null && (titleInput !== selectedDocument.name || mainInput !== selectedDocument.content))
     if (hasEdit) {
       setConfirmationState({state: ConfirmationState.LEAVE_UNSAVED_DOCUMENT, nextId: id})
     } else {
@@ -125,7 +127,7 @@ const SideBar = () => {
           />
         )}
       </ScrollView>
-      <ThemeToggle initialIsDark={false} />
+      <ThemeToggle />
     </View>
   )
 }
@@ -135,9 +137,15 @@ const AddButton = (props: {onPress: () => void}) => {
     onPress,
   } = props
 
+  const ref = React.useRef(null)
+  const isHovered = useHover(ref)
+  const interpolatedBgColor = useAnimatedColor(isHovered, Constants.manifest?.extra?.BUTTON_COLOR_ANIM_DURATION, colors.Orange, colors.OrangeHover)
+
   return (
-    <TouchableOpacity onPress={onPress} style={styles.addButton}>
-      <Text style={[styles.addButtonLabel, textStyles.headingM]}>+ New Document</Text>
+    <TouchableOpacity onPress={onPress} ref={ref}>
+      <Animated.View style={[styles.addButton, {backgroundColor: interpolatedBgColor}]}>
+        <Text style={[styles.addButtonLabel, textStyles.headingM]}>+ New Document</Text>
+      </Animated.View>
     </TouchableOpacity>
   )
 }
@@ -178,19 +186,17 @@ const formatDate = (dateStr: string): string => {
   }
 }
 
-const ThemeToggle = (props: {initialIsDark: boolean}) => {
-  const {
-    initialIsDark,
-  } = props
-
-  const [isDark, setIsDark] = React.useState<boolean>(initialIsDark)
+const ThemeToggle = () => {
+  const isDark = useAppSelector(state => state.theme.selectedColorSchemeIsDark)
+  const dispatch = useAppDispatch()
+  const toggleIsDark = () => dispatch(toggleTheme())
 
   return (
     <View style={styles.themeToggleContainer}>
       <SvgWrapper>
        {isDark ? <DarkIconHighlight /> : <DarkIcon />}
       </SvgWrapper>
-      <ToggleSwitch initialIsLeft={isDark} isLeft={isDark} setIsLeft={setIsDark} />
+      <ToggleSwitch initialIsLeft={isDark ?? false} isLeft={isDark ?? false} toggleIsLeft={toggleIsDark} />
       <SvgWrapper>
         {isDark ? <LightIcon /> : <LightIconHighlight />}
       </SvgWrapper>
@@ -198,15 +204,15 @@ const ThemeToggle = (props: {initialIsDark: boolean}) => {
   )
 }
 
-const ANIM_DURATION = 200
+const TOGGLE_SWITCH_ANIM_DURATION = 200
 const IS_LEFT_MARGIN_LEFT = 6
 const IS_RIGHT_MARGIN_LEFT = 30
 
-const ToggleSwitch = (props: {initialIsLeft: boolean, isLeft: boolean, setIsLeft: React.Dispatch<React.SetStateAction<boolean>>}) => {
+const ToggleSwitch = (props: {initialIsLeft: boolean, isLeft: boolean, toggleIsLeft: () => void}) => {
   const {
     initialIsLeft,
     isLeft,
-    setIsLeft,
+    toggleIsLeft,
   } = props
 
   const marginLeftAnim = React.useRef(new Animated.Value(initialIsLeft ? IS_LEFT_MARGIN_LEFT : IS_RIGHT_MARGIN_LEFT)).current
@@ -218,20 +224,20 @@ const ToggleSwitch = (props: {initialIsLeft: boolean, isLeft: boolean, setIsLeft
   const toLeftAnim = () => {
     Animated.timing(marginLeftAnim, {
       toValue: IS_LEFT_MARGIN_LEFT,
-      duration: ANIM_DURATION,
+      duration: TOGGLE_SWITCH_ANIM_DURATION,
       useNativeDriver: false
     }).start()
   }
   const toRightAnim = () => {
     Animated.timing(marginLeftAnim, {
       toValue: IS_RIGHT_MARGIN_LEFT,
-      duration: ANIM_DURATION,
+      duration: TOGGLE_SWITCH_ANIM_DURATION,
       useNativeDriver: false
     }).start()
   }
 
   return (
-    <TouchableWithoutFeedback onPress={() => setIsLeft(isLeft => !isLeft)}>
+    <TouchableWithoutFeedback onPress={() => toggleIsLeft()}>
       <View style={styles.toggleSwitch}>
         <Animated.View style={[styles.toggleSlider, {marginLeft: marginLeftAnim}]} />
       </View>

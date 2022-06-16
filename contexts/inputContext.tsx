@@ -1,7 +1,8 @@
 import Constants from 'expo-constants'
 import React from "react"
 import { useAppDispatch, useAppSelector } from "../store/hooks"
-import { deselectDocument, getDataFromAsyncStorage, selectLatestDocument, selectSelectedDocument } from "../store/slices/document"
+import { deselectDocument, getDocumentStateFromAsyncStorage, selectSelectedDocument } from "../store/slices/document"
+import { getThemeStateFromAsyncStorage } from '../store/slices/theme'
 
 export type ConfirmationStateProps = {
   state: ConfirmationState.NONE | ConfirmationState.DELETE
@@ -21,6 +22,7 @@ type InputContextState = {
   setTitleInput: React.Dispatch<React.SetStateAction<string>>
   confirmationState: ConfirmationStateProps
   setConfirmationState: React.Dispatch<React.SetStateAction<ConfirmationStateProps>>
+  hasEdit: boolean
 }
 
 export const InputContext = React.createContext({} as InputContextState)
@@ -33,9 +35,10 @@ export const InputContextProvider = (props: {children: React.ReactNode}): JSX.El
   const dispatch = useAppDispatch()
   React.useEffect(() => {
     (async() => {
-      await dispatch(getDataFromAsyncStorage()).unwrap()
+      await dispatch(getDocumentStateFromAsyncStorage()).unwrap()
       tryLoadingInputFromUrlParams()
     })()
+    dispatch(getThemeStateFromAsyncStorage())
   }, [])
   const tryLoadingInputFromUrlParams = () => {
     const search = window?.location?.search
@@ -58,8 +61,26 @@ export const InputContextProvider = (props: {children: React.ReactNode}): JSX.El
     }
   }, [selectedDocument])
 
+  const hasEdit = React.useMemo(() => {
+    return (selectedDocument === null && (titleInput !== '' || mainInput !== ''))
+      || (selectedDocument !== null && (titleInput !== selectedDocument.name || mainInput !== selectedDocument.content))
+  }, [selectedDocument, titleInput, mainInput])
+
+  const confirmUnsavedDocument = React.useCallback((event: BeforeUnloadEvent): void => {
+    event.preventDefault()
+    if (!hasEdit) {
+      return
+    }
+    // This shows confirmation dialog.
+    event.returnValue = true
+  }, [hasEdit])
+  React.useEffect(() => {
+    window.addEventListener?.('beforeunload', confirmUnsavedDocument)
+    return () => window.removeEventListener?.('beforeunload', confirmUnsavedDocument)
+  }, [confirmUnsavedDocument])
+
   return (
-    <InputContext.Provider value={{titleInput, setTitleInput, mainInput, setMainInput, confirmationState, setConfirmationState}}>
+    <InputContext.Provider value={{titleInput, setTitleInput, mainInput, setMainInput, confirmationState, setConfirmationState, hasEdit}}>
       {props.children}
     </InputContext.Provider>
   )

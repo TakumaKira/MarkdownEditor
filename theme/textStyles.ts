@@ -23,37 +23,31 @@ const textStyles = StyleSheet.create({
     fontFamily: fonts.robotoMonoRegular,
     fontSize: 14,
     lineHeight: 24,
-    color: colors[700],
   },
   previewH1: {
     fontFamily: fonts.robotoSlabBold,
     fontSize: 32,
     lineHeight: 42,
-    color: colors[700],
   },
   previewH2: {
     fontFamily: fonts.robotoSlabLight,
     fontSize: 28,
     lineHeight: 37,
-    color: colors[700],
   },
   previewH3: {
     fontFamily: fonts.robotoSlabBold,
     fontSize: 24,
     lineHeight: 32,
-    color: colors[700],
   },
   previewH4: {
     fontFamily: fonts.robotoSlabBold,
     fontSize: 20,
     lineHeight: 26,
-    color: colors[700],
   },
   previewH5: {
     fontFamily: fonts.robotoSlabBold,
     fontSize: 16,
     lineHeight: 21,
-    color: colors[700],
   },
   previewH6: {
     fontFamily: fonts.robotoSlabBold,
@@ -65,13 +59,11 @@ const textStyles = StyleSheet.create({
     fontFamily: fonts.robotoSlabRegular,
     fontSize: 14,
     lineHeight: 24,
-    color: colors[500],
   },
   previewParagraphBold: {
     fontFamily: fonts.robotoSlabBold,
     fontSize: 14,
     lineHeight: 24,
-    color: colors[700],
   },
   title: {
     fontFamily: fonts.commissionerBold,
@@ -84,13 +76,11 @@ const textStyles = StyleSheet.create({
   },
   codeBlock: {
     padding: 24,
-    backgroundColor: colors[200],
     borderRadius: 4,
     overflow: 'hidden',
   },
   quoteBlock: {
     padding: 24,
-    backgroundColor: colors[200],
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -101,5 +91,4 @@ const textStyles = StyleSheet.create({
     marginTop: 4,
   }
 })
-
 export default textStyles

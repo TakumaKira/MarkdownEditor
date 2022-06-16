@@ -38,9 +38,9 @@ const initialState: DocumentState = {
   selectedDocumentId: null
 }
 
-export const getDataFromAsyncStorage = createAsyncThunk(
-  'document/getDataFromAsyncStorage',
-  getData
+export const getDocumentStateFromAsyncStorage = createAsyncThunk(
+  'document/getDocumentStateFromAsyncStorage',
+  async() => getData('document')
 )
 
 const documentSlice = createSlice({
@@ -88,15 +88,15 @@ const documentSlice = createSlice({
     },
   },
   extraReducers: builder => {
-    builder.addCase(getDataFromAsyncStorage.fulfilled, (state, action) => {
+    builder.addCase(getDocumentStateFromAsyncStorage.fulfilled, (state, action) => {
       const restored = action.payload
       if (restored) {
-        state.documentList = restored.document.documentList
-        state.selectedDocumentId = restored.document.selectedDocumentId
+        state.documentList = restored.documentList
+        state.selectedDocumentId = restored.selectedDocumentId
       } else {
         state.documentList = generateInitialDocuments()
         state.selectedDocumentId = state.documentList?.[0].id || null
-        storeData({document: state})
+        storeData('document', state)
       }
     })
   }

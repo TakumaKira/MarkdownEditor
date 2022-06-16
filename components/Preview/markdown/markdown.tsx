@@ -4,8 +4,11 @@ import React from "react"
 import { Image, Platform } from 'react-native'
 import { v4 as uuidv4 } from 'uuid'
 import { PreviewContext } from '../../../contexts/previewContext'
+import { useAppSelector } from '../../../store/hooks'
+import { selectColorScheme } from '../../../store/slices/theme'
 import colors from '../../../theme/colors'
 import textStyles from "../../../theme/textStyles"
+import themeColors from '../../../theme/themeColors'
 import { Text } from '../../common/withCustomFont'
 
 type FoundMarkdownWithIndex = {
@@ -245,9 +248,9 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
     React.useEffect(() => {
       return () => props.unmount()
     }, [])
-
+    const colorScheme = useAppSelector(selectColorScheme)
     return (
-      <Text style={textStyles.markdownCode}>
+      <Text style={[textStyles.markdownCode, themeColors[colorScheme].previewMarkdown]}>
         {removeInlineMarkdown(props.children, 1)}
       </Text>
     )
