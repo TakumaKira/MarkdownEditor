@@ -1,7 +1,10 @@
 import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
+import { useAppSelector } from '../../../store/hooks'
+import { selectColorScheme } from '../../../store/slices/theme'
 import colors from '../../../theme/colors'
 import textStyles from '../../../theme/textStyles'
+import themeColors from '../../../theme/themeColors'
 import Markdown from './markdown'
 
 export default abstract class LineMarkdown extends Markdown {
@@ -114,34 +117,62 @@ const LineMarkdowns: ListMarkdownTypes[] = [
 ]
 
 const Line: {[key in 'Default' | 'H1' | 'H2' | 'H3' | 'H4' | 'H5' | 'H6' | 'Rule']: React.MemoExoticComponent<any>} = {
-  Default: React.memo((props: {children: string}) =>
-    <Text style={textStyles.previewParagraph}>
-      <Markdown.FragmentRenderer>{props.children}</Markdown.FragmentRenderer>
-    </Text>),
-  H1: React.memo((props: {children: string}) =>
-    <Text style={textStyles.previewH1}>
-      <Markdown.FragmentRenderer>{props.children.replace(H1Line.regexp, '')}</Markdown.FragmentRenderer>
-    </Text>),
-  H2: React.memo((props: {children: string}) =>
-    <Text style={textStyles.previewH2}>
-      <Markdown.FragmentRenderer>{props.children.replace(H2Line.regexp, '')}</Markdown.FragmentRenderer>
-    </Text>),
-  H3: React.memo((props: {children: string}) =>
-    <Text style={textStyles.previewH3}>
-      <Markdown.FragmentRenderer>{props.children.replace(H3Line.regexp, '')}</Markdown.FragmentRenderer>
-    </Text>),
-  H4: React.memo((props: {children: string}) =>
-    <Text style={textStyles.previewH4}>
-      <Markdown.FragmentRenderer>{props.children.replace(H4Line.regexp, '')}</Markdown.FragmentRenderer>
-    </Text>),
-  H5: React.memo((props: {children: string}) =>
-    <Text style={textStyles.previewH5}>
-      <Markdown.FragmentRenderer>{props.children.replace(H5Line.regexp, '')}</Markdown.FragmentRenderer>
-    </Text>),
-  H6: React.memo((props: {children: string}) =>
-    <Text style={textStyles.previewH6}>
-      <Markdown.FragmentRenderer>{props.children.replace(H6Line.regexp, '')}</Markdown.FragmentRenderer>
-    </Text>),
+  Default: React.memo((props: {children: string}) => {
+    const colorScheme = useAppSelector(selectColorScheme)
+    return (
+      <Text style={[textStyles.previewParagraph, themeColors[colorScheme].previewParagraph]}>
+        <Markdown.FragmentRenderer>{props.children}</Markdown.FragmentRenderer>
+      </Text>
+    )
+  }),
+  H1: React.memo((props: {children: string}) => {
+    const colorScheme = useAppSelector(selectColorScheme)
+    return (
+      <Text style={[textStyles.previewH1, themeColors[colorScheme].previewHeader]}>
+        <Markdown.FragmentRenderer>{props.children.replace(H1Line.regexp, '')}</Markdown.FragmentRenderer>
+      </Text>
+    )
+  }),
+  H2: React.memo((props: {children: string}) => {
+    const colorScheme = useAppSelector(selectColorScheme)
+    return (
+      <Text style={[textStyles.previewH2, themeColors[colorScheme].previewHeader]}>
+        <Markdown.FragmentRenderer>{props.children.replace(H2Line.regexp, '')}</Markdown.FragmentRenderer>
+      </Text>
+    )
+  }),
+  H3: React.memo((props: {children: string}) => {
+    const colorScheme = useAppSelector(selectColorScheme)
+    return (
+      <Text style={[textStyles.previewH3, themeColors[colorScheme].previewHeader]}>
+        <Markdown.FragmentRenderer>{props.children.replace(H3Line.regexp, '')}</Markdown.FragmentRenderer>
+      </Text>
+    )
+  }),
+  H4: React.memo((props: {children: string}) => {
+    const colorScheme = useAppSelector(selectColorScheme)
+    return (
+      <Text style={[textStyles.previewH4, themeColors[colorScheme].previewHeader]}>
+        <Markdown.FragmentRenderer>{props.children.replace(H4Line.regexp, '')}</Markdown.FragmentRenderer>
+      </Text>
+    )
+  }),
+  H5: React.memo((props: {children: string}) => {
+    const colorScheme = useAppSelector(selectColorScheme)
+    return (
+      <Text style={[textStyles.previewH5, themeColors[colorScheme].previewHeader]}>
+        <Markdown.FragmentRenderer>{props.children.replace(H5Line.regexp, '')}</Markdown.FragmentRenderer>
+      </Text>
+    )
+  }),
+  H6: React.memo((props: {children: string}) => {
+    const colorScheme = useAppSelector(selectColorScheme)
+    return (
+      <Text style={[textStyles.previewH6, themeColors[colorScheme].previewHeader]}>
+        <Markdown.FragmentRenderer>{props.children.replace(H6Line.regexp, '')}</Markdown.FragmentRenderer>
+      </Text>
+    )
+  }),
   Rule: React.memo(() =>
     <View style={horizontalRuleStyles.container}>
       <View style={horizontalRuleStyles.rule} />
