@@ -1,6 +1,5 @@
 import Constants from 'expo-constants'
 import React from "react"
-import { Appearance } from 'react-native'
 import { useAppDispatch, useAppSelector } from "../store/hooks"
 import { deselectDocument, getDocumentStateFromAsyncStorage, selectSelectedDocument } from "../store/slices/document"
 import { getThemeStateFromAsyncStorage } from '../store/slices/theme'
@@ -76,8 +75,8 @@ export const InputContextProvider = (props: {children: React.ReactNode}): JSX.El
     event.returnValue = true
   }, [hasEdit])
   React.useEffect(() => {
-    window.addEventListener('beforeunload', confirmUnsavedDocument)
-    return () => window.removeEventListener('beforeunload', confirmUnsavedDocument)
+    window.addEventListener?.('beforeunload', confirmUnsavedDocument)
+    return () => window.removeEventListener?.('beforeunload', confirmUnsavedDocument)
   }, [confirmUnsavedDocument])
 
   return (
