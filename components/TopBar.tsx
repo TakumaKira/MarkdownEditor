@@ -95,7 +95,6 @@ const styles = StyleSheet.create({
     height: 40,
     paddingLeft: 16,
     paddingRight: 16,
-    backgroundColor: colors.Orange,
     borderRadius: 4,
     flexDirection: 'row',
     justifyContent: 'center',
