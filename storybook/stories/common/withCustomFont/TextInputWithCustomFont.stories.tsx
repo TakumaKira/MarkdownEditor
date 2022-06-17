@@ -1,7 +1,8 @@
+import { number, select } from '@storybook/addon-knobs';
 import { storiesOf } from '@storybook/react-native';
 import { StyleSheet } from 'react-native';
 import { TextInput } from '../../../../components/common/withCustomFont';
-import textStyles from '../../../../theme/textStyles';
+import fonts from '../../../../theme/fonts';
 
 const styles = StyleSheet.create({
   input: {
@@ -10,5 +11,11 @@ const styles = StyleSheet.create({
 })
 
 storiesOf('withCustomFont', module).add('TextInput', () =>
-  <TextInput multiline style={[textStyles.markdownCode, styles.input]} />
-);
+  <TextInput
+    style={[styles.input, {
+      fontFamily: select('font family', fonts, fonts.robotoLight),
+      fontSize: number('font size', 96)
+    }]}
+    multiline placeholder="Input something..."
+  />
+)
