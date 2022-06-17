@@ -10,12 +10,13 @@ const styles = StyleSheet.create({
   },
 })
 
-storiesOf('withCustomFont', module).add('TextInput', () =>
-  <TextInput
-    style={[styles.input, {
-      fontFamily: select('font family', fonts, fonts.robotoLight),
-      fontSize: number('font size', 96)
-    }]}
-    multiline placeholder="Input something..."
-  />
-)
+storiesOf('withCustomFont', module)
+  .add('TextInput', () =>
+    <TextInput
+      style={[styles.input, {
+        fontFamily: select('font family', fonts, fonts.robotoLight),
+        fontSize: number('font size', 96)
+      }]}
+      multiline placeholder="Input something..."
+    />
+  )
