@@ -8,7 +8,6 @@ import DocumentIcon from '../assets/icon-document.svg'
 import HamburgerIcon from '../assets/icon-menu.svg'
 import SaveIcon from '../assets/icon-save.svg'
 import { ConfirmationState, useInputContext } from '../contexts/inputContext'
-import useAnimatedColor from '../hooks/useAnimatedColor'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { saveDocument, selectSelectedDocument } from '../store/slices/document'
@@ -16,6 +15,7 @@ import { selectColorScheme } from '../store/slices/theme'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
 import themeColors from '../theme/themeColors'
+import ButtonWithHover from './common/ButtonWithHover'
 import SvgWrapper from './common/SvgWrapper'
 import { Text, TextInput } from './common/withCustomFont'
 import Title from './Title'
@@ -145,15 +145,12 @@ const MenuButton = (props: {toggle: () => void, isOpen: boolean}) => {
 
   const ref = React.useRef(null)
   const isHovered = useHover(ref)
-  const interpolatedBgColor = useAnimatedColor(isHovered, 0, colors[700], colors.Orange)
 
   return (
-    <TouchableOpacity onPress={toggle} ref={ref}>
-      <Animated.View style={[styles.menuButton, {backgroundColor: interpolatedBgColor}]}>
-        <SvgWrapper>
-          {isOpen ? <CloseIcon /> : <HamburgerIcon />}
-        </SvgWrapper>
-      </Animated.View>
+    <TouchableOpacity onPress={toggle} ref={ref} style={[styles.menuButton, {backgroundColor: isHovered ? colors.Orange : colors[700]}]}>
+      <SvgWrapper>
+        {isOpen ? <CloseIcon /> : <HamburgerIcon />}
+      </SvgWrapper>
     </TouchableOpacity>
   )
 }
@@ -267,19 +264,13 @@ const SaveButton = (props: {onPress: () => void}) => {
 
   const mediaType = useMediaquery()
 
-  const ref = React.useRef(null)
-  const isHovered = useHover(ref)
-  const interpolatedBgColor = useAnimatedColor(isHovered, Constants.manifest?.extra?.BUTTON_COLOR_ANIM_DURATION, colors.Orange, colors.OrangeHover)
-
   return (
-    <TouchableOpacity onPress={onPress} ref={ref}>
-      <Animated.View style={[styles.saveButton, {backgroundColor: interpolatedBgColor}]}>
-        <SvgWrapper>
-          <SaveIcon />
-        </SvgWrapper>
-        {mediaType !== MediaType.MOBILE && <Text style={[styles.saveButtonLabel, textStyles.headingM]}>Save Changes</Text>}
-      </Animated.View>
-    </TouchableOpacity>
+    <ButtonWithHover onPress={onPress} offColorRGB={colors.Orange} onColorRGB={colors.OrangeHover} style={styles.saveButton}>
+      <SvgWrapper>
+        <SaveIcon />
+      </SvgWrapper>
+      {mediaType !== MediaType.MOBILE && <Text style={[styles.saveButtonLabel, textStyles.headingM]}>Save Changes</Text>}
+    </ButtonWithHover>
   )
 }
 

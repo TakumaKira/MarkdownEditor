@@ -1,7 +1,5 @@
-import Constants from 'expo-constants'
 import React from 'react'
 import { Animated, ScrollView, StyleProp, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View, ViewStyle } from 'react-native'
-import { useHover } from 'react-native-web-hooks'
 import DarkIconHighlight from '../assets/icon-dark-mode-highlight.svg'
 import DarkIcon from '../assets/icon-dark-mode.svg'
 import DocumentIcon from '../assets/icon-document.svg'
@@ -9,13 +7,13 @@ import LightIconHighlight from '../assets/icon-light-mode-highlight.svg'
 import LightIcon from '../assets/icon-light-mode.svg'
 import { ConfirmationState, useInputContext } from '../contexts/inputContext'
 import { sortDocumentsFromNewest } from '../helpers/functions'
-import useAnimatedColor from '../hooks/useAnimatedColor'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { newDocument, selectDocument } from '../store/slices/document'
 import { toggleTheme } from '../store/slices/theme'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
+import ButtonWithHover from './common/ButtonWithHover'
 import SvgWrapper from './common/SvgWrapper'
 import { Text } from './common/withCustomFont'
 import Title from './Title'
@@ -137,16 +135,10 @@ const AddButton = (props: {onPress: () => void}) => {
     onPress,
   } = props
 
-  const ref = React.useRef(null)
-  const isHovered = useHover(ref)
-  const interpolatedBgColor = useAnimatedColor(isHovered, Constants.manifest?.extra?.BUTTON_COLOR_ANIM_DURATION, colors.Orange, colors.OrangeHover)
-
   return (
-    <TouchableOpacity onPress={onPress} ref={ref}>
-      <Animated.View style={[styles.addButton, {backgroundColor: interpolatedBgColor}]}>
-        <Text style={[styles.addButtonLabel, textStyles.headingM]}>+ New Document</Text>
-      </Animated.View>
-    </TouchableOpacity>
+    <ButtonWithHover onPress={onPress} offColorRGB={colors.Orange} onColorRGB={colors.OrangeHover} style={styles.addButton}>
+      <Text style={[styles.addButtonLabel, textStyles.headingM]}>+ New Document</Text>
+    </ButtonWithHover>
   )
 }
 

@@ -1,13 +1,11 @@
-import Constants from 'expo-constants'
 import React from 'react'
-import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native'
-import { useHover } from 'react-native-web-hooks'
-import useAnimatedColor from '../hooks/useAnimatedColor'
+import { StyleSheet, View } from 'react-native'
 import { useAppSelector } from '../store/hooks'
 import { selectColorScheme } from '../store/slices/theme'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
 import themeColors from '../theme/themeColors'
+import ButtonWithHover from './common/ButtonWithHover'
 import Modal from './common/Modal'
 import { Text } from './common/withCustomFont'
 
@@ -48,20 +46,14 @@ const Confirmation = (props: {title: string, message: string, buttonLabel: strin
 
   const colorScheme = useAppSelector(selectColorScheme)
 
-  const ref = React.useRef(null)
-  const isHovered = useHover(ref)
-  const interpolatedBgColor = useAnimatedColor(isHovered, Constants.manifest?.extra?.BUTTON_COLOR_ANIM_DURATION, colors.Orange, colors.OrangeHover)
-
   return (
     <Modal onPressBackground={onPressBackground}>
       <View style={[styles.modalContentContainer, themeColors[colorScheme].modalContentContainerBg]}>
         <Text style={[textStyles.previewH4, themeColors[colorScheme].confirmationTitle]}>{title}</Text>
         <Text style={[styles.message, textStyles.previewParagraph, themeColors[colorScheme].confirmationMessage]}>{message}</Text>
-        <TouchableOpacity onPress={onPressButton} ref={ref}>
-          <Animated.View style={[styles.buttonContainer, {backgroundColor: interpolatedBgColor}]}>
-            <Text style={[styles.buttonLabel, textStyles.headingM]}>{buttonLabel}</Text>
-          </Animated.View>
-        </TouchableOpacity>
+        <ButtonWithHover onPress={onPressButton} offColorRGB={colors.Orange} onColorRGB={colors.OrangeHover} style={styles.buttonContainer}>
+          <Text style={[styles.buttonLabel, textStyles.headingM]}>{buttonLabel}</Text>
+        </ButtonWithHover>
       </View>
     </Modal>
   )
