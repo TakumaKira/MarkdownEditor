@@ -11,7 +11,6 @@ import { Text } from './common/withCustomFont'
 
 const styles = StyleSheet.create({
   modalContentContainer: {
-    height: 218,
     width: 343,
     borderRadius: 4,
     paddingTop: 24,

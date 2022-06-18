@@ -12,7 +12,7 @@ const store = configureStore({
     document: documentReducer,
     theme: themeReducer,
   },
-  middleware: gDM => gDM().concat(asyncStorageMiddleware)
+  middleware: gDM => gDM().concat(asyncStorageMiddleware),
 })
 export default store
 

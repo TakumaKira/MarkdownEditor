@@ -1,14 +1,14 @@
-import { boolean, color, number, select, text } from '@storybook/addon-knobs';
+import { action } from '@storybook/addon-actions';
+import { boolean, number, select, text } from '@storybook/addon-knobs';
 import { storiesOf } from '@storybook/react-native';
 import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import SaveIcon from '../../../assets/icon-save.svg';
 import ButtonWithHoverColorAnimation from '../../../components/common/ButtonWithHoverColorAnimation';
 import SvgWrapper from '../../../components/common/SvgWrapper';
-import { action } from '@storybook/addon-actions'
-import { StyleSheet, View } from 'react-native';
 import { Text } from '../../../components/common/withCustomFont';
-import fonts from '../../../theme/fonts';
-import SaveIcon from '../../../assets/icon-save.svg'
 import colors from '../../../theme/colors';
+import fonts from '../../../theme/fonts';
 
 const styles = StyleSheet.create({
   container: {
