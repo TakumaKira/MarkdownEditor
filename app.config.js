@@ -17,6 +17,5 @@ export default {
       },
     ],
     STATE_STORAGE_KEY: 'MARKDOWN_EDITOR_STATE',
-    BUTTON_COLOR_ANIM_DURATION: 100,
   },
 }

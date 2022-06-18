@@ -13,7 +13,7 @@ import { newDocument, selectDocument } from '../store/slices/document'
 import { toggleTheme } from '../store/slices/theme'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
-import ButtonWithHover from './common/ButtonWithHover'
+import ButtonWithHoverColorAnimation from './common/ButtonWithHoverColorAnimation'
 import SvgWrapper from './common/SvgWrapper'
 import { Text } from './common/withCustomFont'
 import Title from './Title'
@@ -135,9 +135,9 @@ const AddButton = (props: {onPress: () => void}) => {
   } = props
 
   return (
-    <ButtonWithHover onPress={onPress} offColorRGB={colors.Orange} onColorRGB={colors.OrangeHover} style={styles.addButton}>
+    <ButtonWithHoverColorAnimation onPress={onPress} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={styles.addButton}>
       <Text style={[styles.addButtonLabel, textStyles.headingM]}>+ New Document</Text>
-    </ButtonWithHover>
+    </ButtonWithHoverColorAnimation>
   )
 }
 

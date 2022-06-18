@@ -1,7 +1,7 @@
 import { boolean, color, number, select, text } from '@storybook/addon-knobs';
 import { storiesOf } from '@storybook/react-native';
 import React from 'react';
-import ButtonWithHover from '../../../components/common/ButtonWithHover';
+import ButtonWithHoverColorAnimation from '../../../components/common/ButtonWithHoverColorAnimation';
 import SvgWrapper from '../../../components/common/SvgWrapper';
 import { action } from '@storybook/addon-actions'
 import { StyleSheet, View } from 'react-native';
@@ -30,7 +30,7 @@ storiesOf('ButtonWithHover', module)
     const showSaveIcon = boolean('show save icon', true)
     return (
       <View style={styles.container}>
-        <ButtonWithHover onPress={action('onPress')} offColorRGB={text('offColorRGB', colors.Orange as string)} onColorRGB={text('onColorRGB', colors.OrangeHover as string)} style={styles.button}>
+        <ButtonWithHoverColorAnimation onPress={action('onPress')} offBgColorRGB={text('offColorRGB', colors.Orange as string)} onBgColorRGB={text('onColorRGB', colors.OrangeHover as string)} duration={number('duration', 100)} style={styles.button}>
           {showSaveIcon &&
             <SvgWrapper>
               <SaveIcon />
@@ -46,7 +46,7 @@ storiesOf('ButtonWithHover', module)
               {text('label', 'Save Changes')}
             </Text>
           }
-        </ButtonWithHover>
+        </ButtonWithHoverColorAnimation>
       </View>
     )
   })

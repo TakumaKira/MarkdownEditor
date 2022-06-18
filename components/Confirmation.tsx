@@ -5,7 +5,7 @@ import { selectColorScheme } from '../store/slices/theme'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
 import themeColors from '../theme/themeColors'
-import ButtonWithHover from './common/ButtonWithHover'
+import ButtonWithHoverColorAnimation from './common/ButtonWithHoverColorAnimation'
 import Modal from './common/Modal'
 import { Text } from './common/withCustomFont'
 
@@ -50,9 +50,9 @@ const Confirmation = (props: {title: string, message: string, buttonLabel: strin
       <View style={[styles.modalContentContainer, themeColors[colorScheme].modalContentContainerBg]}>
         <Text style={[textStyles.previewH4, themeColors[colorScheme].confirmationTitle]}>{title}</Text>
         <Text style={[styles.message, textStyles.previewParagraph, themeColors[colorScheme].confirmationMessage]}>{message}</Text>
-        <ButtonWithHover onPress={onPressButton} offColorRGB={colors.Orange} onColorRGB={colors.OrangeHover} style={styles.buttonContainer}>
+        <ButtonWithHoverColorAnimation onPress={onPressButton} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={styles.buttonContainer}>
           <Text style={[styles.buttonLabel, textStyles.headingM]}>{buttonLabel}</Text>
-        </ButtonWithHover>
+        </ButtonWithHoverColorAnimation>
       </View>
     </Modal>
   )

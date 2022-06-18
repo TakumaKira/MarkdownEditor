@@ -1,5 +1,5 @@
 import './common/withCustomFont'
-import './common/ButtonWithHover.stories'
+import './common/ButtonWithHoverColorAnimation.stories'
 import './EditorView.stories'
 import './Frame.stories'
 import './MainView.stories'

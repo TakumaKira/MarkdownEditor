@@ -1,4 +1,3 @@
-import Constants from 'expo-constants'
 import React from "react"
 import { Animated, ColorValue, StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native'
 import { useHover } from "react-native-web-hooks"
@@ -8,18 +7,19 @@ import useAnimatedColor from "../../hooks/useAnimatedColor"
  * @param offColorRGB @type {ColorValue} 'rgb(r, g, b)' type value only
  * @param onColorRGB @type {ColorValue} 'rgb(r, g, b)' type value only
  */
-const ButtonWithHover = (props: {onPress: () => void, children: View['props']['children'], offColorRGB: ColorValue, onColorRGB: ColorValue, style?: StyleProp<ViewStyle>}) => {
+const ButtonWithHoverColorAnimation = (props: {onPress: () => void, children: View['props']['children'], offBgColorRGB: ColorValue, onBgColorRGB: ColorValue, duration?: number, style?: StyleProp<ViewStyle>}) => {
   const {
     onPress,
     children,
-    offColorRGB,
-    onColorRGB,
+    offBgColorRGB,
+    onBgColorRGB,
+    duration=100,
     style,
   } = props
 
   const ref = React.useRef(null)
   const isHovered = useHover(ref)
-  const interpolatedBgColor = useAnimatedColor(isHovered, Constants.manifest?.extra?.BUTTON_COLOR_ANIM_DURATION, offColorRGB, onColorRGB)
+  const interpolatedBgColor = useAnimatedColor(isHovered, duration, offBgColorRGB, onBgColorRGB)
 
   return (
     <TouchableOpacity onPress={onPress} ref={ref}>
@@ -29,4 +29,4 @@ const ButtonWithHover = (props: {onPress: () => void, children: View['props']['c
     </TouchableOpacity>
   )
 }
-export default ButtonWithHover
+export default ButtonWithHoverColorAnimation

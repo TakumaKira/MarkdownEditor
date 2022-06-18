@@ -1,7 +1,6 @@
 import Constants from 'expo-constants'
 import React, { Dispatch, SetStateAction } from 'react'
 import { Animated, Platform, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native'
-import { useHover } from 'react-native-web-hooks'
 import CloseIcon from '../assets/icon-close.svg'
 import DeleteIcon from '../assets/icon-delete.svg'
 import DocumentIcon from '../assets/icon-document.svg'
@@ -15,7 +14,7 @@ import { selectColorScheme } from '../store/slices/theme'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
 import themeColors from '../theme/themeColors'
-import ButtonWithHover from './common/ButtonWithHover'
+import ButtonWithHoverColorAnimation from './common/ButtonWithHoverColorAnimation'
 import SvgWrapper from './common/SvgWrapper'
 import { Text, TextInput } from './common/withCustomFont'
 import Title from './Title'
@@ -142,15 +141,12 @@ const MenuButton = (props: {toggle: () => void, isOpen: boolean}) => {
     isOpen,
   } = props
 
-  const ref = React.useRef(null)
-  const isHovered = useHover(ref)
-
   return (
-    <TouchableOpacity onPress={toggle} ref={ref} style={[styles.menuButton, {backgroundColor: isHovered ? colors.Orange : colors[700]}]}>
+    <ButtonWithHoverColorAnimation onPress={toggle} offBgColorRGB={colors[700]} onBgColorRGB={colors.Orange} duration={0} style={styles.menuButton}>
       <SvgWrapper>
         {isOpen ? <CloseIcon /> : <HamburgerIcon />}
       </SvgWrapper>
-    </TouchableOpacity>
+    </ButtonWithHoverColorAnimation>
   )
 }
 
@@ -264,12 +260,12 @@ const SaveButton = (props: {onPress: () => void}) => {
   const mediaType = useMediaquery()
 
   return (
-    <ButtonWithHover onPress={onPress} offColorRGB={colors.Orange} onColorRGB={colors.OrangeHover} style={styles.saveButton}>
+    <ButtonWithHoverColorAnimation onPress={onPress} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={styles.saveButton}>
       <SvgWrapper>
         <SaveIcon />
       </SvgWrapper>
       {mediaType !== MediaType.MOBILE && <Text style={[styles.saveButtonLabel, textStyles.headingM]}>Save Changes</Text>}
-    </ButtonWithHover>
+    </ButtonWithHoverColorAnimation>
   )
 }
 
