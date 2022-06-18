@@ -86,6 +86,7 @@ const styles = StyleSheet.create({
     marginRight: 13,
     height: 40,
     width: 40,
+    borderRadius: 4,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -244,11 +245,11 @@ const DeleteButton = (props: {onPress: () => void}) => {
   } = props
 
   return (
-    <TouchableOpacity onPress={onPress} style={styles.deleteButton}>
+    <ButtonWithHoverColorAnimation onPress={onPress} offBgColorRGB={colors[800]} onBgColorRGB={colors[700]} style={styles.deleteButton}>
       <SvgWrapper>
         <DeleteIcon />
       </SvgWrapper>
-    </TouchableOpacity>
+    </ButtonWithHoverColorAnimation>
   )
 }
 
