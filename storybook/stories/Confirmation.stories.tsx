@@ -1,4 +1,3 @@
-import { configureStore } from '@reduxjs/toolkit';
 import { action } from '@storybook/addon-actions';
 import { boolean, text } from '@storybook/addon-knobs';
 import { storiesOf } from '@storybook/react-native';
@@ -9,41 +8,19 @@ import { Text } from '../../components/common/withCustomFont';
 import Confirmation from '../../components/Confirmation';
 import { confirmationMessages } from '../../constants/confirmationMessages';
 import { ConfirmationState } from '../../contexts/inputContext';
-import documentReducer from '../../store/slices/document';
-import themeReducer from '../../store/slices/theme';
 import colors from '../../theme/colors';
 import textStyles from '../../theme/textStyles';
+import getMockStore from '../mockStore/getMockStore';
 
-const store = configureStore({
-  reducer: {
-    document: documentReducer,
-    theme: themeReducer,
+const store = getMockStore()
+const storeInDark = getMockStore({
+  document: {
+    documentList: [],
+    selectedDocumentId: null,
   },
-  preloadedState: {
-    document: {
-      documentList: [],
-      selectedDocumentId: null,
-    },
-    theme: {
-      deviceColorSchemeIsDark: false,
-      selectedColorSchemeIsDark: false,
-    },
-  },
-})
-const storeInDark = configureStore({
-  reducer: {
-    document: documentReducer,
-    theme: themeReducer,
-  },
-  preloadedState: {
-    document: {
-      documentList: [],
-      selectedDocumentId: null,
-    },
-    theme: {
-      deviceColorSchemeIsDark: false,
-      selectedColorSchemeIsDark: true,
-    },
+  theme: {
+    deviceColorSchemeIsDark: false,
+    selectedColorSchemeIsDark: true,
   },
 })
 

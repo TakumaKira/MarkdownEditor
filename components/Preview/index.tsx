@@ -23,5 +23,4 @@ const Preview = React.memo((props: {children: string, style?: StyleProp<ViewStyl
     </View>
   )
 })
-
 export default Preview
