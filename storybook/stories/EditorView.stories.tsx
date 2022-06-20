@@ -13,7 +13,9 @@ storiesOf('EditorView', module)
     <Provider store={mockStore}>
       <InputContextProvider>
         <ThemeWrapper isDark={boolean('dark mode', false)}>
-          <EditorView maxHeight={boolean('enable max height', false) ? number('max height', 500) : undefined} />
+          {colorScheme =>
+            <EditorView maxHeight={boolean('enable max height', false) ? number('max height', 500) : undefined} />
+          }
         </ThemeWrapper>
       </InputContextProvider>
     </Provider>

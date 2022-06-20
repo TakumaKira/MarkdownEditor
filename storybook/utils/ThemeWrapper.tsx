@@ -2,7 +2,7 @@ import React from "react"
 import { useAppDispatch, useAppSelector } from "../../store/hooks"
 import { selectColorScheme, toggleTheme } from "../../store/slices/theme"
 
-const ThemeWrapper = (props: {children: JSX.Element, isDark: boolean}) => {
+const ThemeWrapper = (props: {children: (colorScheme: 'light' | 'dark') => JSX.Element, isDark?: boolean}) => {
   const colorScheme = useAppSelector(selectColorScheme)
   const dispatch = useAppDispatch()
   React.useEffect(() => {
@@ -13,6 +13,6 @@ const ThemeWrapper = (props: {children: JSX.Element, isDark: boolean}) => {
       dispatch(toggleTheme())
     }
   }, [props.isDark])
-  return props.children
+  return props.children(colorScheme)
 }
 export default ThemeWrapper

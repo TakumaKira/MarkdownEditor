@@ -15,7 +15,9 @@ storiesOf('MainView', module)
     <Provider store={mockStore}>
       <InputContextProvider>
         <ThemeWrapper isDark={boolean('dark mode', false)}>
-          <MainView showSidebar={boolean('show sidebar', false)} setShowSidebar={action('setShowSidebar')} />
+          {colorScheme =>
+            <MainView showSidebar={boolean('show sidebar', false)} setShowSidebar={action('setShowSidebar')} />
+          }
         </ThemeWrapper>
       </InputContextProvider>
     </Provider>
