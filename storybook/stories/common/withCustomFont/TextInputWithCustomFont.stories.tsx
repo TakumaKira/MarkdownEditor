@@ -1,3 +1,4 @@
+import { action } from '@storybook/addon-actions';
 import { number, select } from '@storybook/addon-knobs';
 import { storiesOf } from '@storybook/react-native';
 import { StyleSheet } from 'react-native';
@@ -17,6 +18,7 @@ storiesOf('withCustomFont', module)
         fontFamily: select('font family', fonts, fonts.robotoLight),
         fontSize: number('font size', 96)
       }]}
+      onChangeText={action('onChangeText')}
       multiline placeholder="Input something..."
     />
   )
