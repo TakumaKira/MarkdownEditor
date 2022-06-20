@@ -12,6 +12,16 @@ const defaultPreloadedState = {
     selectedColorSchemeIsDark: false,
   },
 }
+export const preloadedStateInDarkScheme = {
+  document: {
+    documentList: [],
+    selectedDocumentId: null,
+  },
+  theme: {
+    deviceColorSchemeIsDark: true, // This will be reset on initialization.
+    selectedColorSchemeIsDark: true,
+  },
+}
 const getMockStore = (preloadedState = defaultPreloadedState): EnhancedStore => {
   return configureStore({
     reducer,

@@ -10,19 +10,10 @@ import { confirmationMessages } from '../../constants/confirmationMessages';
 import { ConfirmationState } from '../../contexts/inputContext';
 import colors from '../../theme/colors';
 import textStyles from '../../theme/textStyles';
-import getMockStore from '../mockStore/getMockStore';
+import getMockStore, { preloadedStateInDarkScheme } from '../mockStore/getMockStore';
 
-const store = getMockStore()
-const storeInDark = getMockStore({
-  document: {
-    documentList: [],
-    selectedDocumentId: null,
-  },
-  theme: {
-    deviceColorSchemeIsDark: false,
-    selectedColorSchemeIsDark: true,
-  },
-})
+const mockStore = getMockStore()
+const mockStoreInDark = getMockStore(preloadedStateInDarkScheme)
 
 const styles = StyleSheet.create({
   fullscreen: {
@@ -48,7 +39,7 @@ const LONG_TEXT = 'Lorem ipsum dolor sit amet consectetur, adipisicing elit. Nos
 
 const Wrapper = (props: {children: React.ReactNode, dark?: boolean}): JSX.Element => {
   return (
-    <Provider store={props.dark ? storeInDark : store}>
+    <Provider store={props.dark ? mockStoreInDark : mockStore}>
       <View style={styles.fullscreen}>
         <>
           <View style={[styles.fullscreen, props.dark ? styles.darkBg : styles.lightBg]}>
@@ -64,7 +55,7 @@ const Wrapper = (props: {children: React.ReactNode, dark?: boolean}): JSX.Elemen
 }
 
 storiesOf('Confirmation', module)
-  .add('Delete', () =>
+  .add('Delete in light scheme', () =>
     <Wrapper>
       {boolean('show', true) &&
         <Confirmation
@@ -77,7 +68,7 @@ storiesOf('Confirmation', module)
       }
     </Wrapper>
   )
-  .add('Delete in dark', () =>
+  .add('Delete in dark scheme', () =>
     <Wrapper dark>
       {boolean('show', true) &&
         <Confirmation
@@ -90,7 +81,7 @@ storiesOf('Confirmation', module)
       }
     </Wrapper>
   )
-  .add('Leaved unsaved document', () =>
+  .add('Leaved unsaved document in light scheme', () =>
     <Wrapper>
       {boolean('show', true) &&
         <Confirmation
@@ -103,7 +94,7 @@ storiesOf('Confirmation', module)
       }
     </Wrapper>
   )
-  .add('Leaved unsaved document in dark', () =>
+  .add('Leaved unsaved document in dark scheme', () =>
     <Wrapper dark>
       {boolean('show', true) &&
         <Confirmation
@@ -116,7 +107,7 @@ storiesOf('Confirmation', module)
       }
     </Wrapper>
   )
-  .add('Long text', () =>
+  .add('Long text in light scheme', () =>
     <Wrapper>
       {boolean('show', true) &&
         <Confirmation
@@ -129,7 +120,7 @@ storiesOf('Confirmation', module)
       }
     </Wrapper>
   )
-  .add('Long text in dark', () =>
+  .add('Long text in dark scheme', () =>
     <Wrapper dark>
       {boolean('show', true) &&
         <Confirmation
