@@ -7,7 +7,7 @@ import Modal from '../../../components/common/Modal';
 import { Text } from '../../../components/common/withCustomFont';
 import colors from '../../../theme/colors';
 import textStyles from '../../../theme/textStyles';
-import getMockStore, { preloadedStateInDarkScheme } from '../../mockStore/getMockStore';
+import getMockStore, { preloadedStateInDarkScheme } from '../../utils/getMockStore';
 
 const mockStore = getMockStore()
 const mockStoreInDark = getMockStore(preloadedStateInDarkScheme)

@@ -3,23 +3,18 @@ import { storiesOf } from '@storybook/react-native';
 import { Provider } from 'react-redux';
 import EditorView from '../../components/EditorView';
 import { InputContextProvider } from '../../contexts/inputContext';
-import getMockStore, { preloadedStateInDarkScheme } from '../mockStore/getMockStore';
+import getMockStore from '../utils/getMockStore';
+import ThemeWrapper from '../utils/ThemeWrapper';
 
 const mockStore = getMockStore()
-const mockStoreInDark = getMockStore(preloadedStateInDarkScheme)
 
 storiesOf('EditorView', module)
-  .add('in light scheme', () =>
+  .add('to Storybook', () =>
     <Provider store={mockStore}>
       <InputContextProvider>
-        <EditorView maxHeight={boolean('enable max height', false) ? number('max height', 500) : undefined} />
-      </InputContextProvider>
-    </Provider>
-  )
-  .add('in dark scheme', () =>
-    <Provider store={mockStoreInDark}>
-      <InputContextProvider>
-        <EditorView maxHeight={boolean('enable max height', false) ? number('max height', 500) : undefined} />
+        <ThemeWrapper isDark={boolean('dark mode', false)}>
+          <EditorView maxHeight={boolean('enable max height', false) ? number('max height', 500) : undefined} />
+        </ThemeWrapper>
       </InputContextProvider>
     </Provider>
   )

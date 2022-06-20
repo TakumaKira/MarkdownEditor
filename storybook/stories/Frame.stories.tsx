@@ -5,7 +5,7 @@ import MainView from '../../components/MainView';
 import SafeArea from '../../components/SafeArea';
 import SideBar from '../../components/SideBar';
 import { InputContextProvider } from '../../contexts/inputContext';
-import getMockStore from '../mockStore/getMockStore';
+import getMockStore from '../utils/getMockStore';
 
 const mockStore = getMockStore()
 

@@ -10,7 +10,7 @@ import { confirmationMessages } from '../../constants/confirmationMessages';
 import { ConfirmationState } from '../../contexts/inputContext';
 import colors from '../../theme/colors';
 import textStyles from '../../theme/textStyles';
-import getMockStore, { preloadedStateInDarkScheme } from '../mockStore/getMockStore';
+import getMockStore, { preloadedStateInDarkScheme } from '../utils/getMockStore';
 
 const mockStore = getMockStore()
 const mockStoreInDark = getMockStore(preloadedStateInDarkScheme)

@@ -8,7 +8,7 @@ import { Document } from '../../store/slices/document';
 import { selectColorScheme } from '../../store/slices/theme';
 import colors from '../../theme/colors';
 import themeColors from '../../theme/themeColors';
-import getMockStore from '../mockStore/getMockStore';
+import getMockStore from '../utils/getMockStore';
 
 const mockStore = getMockStore()
 
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   },
 })
 
-const Wrapper = (props: {children: JSX.Element}) => {
+const ThemeWrapper = (props: {children: JSX.Element}) => {
   const colorScheme = useAppSelector(selectColorScheme)
   return (
     <View style={[styles.fullscreen, themeColors[colorScheme].editorBg]}>
@@ -61,15 +61,15 @@ const Wrapper = (props: {children: JSX.Element}) => {
 storiesOf('SideBar', module)
   .add('to Storybook', () =>
     <Provider store={mockStore}>
-      <Wrapper>
+      <ThemeWrapper>
         <SideBar />
-      </Wrapper>
+      </ThemeWrapper>
     </Provider>
   )
   .add('with many documents with long title', () =>
     <Provider store={mockStoreWithManyDocumentsWithLongTitle}>
-      <Wrapper>
+      <ThemeWrapper>
         <SideBar />
-      </Wrapper>
+      </ThemeWrapper>
     </Provider>
   )
