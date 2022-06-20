@@ -2,7 +2,7 @@ import { configureStore, EnhancedStore } from "@reduxjs/toolkit"
 import { CurriedGetDefaultMiddleware } from "@reduxjs/toolkit/dist/getDefaultMiddleware"
 import { reducer, RootState } from "../../store"
 
-const defaultPreloadedState = {
+const defaultPreloadedState: RootState = {
   document: {
     documentList: [],
     selectedDocumentId: null,
@@ -12,7 +12,7 @@ const defaultPreloadedState = {
     selectedColorSchemeIsDark: false,
   },
 }
-export const preloadedStateInDarkScheme = {
+export const preloadedStateInDarkScheme: RootState = {
   document: {
     documentList: [],
     selectedDocumentId: null,
