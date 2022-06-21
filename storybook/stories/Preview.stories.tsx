@@ -3,13 +3,15 @@ import { storiesOf } from '@storybook/react-native'
 import Constants from 'expo-constants'
 import React from 'react'
 import { Image, Text as PureText, View } from 'react-native'
+import { Provider } from 'react-redux'
 import { Text } from '../../components/common/withCustomFont'
 import Preview from '../../components/Preview'
+import { Bullet } from '../../components/Preview/markdown/listBlock'
 import textStyles from '../../theme/textStyles'
-
-const Bullet = () => {
-  return (<Text>・</Text>)
-}
+import themeColors from '../../theme/themeColors'
+import getMockStore from '../utils/getMockStore'
+import utilStyles from '../utils/styles'
+import ThemeWrapper from '../utils/ThemeWrapper'
 
 const imageSUrl = 'https://picsum.photos/id/10/50'
 const imageMUrl = 'https://picsum.photos/id/1000/200'
@@ -21,10 +23,9 @@ const svgUrl = 'https://img.shields.io/badge/license-MIT-blue.svg'
 const svgMarkdown = `![svg](${svgUrl})`
 const linkUrl = 'https://google.com'
 
-storiesOf('Preview', module)
-  .add('Preview', () =>
-    <Preview children={(Constants.manifest?.extra?.INITIAL_DOCUMENTS?.[0]?.content as string)} />
-  )
+const mockStore = getMockStore()
+
+storiesOf('Preview test', module)
   .add('Preview - input text', () =>
     <>{(Constants.manifest?.extra?.INITIAL_DOCUMENTS?.[0]?.content as string).split('\n').map((line, i) =>
       <Text key={i}>{line}</Text>
@@ -106,6 +107,22 @@ storiesOf('Preview', module)
       <Image source={{uri: imageSUrl}} style={{width: 50, height: 50}} />
       <>test</>
     </PureText>
+  )
+
+storiesOf('Preview', module)
+  .addDecorator(story =>
+    <Provider store={mockStore}>
+      <ThemeWrapper isDark={boolean('dark mode', false)}>
+        {colorScheme =>
+          <View style={[utilStyles.fullscreen, themeColors[colorScheme].editorBg]}>
+            <>{story()}</>
+          </View>
+        }
+      </ThemeWrapper>
+    </Provider>
+  )
+  .add('Preview', () =>
+    <Preview children={(Constants.manifest?.extra?.INITIAL_DOCUMENTS?.[0]?.content as string)} />
   )
   // This already has some trouble with displaying inline image on iOS and android
   .add('Preview - Inline Image test', () =>
