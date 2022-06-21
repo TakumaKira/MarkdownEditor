@@ -1,20 +1,21 @@
 import { storiesOf } from '@storybook/react-native';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { Provider } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
 import SideBar from '../../components/SideBar';
 import { Document } from '../../store/slices/document';
 import themeColors from '../../theme/themeColors';
+import { LONG_TITLE } from '../utils/constants';
 import getMockStore from '../utils/getMockStore';
+import utilStyles from '../utils/styles';
 import ThemeWrapper from '../utils/ThemeWrapper';
 
 const mockStore = getMockStore()
 
-const LONG_TITLE = 'Really really really very very very long long long title.md'
 const documentWithLongTitle = (): Document => ({
   createdAt: '2022-04-01T00:00:00.000Z',
   lastUpdatedAt: '2022-04-01T00:00:00.000Z',
-  name: LONG_TITLE,
+  name: LONG_TITLE + '.md',
   content: '',
   id: uuidv4(),
 })
@@ -40,19 +41,12 @@ const mockStoreWithManyDocumentsWithLongTitle = getMockStore({
   },
 })
 
-const styles = StyleSheet.create({
-  fullscreen: {
-    height: '100%',
-    width: '100%',
-  },
-})
-
 storiesOf('SideBar', module)
   .add('to Storybook', () =>
     <Provider store={mockStore}>
       <ThemeWrapper>
         {colorScheme =>
-          <View style={[styles.fullscreen, themeColors[colorScheme].editorBg]}>
+          <View style={[utilStyles.fullscreen, themeColors[colorScheme].editorBg]}>
             <SideBar />
           </View>
         }
@@ -63,7 +57,7 @@ storiesOf('SideBar', module)
     <Provider store={mockStoreWithManyDocumentsWithLongTitle}>
       <ThemeWrapper>
         {colorScheme =>
-          <View style={[styles.fullscreen, themeColors[colorScheme].editorBg]}>
+          <View style={[utilStyles.fullscreen, themeColors[colorScheme].editorBg]}>
             <SideBar />
           </View>
         }
