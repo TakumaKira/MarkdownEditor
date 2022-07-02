@@ -1,6 +1,7 @@
 import React from 'react';
-import { Animated, StatusBar, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Animated, StatusBar, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import useWindowDimensions from '../hooks/useWindowDimensions';
 import MainView from './MainView';
 import SideBar, { SIDEBAR_WIDTH } from './SideBar';
 

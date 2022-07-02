@@ -1,5 +1,6 @@
 import React, { Dispatch, SetStateAction } from 'react'
-import { useWindowDimensions, View } from 'react-native'
+import { View } from 'react-native'
+import useWindowDimensions from '../hooks/useWindowDimensions'
 import EditorView from './EditorView'
 import TopBar, { TOP_BAR_HEIGHT } from './TopBar'
 

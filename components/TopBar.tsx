@@ -1,6 +1,6 @@
 import Constants from 'expo-constants'
 import React, { Dispatch, SetStateAction } from 'react'
-import { Animated, Platform, StyleSheet, TouchableOpacity, useWindowDimensions, View } from 'react-native'
+import { Animated, Platform, StyleSheet, View } from 'react-native'
 import CloseIcon from '../assets/icon-close.svg'
 import DeleteIcon from '../assets/icon-delete.svg'
 import DocumentIcon from '../assets/icon-document.svg'
@@ -8,6 +8,7 @@ import HamburgerIcon from '../assets/icon-menu.svg'
 import SaveIcon from '../assets/icon-save.svg'
 import { ConfirmationState, useInputContext } from '../contexts/inputContext'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
+import useWindowDimensions from '../hooks/useWindowDimensions'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { saveDocument, selectSelectedDocument } from '../store/slices/document'
 import { selectColorScheme } from '../store/slices/theme'
@@ -33,9 +34,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexGrow: 1,
-    /** Use 2 lines below to check how input layout works */
-    // borderWidth: 1,
-    // borderColor: 'red',
+  },
+  /** For checking how input layout works on Storybook */
+  leftContainerOutline: {
+    borderWidth: 1,
+    borderColor: 'red',
   },
   menuButton: {
     height: TOP_BAR_HEIGHT,
@@ -59,9 +62,11 @@ const styles = StyleSheet.create({
   },
   textsContainer: {
     marginLeft: 17,
-    /** Use 2 lines below to check how input layout works */
-    // borderWidth: 1,
-    // borderColor: 'yellow',
+  },
+  /** For checking how input layout works on Storybook */
+  textsContainerOutline: {
+    borderWidth: 1,
+    borderColor: 'yellow',
   },
   documentTitleInput: {
     marginTop: 3,
@@ -106,19 +111,21 @@ const styles = StyleSheet.create({
   },
 })
 
-const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showSidebar: boolean}) => {
+const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showSidebar: boolean, checkLayout?: boolean, mockWindowWidth?: number}) => {
   const {
     setShowSidebar,
     showSidebar,
+    checkLayout,
+    mockWindowWidth,
   } = props
 
   const {titleInput, mainInput, setConfirmationState} = useInputContext()
   const dispatch = useAppDispatch()
-  const mediaType = useMediaquery()
+  const mediaType = useMediaquery({width: mockWindowWidth})
 
   return (
     <View style={styles.container}>
-      <View style={styles.leftContainer}>
+      <View style={[styles.leftContainer, checkLayout ? styles.leftContainerOutline : undefined]}>
         <MenuButton toggle={() => setShowSidebar(value => !value)} isOpen={showSidebar} />
         {mediaType === MediaType.DESKTOP &&
           <>
@@ -126,11 +133,11 @@ const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showS
             <View style={styles.border} />
           </>
         }
-        <DocumentTitle />
+        <DocumentTitle checkLayout={checkLayout} mockWindowWidth={mockWindowWidth} />
       </View>
       <View style={styles.rightContainer}>
         <DeleteButton onPress={() => setConfirmationState({state: ConfirmationState.DELETE})} />
-        <SaveButton onPress={() => dispatch(saveDocument({titleInput, mainInput}))} />
+        <SaveButton onPress={() => dispatch(saveDocument({titleInput, mainInput}))} mockWindowWidth={mockWindowWidth} />
       </View>
     </View>
   )
@@ -153,7 +160,12 @@ const MenuButton = (props: {toggle: () => void, isOpen: boolean}) => {
 
 const BORDER_BOTTOM_WIDTH_ANIM_DURATION = 200
 
-const DocumentTitle = () => {
+const DocumentTitle = (props: {checkLayout?: boolean, mockWindowWidth?: number}) => {
+  const {
+    checkLayout,
+    mockWindowWidth,
+  } = props
+
   const selectedDocument = useAppSelector(selectSelectedDocument)
   React.useEffect(() => {
     if (selectedDocument) {
@@ -162,6 +174,7 @@ const DocumentTitle = () => {
   }, [selectedDocument])
 
   const {titleInput, setTitleInput} = useInputContext()
+  // TODO: Needs tests
   const addExtension = () => {
     if (titleInput.replace(/\s*/, '') === '') {
       setTitleInput(Constants.manifest?.extra?.NEW_DOCUMENT_TITLE)
@@ -187,8 +200,8 @@ const DocumentTitle = () => {
     onFocus ? focusAnim() : blurAnim()
   }, [onFocus])
 
-  const mediaType = useMediaquery()
-  const {width: windowWidth} = useWindowDimensions()
+  const mediaType = useMediaquery({width: mockWindowWidth})
+  const {width: windowWidth} = useWindowDimensions({width: mockWindowWidth})
   const INPUT_MAX_WIDTH = 272
   const inputWidth = React.useMemo(() => Math.min(windowWidth - (mediaType !== MediaType.MOBILE ? 355 : 255), INPUT_MAX_WIDTH), [windowWidth])
 
@@ -223,7 +236,7 @@ const DocumentTitle = () => {
       <SvgWrapper>
         <DocumentIcon />
       </SvgWrapper>
-      <View style={styles.textsContainer}>
+      <View style={[styles.textsContainer, checkLayout ? styles.textsContainerOutline : undefined]}>
         {mediaType !== MediaType.MOBILE && <Text style={[textStyles.bodyM, themeColors[colorScheme].documentTitleLabel]}>Document Name</Text>}
         <TextInput
           style={[styles.documentTitleInput, textStyles.headingM, {width: inputWidth}]}
@@ -253,12 +266,13 @@ const DeleteButton = (props: {onPress: () => void}) => {
   )
 }
 
-const SaveButton = (props: {onPress: () => void}) => {
+const SaveButton = (props: {onPress: () => void, mockWindowWidth?: number}) => {
   const {
     onPress,
+    mockWindowWidth,
   } = props
 
-  const mediaType = useMediaquery()
+  const mediaType = useMediaquery({width: mockWindowWidth})
 
   return (
     <ButtonWithHoverColorAnimation onPress={onPress} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={styles.saveButton}>
