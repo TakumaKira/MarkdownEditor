@@ -1,6 +1,7 @@
 import AppLoading from 'expo-app-loading'
 import { FontSource, loadAsync } from 'expo-font'
 import React from 'react'
+import { Text, TextInput, TextInputProps, TextProps } from 'react-native'
 import fonts, { FontValues } from '../../../theme/fonts'
 
 const customFonts = {
@@ -14,7 +15,7 @@ const customFonts = {
   [fonts.commissionerBold]: require('../../../assets/fonts/Commissioner-Bold.ttf'),
 } as Record<FontValues, FontSource>
 
-const withCustomFont = (Component: any) => (props?: any) => { // TODO: Restrict type
+const withCustomFont = (Component: React.ComponentFactory<TextProps, Text> | React.ComponentFactory<TextInputProps, TextInput>) => (props?: TextProps | TextInputProps) => { // TODO: Better type annotation
   const [fontsLoaded, setFontsLoaded] = React.useState(false)
 
   React.useEffect(() => {
@@ -23,7 +24,7 @@ const withCustomFont = (Component: any) => (props?: any) => { // TODO: Restrict 
       if (isMounted) setFontsLoaded(true)
     })
     return () => {isMounted = false}
-  }, [Component, props])
+  }, [])
 
   if (!fontsLoaded) {
     return <AppLoading />
