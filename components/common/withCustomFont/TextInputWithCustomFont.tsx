@@ -9,5 +9,4 @@ const TextInputWithCustomFont = (props: TextInputProps) => {
     <WithCustomFont {...props} />
   )
 }
-
 export default TextInputWithCustomFont

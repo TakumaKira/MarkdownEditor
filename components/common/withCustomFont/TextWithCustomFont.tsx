@@ -9,5 +9,4 @@ const TextWithCustomFont = (props: TextProps) => {
     <WithCustomFont {...props} />
   )
 }
-
 export default TextWithCustomFont
