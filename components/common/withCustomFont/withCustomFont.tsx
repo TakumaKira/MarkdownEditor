@@ -1,6 +1,7 @@
 import AppLoading from 'expo-app-loading'
 import { FontSource, loadAsync } from 'expo-font'
 import React from 'react'
+import { Text, TextInput, TextInputProps, TextProps } from 'react-native'
 import fonts, { FontValues } from '../../../theme/fonts'
 
 const customFonts = {
@@ -14,24 +15,23 @@ const customFonts = {
   [fonts.commissionerBold]: require('../../../assets/fonts/Commissioner-Bold.ttf'),
 } as Record<FontValues, FontSource>
 
-const withCustomFont = (Component: any) => (props?: any) => { // TODO: Restrict type
-  const [fontsLoaded, setFontsLoaded] = React.useState(false)
+const withCustomFont = (Component: React.ComponentFactory<TextProps, Text> | React.ComponentFactory<TextInputProps, TextInput>) => {
+  return (props?: TextProps | TextInputProps) => { // TODO: Better type annotation
+    const [fontsLoaded, setFontsLoaded] = React.useState(false)
 
-  React.useEffect(() => {
-    let isMounted = true
-    loadAsync(customFonts).then(() => {
-      if (isMounted) setFontsLoaded(true)
-    })
-    return () => {isMounted = false}
-  }, [Component, props])
+    React.useEffect(() => {
+      let isMounted = true
+      loadAsync(customFonts).then(() => {
+        if (isMounted) setFontsLoaded(true)
+      })
+      return () => {isMounted = false}
+    }, [])
 
-  if (!fontsLoaded) {
-    return <AppLoading />
+    if (!fontsLoaded) {
+      return <AppLoading />
+    }
+
+    return <Component {...props} />
   }
-
-  return (
-    <Component {...props} />
-  )
 }
-
 export default withCustomFont
