@@ -1,3 +1,4 @@
+import AppLoading from 'expo-app-loading'
 import { FontSource, loadAsync } from 'expo-font'
 import React from 'react'
 import { Text, TextInput, TextInputProps, TextProps } from 'react-native'
@@ -16,13 +17,21 @@ const customFonts = {
 
 const withCustomFont = (Component: React.ComponentFactory<TextProps, Text> | React.ComponentFactory<TextInputProps, TextInput>) => {
   return (props?: TextProps | TextInputProps) => { // TODO: Better type annotation
+    const [fontsLoaded, setFontsLoaded] = React.useState(false)
+
     React.useEffect(() => {
-      loadAsync(customFonts)
+      let isMounted = true
+      loadAsync(customFonts).then(() => {
+        if (isMounted) setFontsLoaded(true)
+      })
+      return () => {isMounted = false}
     }, [])
 
-    return (
-      <Component {...props} />
-    )
+    if (!fontsLoaded) {
+      return <AppLoading />
+    }
+
+    return <Component {...props} />
   }
 }
 export default withCustomFont
