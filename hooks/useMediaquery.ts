@@ -1,6 +1,6 @@
 import Constants from 'expo-constants'
 import React from "react"
-import { useWindowDimensions } from "react-native"
+import useWindowDimensions from './useWindowDimensions'
 
 export enum MediaType {
   MOBILE = 'MOBILE',
@@ -8,8 +8,8 @@ export enum MediaType {
   DESKTOP = 'DESKTOP',
 }
 
-const useMediaquery = () => {
-  const windowWidth = useWindowDimensions().width
+const useMediaquery = (mockDimensions?: Parameters<typeof useWindowDimensions>[0]) => {
+  const {width: windowWidth} = useWindowDimensions(mockDimensions) // DO NOT CALL ANY HOOKS CONDITIONALLY!!
   const mediaType = React.useMemo(() => {
     const {MOBILE_TABLET, TABLET_DESKTOP} = Constants.manifest?.extra?.breakpoints
     if (windowWidth < MOBILE_TABLET) {
@@ -22,5 +22,4 @@ const useMediaquery = () => {
   }, [windowWidth])
   return mediaType
 }
-
 export default useMediaquery

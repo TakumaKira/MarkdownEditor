@@ -140,6 +140,14 @@ const ListBlockMarkdowns: ListBlockMarkdownTypes[] = [
   Quote,
 ]
 
+export const Bullet = () => {
+  return (
+    <View style={[listStyles.itemHeaderContainer, listStyles.bulletContainer]}>
+      <View style={listStyles.bullet} />
+    </View>
+  )
+}
+
 const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExoticComponent<any>} = {
   OrderedList: React.memo((props: {children: string[]}) => {
     const getNumber = (line: string): number => {
@@ -180,13 +188,6 @@ const Block: {[key in 'OrderedList' | 'UnorderedList' | 'Quote']: React.MemoExot
   }, (prevProps, nextProps) => JSON.stringify(prevProps.children) === JSON.stringify(nextProps.children)),
   UnorderedList: React.memo((props: {children: string[]}) => {
     const colorScheme = useAppSelector(selectColorScheme)
-    const Bullet = React.memo(() => {
-      return (
-        <View style={[listStyles.itemHeaderContainer, listStyles.bulletContainer]}>
-          <View style={listStyles.bullet} />
-        </View>
-      )
-    })
     return (
       <View style={textStyles.indent}>
         {props.children.map((line, i) =>
