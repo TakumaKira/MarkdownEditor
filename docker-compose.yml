@@ -1,0 +1,28 @@
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - 7007:7007
+      - 19000:19000
+      - 19002:19002
+      - 19006:19006
+    env_file: ./frontend/.env
+    command: yarn start
+  api:
+    build: ./api
+    ports:
+      - 19007:19007
+  db:
+    image: mysql:8.0.29
+    restart: always
+    environment:
+      MYSQL_DATABASE: markdown-editor
+      MYSQL_ROOT_PASSWORD: admin
+    ports:
+      - 3306:3306
+    volumes:
+      - db:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+volumes:
+  db:
+    driver: local
