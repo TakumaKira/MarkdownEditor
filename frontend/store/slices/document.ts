@@ -5,11 +5,11 @@ import { getData, storeData } from '../../helpers/asyncStorage'
 import { sortDocumentsFromNewest } from '../../helpers/functions'
 
 export interface Document {
-  createdAt: string
-  lastUpdatedAt: string
+  id: string
   name: string
   content: string
-  id: string
+  createdAt: string
+  lastUpdatedAt: string
 }
 export interface DocumentState {
   documentList: Document[]
@@ -17,11 +17,11 @@ export interface DocumentState {
 }
 
 const generateNewDocument = (): Document => ({
-  createdAt: new Date().toISOString(),
-  lastUpdatedAt: new Date().toISOString(),
+  id: uuidv4(),
   name: Constants.manifest?.extra?.NEW_DOCUMENT_TITLE,
   content: '',
-  id: uuidv4(),
+  createdAt: new Date().toISOString(),
+  lastUpdatedAt: new Date().toISOString(),
 })
 
 const generateInitialDocuments = (): Document[] => {

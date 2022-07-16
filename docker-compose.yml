@@ -16,7 +16,7 @@ services:
     image: mysql:8.0.29
     restart: always
     environment:
-      MYSQL_DATABASE: markdown-editor
+      MYSQL_DATABASE: markdown_editor
       MYSQL_ROOT_PASSWORD: admin
     ports:
       - 3306:3306
