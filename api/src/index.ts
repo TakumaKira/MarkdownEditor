@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
 import express from 'express'
-import mysql from 'mysql'
+import mysql from 'mysql2'
 
 dotenv.config()
 
