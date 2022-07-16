@@ -9,9 +9,12 @@ services:
     env_file: ./frontend/.env
     command: yarn start
   api:
+    depends_on:
+      - "db"
     build: ./api
     ports:
       - 19007:19007
+    command: sh -c './wait-for db:3306 -- yarn start'
   db:
     image: mysql:8.0.29
     restart: always

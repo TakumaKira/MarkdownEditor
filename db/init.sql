@@ -32,6 +32,29 @@ END
 $$
 
 DELIMITER $$
+CREATE PROCEDURE get_documents (
+    p_user_id INT
+)
+BEGIN
+    SELECT *
+    FROM documents
+    WHERE user_id = p_user_id;
+END
+$$
+
+DELIMITER $$
+CREATE PROCEDURE get_document (
+    p_id CHAR(36) CHARACTER SET ascii,
+    p_user_id INT
+)
+BEGIN
+    SELECT *
+    FROM documents
+    WHERE user_id = p_user_id AND id = p_id;
+END
+$$
+
+DELIMITER $$
 CREATE PROCEDURE create_document (
 	p_id CHAR(36) CHARACTER SET ascii,
 	p_user_id INT,
@@ -88,6 +111,15 @@ $$
 
 CALL create_user('John Doe');
 CALL create_user('Jane Doe');
+
+-- CALL get_documents (
+-- 	1
+-- );
+
+-- CALL get_document (
+-- 	'1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed',
+-- 	1
+-- );
 
 -- CALL create_document (
 -- 	'1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed',

@@ -6,5 +6,3 @@ RUN yarn
 COPY . .
 
 EXPOSE 19007
-
-CMD ["yarn", "start"]
