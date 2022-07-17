@@ -1,3 +1,8 @@
+x-common-variables: &common-variables
+  MYSQL_DATABASE: markdown_editor
+  MYSQL_DATABASE_USERNAME_FOR_APP: app
+  MYSQL_DATABASE_PASSWORD_FOR_APP:
+
 services:
   frontend:
     build: ./frontend
@@ -6,26 +11,29 @@ services:
       - 19000:19000
       - 19002:19002
       - 19006:19006
-    env_file: ./frontend/.env
+    env_file:
+      - ./frontend/.env
     command: yarn start
   api:
     depends_on:
       - "db"
     build: ./api
+    environment:
+      <<: *common-variables
+      PORT: 19007
     ports:
       - 19007:19007
     command: sh -c './wait-for db:3306 -- yarn start'
   db:
     image: mysql:8.0.29
-    restart: always
-    environment:
-      MYSQL_DATABASE: markdown_editor
-      MYSQL_ROOT_PASSWORD: admin
+    env_file:
+      - ./db/.env
+    environment: *common-variables
     ports:
       - 3306:3306
     volumes:
       - db:/var/lib/mysql
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db/init:/docker-entrypoint-initdb.d
 volumes:
   db:
     driver: local

@@ -1,27 +1,24 @@
 import dotenv from 'dotenv'
 import express from 'express'
-import mysql from 'mysql2'
+import startup from './startup'
+import query from './db/query'
 
 dotenv.config()
-
 const app = express()
 const port = process.env.PORT
-const connection = mysql.createConnection({
-  host     : 'db',
-  user     : 'root',
-  password : 'admin',
-  database : 'markdown_editor'
-})
-connection.connect()
-connection.query('CALL get_documents(1)', (error, results, fields) => {
-  console.log(error, results, fields)
-})
-connection.end()
+startup(app)
 
-app.get('/', (req, res) => {
-  res.send('Express + TypeScript Server');
-})
+query([
+  ['CALL get_documents(1)', (error, results, fields) => {
+    if (error) {
+      console.log(error)
+    } else {
+      console.log(results)
+    }
+  }],
+])
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`⚡️[server]: Server is running at https://localhost:${port}`);
 })
+export default server
