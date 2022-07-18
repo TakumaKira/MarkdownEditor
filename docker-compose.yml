@@ -23,7 +23,7 @@ services:
       PORT: 19007
     ports:
       - 19007:19007
-    command: sh -c './wait-for db:3306 -- yarn start'
+    command: sh -c ./docker-entrypoint.sh
   db:
     image: mysql:8.0.29
     env_file:
