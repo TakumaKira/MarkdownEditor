@@ -3,7 +3,7 @@ USE markdown_editor;
 CREATE TABLE users (
 	id INT NOT NULL auto_increment PRIMARY KEY,
     name VARCHAR(50) NOT NULL unique,
-    password BINARY(60) NOT NULL
+    password CHAR(60) BINARY NOT NULL
 );
 
 CREATE TABLE documents (
@@ -17,9 +17,20 @@ CREATE TABLE documents (
 );
 
 DELIMITER $$
+CREATE PROCEDURE get_user (
+	p_name VARCHAR(50)
+)
+BEGIN
+	SELECT *
+    FROM users
+    WHERE name = p_name;
+END
+$$
+
+DELIMITER $$
 CREATE PROCEDURE create_user (
 	p_name VARCHAR(50),
-    p_password BINARY(60)
+    p_password CHAR(60)
 )
 BEGIN
 	INSERT INTO users (
