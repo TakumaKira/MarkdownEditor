@@ -21,7 +21,7 @@ router.post('/', async (req, res) => {
     res.send(token)
   } catch (error) {
     console.error(error)
-    return res.status(400).send('Something went wrong.')
+    return res.status(500).send('Something went wrong.')
   }
 })
 export default router
