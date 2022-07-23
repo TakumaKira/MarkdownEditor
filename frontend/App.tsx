@@ -12,10 +12,11 @@ const wsPort = Number(Constants.manifest?.extra?.wsPort)
 if (!wsPort) {
   throw new Error('WS_PORT is not defined.')
 }
-const socket = io(`ws://localhost:${wsPort}`)
-socket.on('hello', arg => {
+const TOKEN = 'needs_valid_token_here'
+const socket = io(`ws://localhost:${wsPort}`, {auth: {token: TOKEN}})
+
+socket.on('documents_updated', arg => {
   console.log(arg)
 })
-socket.emit('howdy', 'stranger')
 
 export default Constants.manifest?.extra?.loadStorybook ? StorybookUI : App

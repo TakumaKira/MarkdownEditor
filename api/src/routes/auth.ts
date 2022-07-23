@@ -4,9 +4,8 @@ import jwt from 'jsonwebtoken'
 import { RowDataPacket } from 'mysql2/promise'
 import getConnection from '../db/getConnection'
 
-const router = Router()
-
-router.post('/', async (req, res) => {
+const authApiRouter = Router()
+authApiRouter.post('/', async (req, res) => {
   try {
     const connection = await getConnection()
     const [rows, fields] = await connection.execute<RowDataPacket[][]>(`CALL get_user('${req.body.name}')`)
@@ -21,10 +20,10 @@ router.post('/', async (req, res) => {
     res.send(token)
   } catch (error) {
     console.error(error)
-    return res.status(500).send('Something went wrong.')
+    res.status(500).send('Something went wrong.')
   }
 })
-export default router
+export default authApiRouter
 
 function generateAuthToken(id: number, name: string): string {
   if (!process.env.JWT_SECRET_KEY) throw new Error('JWT_SECRET_KEY is not defined.')

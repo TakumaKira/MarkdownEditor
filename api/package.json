@@ -6,7 +6,7 @@
     "build": "npx tsc",
     "start": "node dist/index.js",
     "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/index.js\"",
-    "create-user": "node dist/create-user.js"
+    "create-user": "node dist/db/create-user.js"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",

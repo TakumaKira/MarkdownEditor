@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt'
 import dotenv from 'dotenv'
-import getConnection from './db/getConnection'
+import getConnection from './getConnection'
 
 dotenv.config()
 

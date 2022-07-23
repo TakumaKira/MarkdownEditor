@@ -1,11 +1,17 @@
 import { Router } from 'express'
-import auth from '../middleware/auth'
+import { wsServer } from '..'
+import { authApi } from '../middleware/auth'
 
-const router = Router()
+const documentsRouter = Router()
 
-router.get('/', auth, async (req: any, res) => {
+documentsRouter.get('/', authApi, async (req, res) => {
   console.log(req.user)
   res.send('documents')
 })
 
-export default router
+documentsRouter.post('/', authApi, async (req, res) => {
+  wsServer.to(req.user.id).emit('documents_updated', 'now')
+  res.send('ok')
+})
+
+export default documentsRouter

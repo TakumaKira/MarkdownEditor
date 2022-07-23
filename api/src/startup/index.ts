@@ -1,7 +1,11 @@
 import { Express } from 'express'
-import routes from './routes'
+import { Server } from "socket.io"
+import { apiRoutes, wsRoutes } from './routes'
 
-const startup = (app: Express) => {
-  routes(app)
+const setupApi = (express: Express) => {
+  apiRoutes(express)
 }
-export default startup
+const setupWs = (wsServer: Server) => {
+  wsRoutes(wsServer)
+}
+export { setupApi, setupWs }

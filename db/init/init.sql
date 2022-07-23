@@ -48,12 +48,19 @@ $$
 
 DELIMITER $$
 CREATE PROCEDURE get_documents (
-    p_user_id INT
+    p_user_id INT,
+    p_after DATETIME
 )
 BEGIN
-    SELECT *
-    FROM documents
-    WHERE user_id = p_user_id;
+	IF p_after IS NULL THEN
+		SELECT *
+		FROM documents
+		WHERE user_id = p_user_id;
+    ELSE
+		SELECT *
+		FROM documents
+		WHERE user_id = p_user_id AND updated_at > p_after;
+	END IF;
 END
 $$
 
@@ -125,7 +132,13 @@ END
 $$
 
 -- CALL get_documents (
--- 	1
+-- 	1,
+--     NULL
+-- );
+
+-- CALL get_documents (
+-- 	1,
+--     "2022-07-23 09:38:06"
 -- );
 
 -- CALL get_document (

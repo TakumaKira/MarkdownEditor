@@ -1,9 +1,13 @@
 import { RequestHandler } from 'express';
-import jwt from 'jsonwebtoken';
+import { Socket } from 'socket.io';
+import { ExtendedError } from 'socket.io/dist/namespace';
+import decode from '../helper/decode';
 
-const auth: RequestHandler = (req: any, res, next) => {
-  const token = req.header("x-auth-token");
-  if (!token) return res.status(401).send("Access denied. No token provided.");
+const authApi: RequestHandler = (req, res, next) => {
+  const token = req.header('x-auth-token');
+  if (!token) {
+    return res.status(401).send('Access denied. No token provided.')
+  }
 
   if (!process.env.JWT_SECRET_KEY) {
     console.error('JWT_SECRET_KEY is not defined.')
@@ -11,12 +15,31 @@ const auth: RequestHandler = (req: any, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY)
-    req.user = decoded
+    req.user = decode(token, process.env.JWT_SECRET_KEY)
     next()
   } catch (ex) {
     console.error(ex)
-    res.status(400).send("Invalid token.")
+    res.status(400).send('Invalid token.')
   }
 }
-export default auth
+const authWs = (socket: Socket, next: (err?: ExtendedError) => void): void => {
+  const token = socket.handshake.auth.token
+  if (!token) {
+    return next(new Error('Access denied. No token provided.'))
+  }
+
+  if (!process.env.JWT_SECRET_KEY) {
+    console.error('JWT_SECRET_KEY is not defined.')
+    return next(new Error('Something went wrong.'))
+  }
+
+  try {
+    socket.user = decode(token, process.env.JWT_SECRET_KEY)
+    socket.join(socket.user.id)
+    next()
+  } catch (ex) {
+    console.error(ex)
+    next(new Error('Invalid token.'))
+  }
+}
+export { authApi, authWs }
