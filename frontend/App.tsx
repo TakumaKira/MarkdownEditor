@@ -12,7 +12,7 @@ const wsPort = Number(Constants.manifest?.extra?.wsPort)
 if (!wsPort) {
   throw new Error('WS_PORT is not defined.')
 }
-const TOKEN = 'needs_valid_token_here'
+const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6IkpvaG5Eb2UiLCJpYXQiOjE2NTgyNDE0MTN9.zVQ2f1UWCS8B0UxDBscc9m81YS1WO1CTrmbt4MsPa0Y'
 const socket = io(`ws://localhost:${wsPort}`, {auth: {token: TOKEN}})
 
 socket.on('documents_updated', arg => {

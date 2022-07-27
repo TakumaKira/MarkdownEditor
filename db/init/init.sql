@@ -9,13 +9,15 @@ CREATE TABLE users (
 CREATE TABLE documents (
 	id CHAR(36) CHARACTER SET ascii NOT NULL PRIMARY KEY,
     user_id INT NOT NULL,
-    name VARCHAR(50) NOT NULL,
+    name VARCHAR(50),
     content VARCHAR(20000) CHARACTER SET UTF8MB3,
-    created_at DATETIME NOT NULL DEFAULT NOW(),
-    updated_at DATETIME NOT NULL DEFAULT NOW(),
+    created_at DATETIME,
+    updated_at DATETIME NOT NULL,
+    is_deleted BOOL NOT NULL DEFAULT FALSE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+DROP PROCEDURE IF EXISTS get_user;
 DELIMITER $$
 CREATE PROCEDURE get_user (
 	p_name VARCHAR(50)
@@ -24,9 +26,10 @@ BEGIN
 	SELECT *
     FROM users
     WHERE name = p_name;
-END
-$$
+END $$
+DELIMITER ;
 
+DROP PROCEDURE IF EXISTS create_user;
 DELIMITER $$
 CREATE PROCEDURE create_user (
 	p_name VARCHAR(50),
@@ -43,9 +46,10 @@ BEGIN
         p_name,
         p_password
     );
-END
-$$
+END $$
+DELIMITER ;
 
+DROP PROCEDURE IF EXISTS get_documents;
 DELIMITER $$
 CREATE PROCEDURE get_documents (
     p_user_id INT,
@@ -61,27 +65,19 @@ BEGIN
 		FROM documents
 		WHERE user_id = p_user_id AND updated_at > p_after;
 	END IF;
-END
-$$
+END $$
+DELIMITER ;
 
+DROP PROCEDURE IF EXISTS update_document;
 DELIMITER $$
-CREATE PROCEDURE get_document (
-    p_id CHAR(36) CHARACTER SET ascii,
-    p_user_id INT
-)
-BEGIN
-    SELECT *
-    FROM documents
-    WHERE user_id = p_user_id AND id = p_id;
-END
-$$
-
-DELIMITER $$
-CREATE PROCEDURE create_document (
+CREATE PROCEDURE update_document (
 	p_id CHAR(36) CHARACTER SET ascii,
 	p_user_id INT,
 	p_name VARCHAR(50),
-    p_content VARCHAR(20000) CHARACTER SET UTF8MB3
+    p_content VARCHAR(20000) CHARACTER SET UTF8MB3,
+    p_created_at TIMESTAMP,
+    p_updated_at TIMESTAMP,
+    p_is_deleted BOOL
 )
 BEGIN
 	INSERT INTO documents (
@@ -90,46 +86,26 @@ BEGIN
         name,
         content,
         created_at,
-        updated_at
+        updated_at,
+        is_deleted
     )
     VALUES (
 		p_id,
         p_user_id,
         p_name,
         p_content,
-        DEFAULT,
-        DEFAULT
-    );
-END
-$$
-
-DELIMITER $$
-CREATE PROCEDURE update_document (
-	p_id CHAR(36) CHARACTER SET ascii,
-    p_user_id INT,
-	p_name VARCHAR(50),
-    p_content VARCHAR(20000) CHARACTER SET UTF8MB3
-)
-BEGIN
-	UPDATE documents
-    SET
-		name = p_name,
-        content = p_content,
-        updated_at = NOW()
-	WHERE id = p_id AND user_id = p_user_id;
-END
-$$
-
-DELIMITER $$
-CREATE PROCEDURE delete_document (
-	p_id CHAR(36) CHARACTER SET ascii,
-    p_user_id INT
-)
-BEGIN
-	DELETE FROM documents
-    WHERE id = p_id AND user_id = p_user_id;
-END
-$$
+        p_created_at,
+        p_updated_at,
+        p_is_deleted
+    ) AS new_documents
+    ON DUPLICATE KEY UPDATE
+    name = IF(new_documents.is_deleted = FALSE, new_documents.name, NULL),
+    content = IF(new_documents.is_deleted = FALSE, new_documents.content, NULL),
+    created_at = IF(new_documents.is_deleted = FALSE, documents.created_at, NULL),
+    updated_at = new_documents.updated_at,
+    is_deleted = new_documents.is_deleted;
+END $$
+DELIMITER ;
 
 -- CALL get_documents (
 -- 	1,
@@ -141,26 +117,11 @@ $$
 --     "2022-07-23 09:38:06"
 -- );
 
--- CALL get_document (
--- 	'1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed',
--- 	1
--- );
-
--- CALL create_document (
--- 	'1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed',
---     1,
---     'test title',
---     'test content'
--- );
-
 -- CALL update_document (
 -- 	'1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed',
 --     1,
---     'test title2',
---     'test content2'
--- );
-
--- CALL delete_document (
--- 	'1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed',
---     1
+--     'test title',
+--     'test content',
+--     '2022-07-23 09:38:06',
+--     false
 -- );

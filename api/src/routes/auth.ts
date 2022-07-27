@@ -8,7 +8,9 @@ const authApiRouter = Router()
 authApiRouter.post('/', async (req, res) => {
   try {
     const connection = await getConnection()
-    const [rows, fields] = await connection.execute<RowDataPacket[][]>(`CALL get_user('${req.body.name}')`)
+    const [rows, fields] = await connection.execute<RowDataPacket[][]>(`
+      CALL get_user('${req.body.name}');
+    `)
 
     const user = rows[0][0] as unknown as {id: number, name: string, password: string}
     if (!user) return res.status(400).send('Invalid email or password.')
