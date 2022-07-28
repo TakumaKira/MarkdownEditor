@@ -43,20 +43,8 @@ documentsRouter.post('/', authApi, async (req, res) => {
     toDB.push(...updateFromDevice)
 
     // Push to server.
-    /** TODO: Make name and content encrypted with user's password? */
-    const buildQuery = (document: Document) => `
-      CALL update_document (
-        '${document.id}',
-        ${req.user.id},
-        '${document.name}',
-        '${escapeSingleQuote(document.content)}',
-        '${fromISOStringToTimeStamp(document.createdAt)}',
-        '${fromISOStringToTimeStamp(document.updatedAt)}',
-        ${document.isDeleted}
-      );
-    `
     for (const document of toDB) {
-      const query = buildQuery(document)
+      const query = buildQuery(document, req.user.id)
       // TODO: Confirm with test that every document except the one causing an error will be updated.
       try {
         await connection.execute<RowDataPacket[][]>(query)
@@ -96,6 +84,21 @@ function normalize(document: DocumentFromDB): Document {
     updatedAt: document.updated_at.toISOString(),
     isDeleted: !!document.is_deleted
   }
+}
+
+/** TODO: Make name and content encrypted with user's password? */
+function buildQuery(document: Document, userId: number) {
+  return `
+    CALL update_document (
+      '${document.id}',
+      ${userId},
+      '${document.name}',
+      '${escapeSingleQuote(document.content)}',
+      '${fromISOStringToTimeStamp(document.createdAt)}',
+      '${fromISOStringToTimeStamp(document.updatedAt)}',
+      ${document.isDeleted}
+    );
+  `
 }
 
 export default documentsRouter
