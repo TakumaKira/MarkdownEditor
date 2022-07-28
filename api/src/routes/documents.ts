@@ -44,7 +44,7 @@ documentsRouter.post('/', authApi, async (req, res) => {
 
     // Push to server.
     /** TODO: Make name and content encrypted with user's password? */
-    const makeQuery = (document: Document) => `
+    const buildQuery = (document: Document) => `
       CALL update_document (
         '${document.id}',
         ${req.user.id},
@@ -56,7 +56,14 @@ documentsRouter.post('/', authApi, async (req, res) => {
       );
     `
     for (const document of toDB) {
-      await connection.execute<RowDataPacket[][]>(makeQuery(document))
+      const query = buildQuery(document)
+      // TODO: Confirm with test that every document except the one causing an error will be updated.
+      try {
+        await connection.execute<RowDataPacket[][]>(query)
+      } catch (err) {
+        console.error(err)
+        console.error('The query might cause the error.', query)
+      }
     }
 
     // Push to device.
