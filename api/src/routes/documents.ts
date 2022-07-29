@@ -14,40 +14,46 @@ documentsRouter.post('/', authApi, async (req, res) => {
     const updateFromDevice = requestBody.updated
 
     const connection = await getConnection()
-    let after: string | null = requestBody.deviceLastSynched ? fromISOStringToTimeStamp(requestBody.deviceLastSynched) : null
+    let after: string | null = requestBody.latestUpdatedDocumentFromDBAt ? fromISOStringToTimeStamp(requestBody.latestUpdatedDocumentFromDBAt) : null
     after = after ? `"${after}"` : null
     const [rows, fields] = await connection.execute<RowDataPacket[][]>(`
       CALL get_documents('${req.user.id}', ${after ?? 'NULL'});
     `)
-    const updateFromDB = (rows[0] as DocumentFromDB[]).map(fromDB => normalize(fromDB))
+    const updateFromDatabase = (rows[0] as DocumentFromDB[]).map(fromDB => normalize(fromDB))
 
-    const toDevice: Document[] = []
-    const toDB: Document[] = []
+    const updateToDevice: Document[] = []
+    const updateToDatabase: Document[] = []
 
-    // Find conflicted.
-    updateFromDevice.forEach(fromDevice => {
-      const fromDB = updateFromDB.find(({id}) => id === fromDevice.id)
-      if (fromDB) {
-        // Create document marked conflicted with newer contents.
-        const conflicted = fromDevice.updatedAt > fromDB.updatedAt ? fromDevice : fromDB
-        conflicted.id = uuidv4()
-        conflicted.name = `[Conflicted]: ${conflicted.name}`
-        // Push new document to send pool for server and device.
-        toDevice.push(conflicted)
-        toDB.push(conflicted)
+    // Update newer document of conflicted documents with new id and name, and push to send-back que
+    const conflictedDocumentsId: string[] = []
+    for (const fromDevice of updateFromDevice) {
+      for (const fromDatabase of updateFromDatabase) {
+        if (fromDevice.id === fromDatabase.id) {
+          fromDevice.id = uuidv4()
+          fromDevice.name = `[Conflicted]: ${fromDevice.name}`
+          fromDevice.updatedAt = new Date().toISOString()
+          updateToDevice.push(fromDevice)
+          conflictedDocumentsId.push(fromDevice.id)
+          break
+        }
       }
-    })
+    }
 
     // Push every document to send pool for counterpart.
-    toDevice.push(...updateFromDB)
-    toDB.push(...updateFromDevice)
+    updateToDevice.push(...updateFromDatabase)
+    updateToDatabase.push(...updateFromDevice)
+
+    const uploadedDocumentsId: string[] = []
 
     // Push to server.
-    for (const document of toDB) {
-      const query = buildQuery(document, req.user.id)
-      // TODO: Confirm with test that every document except the one causing an error will be updated.
+    for (const toDatabase of updateToDatabase) {
+      const query = buildUpdateDocumentQuery(toDatabase, req.user.id)
+      // TODO: Test that every document except the one causing an error will be updated.
       try {
         await connection.execute<RowDataPacket[][]>(query)
+        if (!conflictedDocumentsId.includes(toDatabase.id)) {
+          uploadedDocumentsId.push(toDatabase.id)
+        }
       } catch (err) {
         console.error(err)
         console.error('The query might cause the error.', query)
@@ -55,11 +61,16 @@ documentsRouter.post('/', authApi, async (req, res) => {
     }
 
     // Push to device.
-    res.send(toDevice)
+    res.send({fromDB: updateToDevice, uploadedDocumentsId})
 
     // If any error occurs, update time would not be updated, so it will be updated next time.
 
-    wsServer.to(req.user.id).emit('documents_updated', requestBody.deviceLastSynched)
+    // Get user's latest update time from DB.
+    const [rows2, fields2] = await connection.execute<RowDataPacket[][]>(`
+      CALL get_latest_update_time('${req.user.id}');
+    `)
+    const latestUpdatedAt = rows2[0][0].updated_at as Date
+    wsServer.to(req.user.id).emit('documents_updated', latestUpdatedAt.toISOString())
   } catch (error) {
     console.error(error)
     res.status(500).send('Something went wrong.')
@@ -71,7 +82,7 @@ function fromISOStringToTimeStamp(isoString: string): string {
 }
 
 function escapeSingleQuote(string: string): string {
-  // TODO: Check succeeding single quotes cases
+  // TODO: Test succeeding single quotes cases
   return string.replace(/\'/g, '\'\'')
 }
 
@@ -87,7 +98,7 @@ function normalize(document: DocumentFromDB): Document {
 }
 
 /** TODO: Make name and content encrypted with user's password? */
-function buildQuery(document: Document, userId: number) {
+function buildUpdateDocumentQuery(document: Document, userId: number) {
   return `
     CALL update_document (
       '${document.id}',

@@ -107,6 +107,20 @@ BEGIN
 END $$
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS get_latest_update_time;
+DELIMITER $$
+CREATE PROCEDURE get_latest_update_time (
+    p_user_id INT
+)
+BEGIN
+	SELECT updated_at
+	FROM documents
+	WHERE user_id = p_user_id
+    ORDER BY updated_at DESC
+    LIMIT 1;
+END $$
+DELIMITER ;
+
 -- CALL get_documents (
 -- 	1,
 --     NULL
@@ -125,3 +139,5 @@ DELIMITER ;
 --     '2022-07-23 09:38:06',
 --     false
 -- );
+
+-- CALL get_latest_update_time (1);

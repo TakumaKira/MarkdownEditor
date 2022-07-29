@@ -21,5 +21,6 @@ export type Document = {
 }
 export type DocumentsRequest = {
   updated: Document[]
-  deviceLastSynched: string | null
+  /** 2000-01-01T00:00:00.000Z / Need to ask server for documents updated after this time to download, and device should store the newest time of successfully downloaded documents as this property. */
+  latestUpdatedDocumentFromDBAt: string | null
 }
