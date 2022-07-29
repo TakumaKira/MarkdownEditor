@@ -80,30 +80,39 @@ CREATE PROCEDURE update_document (
     p_is_deleted BOOL
 )
 BEGIN
-	INSERT INTO documents (
-		id,
-        user_id,
-        name,
-        content,
-        created_at,
-        updated_at,
-        is_deleted
-    )
-    VALUES (
-		p_id,
-        p_user_id,
-        p_name,
-        p_content,
-        p_created_at,
-        p_updated_at,
-        p_is_deleted
-    ) AS new_documents
-    ON DUPLICATE KEY UPDATE
-    name = IF(new_documents.is_deleted = FALSE, new_documents.name, NULL),
-    content = IF(new_documents.is_deleted = FALSE, new_documents.content, NULL),
-    created_at = IF(new_documents.is_deleted = FALSE, documents.created_at, NULL),
-    updated_at = new_documents.updated_at,
-    is_deleted = new_documents.is_deleted;
+	IF (
+		SELECT user_id
+		FROM documents
+		WHERE id = p_id
+    ) != p_user_id THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "Another user's document is using the same id.";
+        -- TODO: What if this happens?
+	ELSE
+		INSERT INTO documents (
+			id,
+			user_id,
+			name,
+			content,
+			created_at,
+			updated_at,
+			is_deleted
+		)
+		VALUES (
+			p_id,
+			p_user_id,
+			p_name,
+			p_content,
+			p_created_at,
+			p_updated_at,
+			p_is_deleted
+		) AS new_documents
+		ON DUPLICATE KEY UPDATE
+		name = IF(new_documents.is_deleted = FALSE, new_documents.name, NULL),
+		content = IF(new_documents.is_deleted = FALSE, new_documents.content, NULL),
+		created_at = IF(new_documents.is_deleted = FALSE, documents.created_at, NULL),
+		updated_at = new_documents.updated_at,
+		is_deleted = new_documents.is_deleted;
+	END IF;
 END $$
 DELIMITER ;
 
@@ -120,6 +129,8 @@ BEGIN
     LIMIT 1;
 END $$
 DELIMITER ;
+
+-- TODO: Delete test calls below
 
 -- CALL get_documents (
 -- 	1,

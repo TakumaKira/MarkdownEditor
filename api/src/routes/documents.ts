@@ -43,7 +43,7 @@ documentsRouter.post('/', authApi, async (req, res) => {
     updateToDevice.push(...updateFromDatabase)
     updateToDatabase.push(...updateFromDevice)
 
-    const uploadedDocumentsId: string[] = []
+    const uploadedDocumentsIdWithoutConflict: string[] = []
 
     // Push to server.
     for (const toDatabase of updateToDatabase) {
@@ -52,16 +52,21 @@ documentsRouter.post('/', authApi, async (req, res) => {
       try {
         await connection.execute<RowDataPacket[][]>(query)
         if (!conflictedDocumentsId.includes(toDatabase.id)) {
-          uploadedDocumentsId.push(toDatabase.id)
+          uploadedDocumentsIdWithoutConflict.push(toDatabase.id)
         }
       } catch (err) {
         console.error(err)
+        // TODO: What if "Another user's document is using the same id." error returned?
         console.error('The query might cause the error.', query)
       }
     }
 
+    if (updateToDevice.length === 0 && uploadedDocumentsIdWithoutConflict.length === 0) {
+      return res.send('No update for device and database.')
+    }
+
     // Push to device.
-    res.send({fromDB: updateToDevice, uploadedDocumentsId})
+    res.send({fromDB: updateToDevice, uploadedDocumentsId: uploadedDocumentsIdWithoutConflict})
 
     // If any error occurs, update time would not be updated, so it will be updated next time.
 
@@ -69,8 +74,8 @@ documentsRouter.post('/', authApi, async (req, res) => {
     const [rows2, fields2] = await connection.execute<RowDataPacket[][]>(`
       CALL get_latest_update_time('${req.user.id}');
     `)
-    const latestUpdatedAt = rows2[0][0].updated_at as Date
-    wsServer.to(req.user.id).emit('documents_updated', latestUpdatedAt.toISOString())
+    const latestUpdatedAt = (rows2[0][0].updated_at as Date).toISOString()
+    wsServer.to(req.user.id).emit('documents_updated', latestUpdatedAt)
   } catch (error) {
     console.error(error)
     res.status(500).send('Something went wrong.')
