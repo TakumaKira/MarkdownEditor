@@ -1,8 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { CurriedGetDefaultMiddleware } from '@reduxjs/toolkit/dist/getDefaultMiddleware'
+import { apiMiddleware } from './middlewares/api'
 import { asyncStorageMiddleware } from './middlewares/asyncStorage'
-import documentReducer, { DocumentState } from './slices/document'
-import themeReducer, { ThemeState } from './slices/theme'
+import { DocumentState } from './models/document'
+import { ThemeState } from './models/theme'
+import documentReducer from './slices/document'
+import themeReducer from './slices/theme'
 
 export type RootState = {
   document: DocumentState
@@ -12,7 +15,10 @@ export const reducer = {
   document: documentReducer,
   theme: themeReducer,
 }
-export const middleware = (gDM: CurriedGetDefaultMiddleware<RootState>) => gDM().concat(asyncStorageMiddleware)
+export const middleware = (gDM: CurriedGetDefaultMiddleware<RootState>) =>
+  gDM()
+    .concat(asyncStorageMiddleware)
+    .concat(apiMiddleware)
 const store = configureStore({
   reducer,
   middleware,

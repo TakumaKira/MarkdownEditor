@@ -6,7 +6,7 @@ import DocumentIcon from '../assets/icon-document.svg'
 import LightIconHighlight from '../assets/icon-light-mode-highlight.svg'
 import LightIcon from '../assets/icon-light-mode.svg'
 import { ConfirmationState, useInputContext } from '../contexts/inputContext'
-import { sortDocumentsFromNewest } from '../helpers/functions'
+import { sortDocumentsFromNewest } from '../helpers/sortDocuments'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { newDocument, selectDocument } from '../store/slices/document'
@@ -114,10 +114,10 @@ const SideBar = () => {
       <Text style={[styles.myDocuments, textStyles.headingS]}>MY DOCUMENTS</Text>
       <AddButton onPress={() => dispatch(newDocument())} />
       <ScrollView style={styles.documentCardsContainer}>
-        {sortDocumentsFromNewest(documentList).map(({lastUpdatedAt, name, id}, i) =>
+        {sortDocumentsFromNewest(documentList).map(({updatedAt, name, id}, i) =>
           <DocumentCard
             key={id}
-            lastUpdatedAt={lastUpdatedAt}
+            updatedAt={updatedAt}
             name={name}
             style={i === 0 ? undefined : styles.notFirstDocumentCard}
             onPress={() => handlePressDocument(id)}
@@ -141,9 +141,9 @@ const AddButton = (props: {onPress: () => void}) => {
   )
 }
 
-const DocumentCard = (props: {lastUpdatedAt: string, name: string, style?: StyleProp<ViewStyle>, onPress: () => void}) => {
+const DocumentCard = (props: {updatedAt: string, name: string, style?: StyleProp<ViewStyle>, onPress: () => void}) => {
   const {
-    lastUpdatedAt,
+    updatedAt,
     name,
     style,
     onPress,
@@ -157,7 +157,7 @@ const DocumentCard = (props: {lastUpdatedAt: string, name: string, style?: Style
         </SvgWrapper>
       </View>
       <View style={styles.documentCardTextsContainer}>
-        <Text style={[styles.lastUpdatedAtLabel, textStyles.bodyM]}>{formatDate(lastUpdatedAt)}</Text>
+        <Text style={[styles.lastUpdatedAtLabel, textStyles.bodyM]}>{formatDate(updatedAt)}</Text>
         <Text style={[styles.nameLabel, textStyles.headingM]}>{name}</Text>
       </View>
     </TouchableOpacity>

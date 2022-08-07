@@ -19,5 +19,6 @@ export default {
       },
     ],
     STATE_STORAGE_KEY: 'MARKDOWN_EDITOR_STATE',
+    ORIGIN: 'localhost', // TODO: Switch origin with environment variables
   },
 }

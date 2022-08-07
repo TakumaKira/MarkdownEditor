@@ -1,7 +1,8 @@
 import Constants from 'expo-constants'
 import React from "react"
+import { getData } from '../services/asyncStorage'
 import { useAppDispatch, useAppSelector } from "../store/hooks"
-import { deselectDocument, getDocumentStateFromAsyncStorage, selectSelectedDocument } from "../store/slices/document"
+import { deselectDocument, restore, selectSelectedDocument } from "../store/slices/document"
 import { getThemeStateFromAsyncStorage } from '../store/slices/theme'
 
 export type ConfirmationStateProps = {
@@ -25,7 +26,7 @@ type InputContextState = {
   hasEdit: boolean
 }
 
-export const InputContext = React.createContext({} as InputContextState)
+const InputContext = React.createContext({} as InputContextState)
 
 export const InputContextProvider = (props: {children: React.ReactNode}): JSX.Element => {
   const [titleInput, setTitleInput] = React.useState('')
@@ -35,7 +36,10 @@ export const InputContextProvider = (props: {children: React.ReactNode}): JSX.El
   const dispatch = useAppDispatch()
   React.useEffect(() => {
     (async() => {
-      await dispatch(getDocumentStateFromAsyncStorage()).unwrap()
+      const documentState = await getData('document')
+      dispatch(restore(documentState))
+
+      // TODO: Make sure this runs after store initialization(acceptServerResponse) is done.
       tryLoadingInputFromUrlParams()
     })()
     dispatch(getThemeStateFromAsyncStorage())

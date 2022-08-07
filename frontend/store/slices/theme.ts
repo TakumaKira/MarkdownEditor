@@ -1,11 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import { Appearance } from "react-native"
-import { getData, storeData } from "../../helpers/asyncStorage"
-
-export interface ThemeState {
-  deviceColorSchemeIsDark: boolean
-  selectedColorSchemeIsDark: boolean | null
-}
+import { getData, storeData } from "../../services/asyncStorage"
+import { ThemeState } from "../models/theme"
 
 const initialState: ThemeState = {
   /** Appearance.getColorScheme() only gets initial value */

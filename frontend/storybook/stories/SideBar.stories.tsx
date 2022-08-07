@@ -14,7 +14,7 @@ const mockStore = getMockStore()
 
 const documentWithLongTitle = (): Document => ({
   createdAt: '2022-04-01T00:00:00.000Z',
-  lastUpdatedAt: '2022-04-01T00:00:00.000Z',
+  updatedAt: '2022-04-01T00:00:00.000Z',
   name: LONG_TITLE + '.md',
   content: '',
   id: uuidv4(),

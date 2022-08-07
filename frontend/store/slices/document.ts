@@ -1,27 +1,18 @@
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { DocumentsUploadResponse } from '@api/document'
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import Constants from 'expo-constants'
 import { v4 as uuidv4 } from 'uuid'
-import { getData, storeData } from '../../helpers/asyncStorage'
-import { sortDocumentsFromNewest } from '../../helpers/functions'
-
-export interface Document {
-  id: string
-  name: string
-  content: string
-  createdAt: string
-  lastUpdatedAt: string
-}
-export interface DocumentState {
-  documentList: Document[]
-  selectedDocumentId: string | null
-}
+import { sortDocumentsFromNewest } from '../../helpers/sortDocuments'
+import { Document, DocumentState } from '../models/document'
 
 const generateNewDocument = (): Document => ({
   id: uuidv4(),
   name: Constants.manifest?.extra?.NEW_DOCUMENT_TITLE,
   content: '',
   createdAt: new Date().toISOString(),
-  lastUpdatedAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  isDeleted: false,
+  isUploaded: false
 })
 
 const generateInitialDocuments = (): Document[] => {
@@ -35,13 +26,9 @@ const generateInitialDocuments = (): Document[] => {
 
 const initialState: DocumentState = {
   documentList: [],
-  selectedDocumentId: null
+  selectedDocumentId: null,
+  latestUpdatedDocumentFromDBAt: null
 }
-
-export const getDocumentStateFromAsyncStorage = createAsyncThunk(
-  'document/getDocumentStateFromAsyncStorage',
-  async() => getData('document')
-)
 
 const documentSlice = createSlice({
   name: 'document',
@@ -69,7 +56,7 @@ const documentSlice = createSlice({
       if (selectedDocumentIndex !== -1) {
         state.documentList[selectedDocumentIndex].name = action.payload.titleInput
         state.documentList[selectedDocumentIndex].content = action.payload.mainInput
-        state.documentList[selectedDocumentIndex].lastUpdatedAt = new Date().toISOString()
+        state.documentList[selectedDocumentIndex].updatedAt = new Date().toISOString()
       }
     },
     deleteSelectedDocument: state => {
@@ -86,20 +73,52 @@ const documentSlice = createSlice({
       const sorted = sortDocumentsFromNewest(state.documentList)
       state.selectedDocumentId = sorted[0]?.id || null
     },
-  },
-  extraReducers: builder => {
-    builder.addCase(getDocumentStateFromAsyncStorage.fulfilled, (state, action) => {
+    restore: (state, action: PayloadAction<DocumentState | null>) => {
       const restored = action.payload
       if (restored) {
         state.documentList = restored.documentList
         state.selectedDocumentId = restored.selectedDocumentId
       } else {
+        // TODO: How to deal with initial document will be generated as many as user's devices.
         state.documentList = generateInitialDocuments()
         state.selectedDocumentId = state.documentList?.[0].id || null
-        storeData('document', state)
       }
-    })
-  }
+    },
+    acceptServerResponse: (state, action: PayloadAction<DocumentsUploadResponse>) => {
+      const response = action.payload
+
+      let latestUpdatedDocumentFromDBAt: string | null = null
+
+      // Uploaded documents are successfully updated.
+      response.uploadedDocumentsId.forEach(id => {
+        const uploaded = state.documentList.find(({id: d}) => d === id)
+        if (uploaded) {
+          uploaded.isUploaded = true
+          if (latestUpdatedDocumentFromDBAt === null || uploaded.updatedAt > latestUpdatedDocumentFromDBAt) {
+            latestUpdatedDocumentFromDBAt = uploaded.updatedAt
+          }
+        } else {
+          console.error(`Server returned uploaded document id ${id}, but there's no document with that id.`)
+        }
+      })
+
+      // Update local with downloaded documents.
+      response.fromDB.forEach(fromDB => {
+        const localIndex = state.documentList.findIndex(({id}) => fromDB.id === id)
+        if (localIndex === -1) {
+          state.documentList.push({...fromDB, isUploaded: true})
+        } else {
+          state.documentList[localIndex] = {...fromDB, isUploaded: true}
+        }
+        if (latestUpdatedDocumentFromDBAt === null || fromDB.updatedAt > latestUpdatedDocumentFromDBAt) {
+          latestUpdatedDocumentFromDBAt = fromDB.updatedAt
+        }
+      })
+
+      // Update latestUpdatedDocumentFromDBAt.
+      state.latestUpdatedDocumentFromDBAt = latestUpdatedDocumentFromDBAt
+    }
+  },
 })
 
 export const {
@@ -109,6 +128,8 @@ export const {
   saveDocument,
   deleteSelectedDocument,
   selectLatestDocument,
+  restore,
+  acceptServerResponse,
 } = documentSlice.actions
 
 export const selectSelectedDocument = (state: {document: DocumentState}): Document | null =>

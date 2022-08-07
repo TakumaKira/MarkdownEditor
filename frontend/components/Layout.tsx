@@ -1,5 +1,6 @@
 import React from 'react'
 import { confirmationMessages } from '../constants/confirmationMessages'
+import { useAuthContext } from '../contexts/authContext'
 import { ConfirmationState, useInputContext } from '../contexts/inputContext'
 import { useAppDispatch } from '../store/hooks'
 import { deleteSelectedDocument, selectDocument } from '../store/slices/document'
@@ -13,6 +14,9 @@ const Layout = () => {
   const {titleInput, confirmationState, setConfirmationState} = useInputContext()
 
   const dispatch = useAppDispatch()
+
+  // TODO: Set token when signing up or logging in.
+  const {setToken} = useAuthContext()
 
   const handleOk = () => {
     if (confirmationState.state === ConfirmationState.DELETE) {

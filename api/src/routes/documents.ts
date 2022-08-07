@@ -4,13 +4,14 @@ import { v4 as uuidv4 } from 'uuid'
 import { wsServer } from '..'
 import getConnection from '../db/getConnection'
 import { authApi } from '../middleware/auth'
-import { Document, DocumentFromDB, DocumentsRequest } from '../models/document'
+import { Document, DocumentFromDB, DocumentsRequest, DocumentsUploadResponse } from '../models/document'
 
 const documentsRouter = Router()
 
 documentsRouter.post('/', authApi, async (req, res) => {
   try {
     const requestBody: DocumentsRequest = req.body
+    // TODO: Validate request data do not have extra property, especially "isUploaded".
     const updateFromDevice = requestBody.updated
 
     const connection = await getConnection()
@@ -61,15 +62,16 @@ documentsRouter.post('/', authApi, async (req, res) => {
       }
     }
 
-    if (updateToDevice.length === 0 && uploadedDocumentsIdWithoutConflict.length === 0) {
-      return res.send('No update for device and database.')
-    }
-
     // Push to device.
-    res.send({fromDB: updateToDevice, uploadedDocumentsId: uploadedDocumentsIdWithoutConflict})
+    const documentsUploadResponse: DocumentsUploadResponse = {fromDB: updateToDevice, uploadedDocumentsId: uploadedDocumentsIdWithoutConflict}
+    res.send(documentsUploadResponse)
 
     // If any error occurs, update time would not be updated, so it will be updated next time.
 
+    // If there's no update, do not send update notification.
+    if (updateToDevice.length === 0 && uploadedDocumentsIdWithoutConflict.length === 0) {
+      return
+    }
     // Get user's latest update time from DB.
     const [rows2, fields2] = await connection.execute<RowDataPacket[][]>(`
       CALL get_latest_update_time('${req.user.id}');
