@@ -73,6 +73,7 @@ const documentSlice = createSlice({
       const sorted = sortDocumentsFromNewest(state.documentList)
       state.selectedDocumentId = sorted[0]?.id || null
     },
+    /** This reducer cannot be AsyncThunk as it has to dispatch acceptServerResponse using next inside middleware after askServerUpdate(async func). */
     restore: (state, action: PayloadAction<DocumentState | null>) => {
       const restored = action.payload
       if (restored) {
