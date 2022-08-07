@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import { CurriedGetDefaultMiddleware } from '@reduxjs/toolkit/dist/getDefaultMiddleware'
 import { apiMiddleware } from './middlewares/api'
 import { asyncStorageMiddleware } from './middlewares/asyncStorage'
+import { prepareDefaultDocumentsMiddleware } from './middlewares/prepareDefaultDocuments'
 import { DocumentState } from './models/document'
 import { ThemeState } from './models/theme'
 import documentReducer from './slices/document'
@@ -19,6 +20,7 @@ export const middleware = (gDM: CurriedGetDefaultMiddleware<RootState>) =>
   gDM()
     .concat(asyncStorageMiddleware)
     .concat(apiMiddleware)
+    .concat(prepareDefaultDocumentsMiddleware)
 const store = configureStore({
   reducer,
   middleware,

@@ -15,15 +15,6 @@ const generateNewDocument = (): Document => ({
   isUploaded: false
 })
 
-const generateInitialDocuments = (): Document[] => {
-  return Constants.manifest?.extra?.INITIAL_DOCUMENTS?.map((document: {name: string, content: string}) => {
-    const newDocument = generateNewDocument()
-    newDocument.name = document.name
-    newDocument.content = document.content
-    return newDocument
-  })
-}
-
 const initialState: DocumentState = {
   documentList: [],
   selectedDocumentId: null,
@@ -34,6 +25,14 @@ const documentSlice = createSlice({
   name: 'document',
   initialState,
   reducers: {
+    addDocuments: (state, action: PayloadAction<{name: string, content: string}[]>) => {
+      action.payload.forEach(({name, content}) => {
+        const newDocument = generateNewDocument()
+        newDocument.name = name
+        newDocument.content = content
+        state.documentList.push(newDocument)
+      })
+    },
     newDocument: state => {
       const newDocument = generateNewDocument()
       state.documentList.push(newDocument)
@@ -79,14 +78,13 @@ const documentSlice = createSlice({
       if (restored) {
         state.documentList = restored.documentList
         state.selectedDocumentId = restored.selectedDocumentId
-      } else {
-        // TODO: How to deal with initial document will be generated as many as user's devices.
-        state.documentList = generateInitialDocuments()
-        state.selectedDocumentId = state.documentList?.[0].id || null
       }
     },
-    acceptServerResponse: (state, action: PayloadAction<DocumentsUploadResponse>) => {
+    acceptServerResponse: (state, action: PayloadAction<DocumentsUploadResponse | null>) => {
       const response = action.payload
+      if (!response) {
+        return
+      }
 
       let latestUpdatedDocumentFromDBAt: string | null = null
 
@@ -123,6 +121,7 @@ const documentSlice = createSlice({
 })
 
 export const {
+  addDocuments,
   newDocument,
   selectDocument,
   deselectDocument,

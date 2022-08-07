@@ -14,6 +14,8 @@ export const apiMiddleware: Middleware<{}, RootState> = store => next => action 
   ) {
     const documentState = store.getState().document
     askServerUpdate(documentState)
-      .then(response => response && next(acceptServerResponse(response)))
+      .then(response => {
+        next(acceptServerResponse(response))
+      })
   }
 }
