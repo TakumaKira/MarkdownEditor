@@ -4,7 +4,8 @@ import Constants from 'expo-constants'
 import React from "react"
 import { io, Socket } from 'socket.io-client'
 import { askServerUpdate } from '../services/api'
-import { useAppSelector } from '../store/hooks'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { acceptServerResponse } from '../store/slices/document'
 
 // TODO: Implement login/logout
 const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6IkpvaG5Eb2UiLCJpYXQiOjE2NTgyNDE0MTN9.zVQ2f1UWCS8B0UxDBscc9m81YS1WO1CTrmbt4MsPa0Y'
@@ -27,6 +28,7 @@ const AuthContext = React.createContext({} as AuthContextState)
 export const useAuthContext = () => React.useContext(AuthContext)
 export const AuthContextProvider = (props: {children: React.ReactNode}): JSX.Element => {
   const documentState = useAppSelector(state => state.document)
+  const dispatch = useAppDispatch()
 
   const [socket, setSocket] = React.useState<Socket>()
 
@@ -48,16 +50,22 @@ export const AuthContextProvider = (props: {children: React.ReactNode}): JSX.Ele
   const subscribeToUpdate = (token: string) => {
     // TODO: Make this wss
     const socket = io(`ws://${ORIGIN}:${wsPort}`, {auth: {token}})
-    // TODO: Check what happen if token is invalid.
-
-    socket.on('documents_updated', async (updatedAt: string) => {
-      if (documentState.latestUpdatedDocumentFromDBAt! < updatedAt) {
-        askServerUpdate(documentState)
-      }
-    })
-
     setSocket(socket)
   }
+
+  const documentsUpdated = React.useCallback((updatedAt: string) => {
+    if (documentState.latestUpdatedDocumentFromDBAt! < updatedAt) {
+      askServerUpdate(documentState)
+        .then(response => {
+          dispatch(acceptServerResponse(response))
+        })
+    }
+  }, [documentState])
+
+  React.useEffect(() => {
+    socket?.on('documents_updated', documentsUpdated)
+    return () => {socket?.off('documents_updated', documentsUpdated)}
+  }, [socket, documentsUpdated])
 
   return (
     // TODO: Provide removeToken
