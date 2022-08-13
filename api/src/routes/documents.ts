@@ -98,7 +98,7 @@ function normalize(document: DocumentFromDB): Document {
     id: document.id,
     name: document.name,
     content: document.content,
-    createdAt: document.created_at.toISOString(),
+    createdAt: document.created_at?.toISOString() ?? null,
     updatedAt: document.updated_at.toISOString(),
     isDeleted: !!document.is_deleted
   }
@@ -110,9 +110,9 @@ function buildUpdateDocumentQuery(document: Document, userId: number) {
     CALL update_document (
       '${document.id}',
       ${userId},
-      '${document.name}',
-      '${escapeSingleQuote(document.content)}',
-      '${fromISOStringToTimeStamp(document.createdAt)}',
+      ${document.name !== null ? `'${document.name}'` : `NULL`},
+      ${document.content !== null ? `'${escapeSingleQuote(document.content)}'` : `NULL`},
+      ${document.createdAt !== null ? `'${fromISOStringToTimeStamp(document.createdAt)}'` : `NULL`},
       '${fromISOStringToTimeStamp(document.updatedAt)}',
       ${document.isDeleted}
     );

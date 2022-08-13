@@ -10,7 +10,7 @@ import { useInputContext } from '../contexts/inputContext'
 import { sortDocumentsFromNewest } from '../helpers/sortDocuments'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { confirmationStateChanged, newDocument, selectDocument, selectSelectedDocumentHasEdit } from '../store/slices/document'
+import { confirmationStateChanged, newDocument, selectDocument, selectLiveDocumentList, selectSelectedDocumentHasEdit } from '../store/slices/document'
 import { toggleTheme } from '../store/slices/theme'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
 
 const SideBar = () => {
   const mediaType = useMediaquery()
-  const documentList = useAppSelector(state => state.document.documentList)
+  const documentList = useAppSelector(selectLiveDocumentList)
   const dispatch = useAppDispatch()
   const hasEdit = useAppSelector(selectSelectedDocumentHasEdit)
 
@@ -118,7 +118,7 @@ const SideBar = () => {
           <DocumentCard
             key={id}
             updatedAt={updatedAt}
-            name={name}
+            name={name ?? ''}
             style={i === 0 ? undefined : styles.notFirstDocumentCard}
             onPress={() => handlePressDocument(id)}
           />

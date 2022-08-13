@@ -51,15 +51,15 @@ const documentSlice = createSlice({
       const newDocument = generateNewDocument()
       state.documentList.push(newDocument)
       state.documentOnEdit.id = newDocument.id
-      state.documentOnEdit.titleInput = newDocument.name
-      state.documentOnEdit.mainInput = newDocument.content
+      state.documentOnEdit.titleInput = newDocument.name ?? ''
+      state.documentOnEdit.mainInput = newDocument.content ?? ''
   },
     selectDocument: (state, action: PayloadAction<string>) => {
       state.documentOnEdit.id = action.payload
       const selectedDocumentOnList = selectSelectedDocumentOnList({document: state})
       if (selectedDocumentOnList) {
-        state.documentOnEdit.titleInput = selectedDocumentOnList.name
-        state.documentOnEdit.mainInput = selectedDocumentOnList.content
+        state.documentOnEdit.titleInput = selectedDocumentOnList.name ?? ''
+        state.documentOnEdit.mainInput = selectedDocumentOnList.content ?? ''
       }
     },
     /** Used only for load input from url params */
@@ -71,14 +71,15 @@ const documentSlice = createSlice({
         const newDocument = generateNewDocument()
         state.documentList.push(newDocument)
         state.documentOnEdit.id = newDocument.id
-        state.documentOnEdit.titleInput = newDocument.name
-        state.documentOnEdit.mainInput = newDocument.content
+        state.documentOnEdit.titleInput = newDocument.name ?? ''
+        state.documentOnEdit.mainInput = newDocument.content ?? ''
         }
       const selectedDocumentIndex = state.documentList.findIndex(({id}) => id === state.documentOnEdit.id)
       if (selectedDocumentIndex !== -1) {
         state.documentList[selectedDocumentIndex].name = state.documentOnEdit.titleInput
         state.documentList[selectedDocumentIndex].content = state.documentOnEdit.mainInput
         state.documentList[selectedDocumentIndex].updatedAt = new Date().toISOString()
+        state.documentList[selectedDocumentIndex].isUploaded = false
       }
     },
     deleteSelectedDocument: state => {
@@ -86,11 +87,18 @@ const documentSlice = createSlice({
       const selectedDocumentIndex = sorted.findIndex(({id}) => id === state.documentOnEdit.id)
       const nextSelectedDocumentIndex = selectedDocumentIndex === sorted.length - 1 ? selectedDocumentIndex - 1 : selectedDocumentIndex + 1
       const nextSelectedDocument = sorted[nextSelectedDocumentIndex]
-      const deletedDocumentId = state.documentOnEdit.id
+      const deletedDocument = state.documentList.find(({id}) => id === state.documentOnEdit.id)
+      if (deletedDocument) {
+        deletedDocument.name = null
+        deletedDocument.content = null
+        deletedDocument.createdAt = null
+        deletedDocument.updatedAt = new Date().toISOString()
+        deletedDocument.isDeleted = true
+        deletedDocument.isUploaded = false
+      }
       state.documentOnEdit.id = nextSelectedDocument.id
-      state.documentOnEdit.titleInput = nextSelectedDocument.name
-      state.documentOnEdit.mainInput = nextSelectedDocument.content
-    state.documentList = state.documentList.filter(({id}) => id !== deletedDocumentId)
+      state.documentOnEdit.titleInput = nextSelectedDocument.name ?? ''
+      state.documentOnEdit.mainInput = nextSelectedDocument.content ?? ''
     },
     /** Used only for right after loaded and any document not selected yet despite of not loaded from url params. */
     selectLatestDocument: state => {
@@ -152,6 +160,9 @@ const documentSlice = createSlice({
         }
       })
 
+      // No need to store deleted and uploaded documents.
+      state.documentList = state.documentList.filter(({isDeleted, isUploaded}) => !isDeleted || !isUploaded)
+
       // Update latestUpdatedDocumentFromDBAt.
       state.latestUpdatedDocumentFromDBAt = latestUpdatedDocumentFromDBAt
     },
@@ -188,5 +199,8 @@ export const selectSelectedDocumentHasEdit = (state: {document: DocumentState}):
   return (selectedDocumentOnList === null && (titleInput !== '' || mainInput !== ''))
     || (selectedDocumentOnList !== null && (titleInput !== selectedDocumentOnList.name || mainInput !== selectedDocumentOnList.content))
 }
+
+export const selectLiveDocumentList = (state: {document: DocumentState}): Document[] =>
+  state.document.documentList.filter(({isDeleted}) => !isDeleted)
 
 export default documentSlice.reducer

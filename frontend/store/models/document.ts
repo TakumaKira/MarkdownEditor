@@ -2,10 +2,12 @@ import { ConfirmationState } from "../../constants/confirmationMessages"
 
 export interface Document {
   id: string
-  name: string
-  content: string
-  /** 2000-01-01T00:00:00.000Z */
-  createdAt: string
+  /** This is null only when deleted. */
+  name: string | null
+  /** This is null only when deleted. */
+  content: string | null
+  /** 2000-01-01T00:00:00.000Z / This is null only when deleted. */
+  createdAt: string | null
   /** 2000-01-01T00:00:00.000Z */
   updatedAt: string
   isDeleted: boolean
