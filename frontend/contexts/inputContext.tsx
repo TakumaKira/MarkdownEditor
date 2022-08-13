@@ -2,37 +2,15 @@ import Constants from 'expo-constants'
 import React from "react"
 import { getData } from '../services/asyncStorage'
 import { useAppDispatch, useAppSelector } from "../store/hooks"
-import { deselectDocument, restore, selectSelectedDocument } from "../store/slices/document"
+import { deselectDocument, restore, selectSelectedDocumentHasEdit, updateMainInput, updateTitleInput } from "../store/slices/document"
 import { getThemeStateFromAsyncStorage } from '../store/slices/theme'
 
-export type ConfirmationStateProps = {
-  state: ConfirmationState.NONE | ConfirmationState.DELETE
-} | {
-  state: ConfirmationState.LEAVE_UNSAVED_DOCUMENT
-  nextId: string
-}
-export enum ConfirmationState {
-  NONE = 'none',
-  DELETE = 'delete',
-  LEAVE_UNSAVED_DOCUMENT = 'leaveUnsavedDocument',
-}
-type InputContextState = {
-  mainInput: string
-  setMainInput: React.Dispatch<React.SetStateAction<string>>
-  titleInput: string
-  setTitleInput: React.Dispatch<React.SetStateAction<string>>
-  confirmationState: ConfirmationStateProps
-  setConfirmationState: React.Dispatch<React.SetStateAction<ConfirmationStateProps>>
-  hasEdit: boolean
-}
+type InputContextState = {}
 
 const InputContext = React.createContext({} as InputContextState)
 
+/** TODO: No need to be as context anymore. */
 export const InputContextProvider = (props: {children: React.ReactNode}): JSX.Element => {
-  const [titleInput, setTitleInput] = React.useState('')
-  const [mainInput, setMainInput] = React.useState('')
-  const [confirmationState, setConfirmationState] = React.useState<ConfirmationStateProps>({state: ConfirmationState.NONE})
-
   const dispatch = useAppDispatch()
   React.useEffect(() => {
     (async() => {
@@ -54,22 +32,11 @@ export const InputContextProvider = (props: {children: React.ReactNode}): JSX.El
       return
     }
     dispatch(deselectDocument())
-    setTitleInput(Constants.manifest?.extra?.NEW_DOCUMENT_TITLE)
-    setMainInput(decodeURIComponent(_input))
+    dispatch(updateTitleInput(Constants.manifest?.extra?.NEW_DOCUMENT_TITLE))
+    dispatch(updateMainInput(decodeURIComponent(_input)))
   }
 
-  const selectedDocument = useAppSelector(selectSelectedDocument)
-  React.useEffect(() => {
-    if (selectedDocument) {
-      setMainInput(selectedDocument.content)
-    }
-  }, [selectedDocument])
-
-  const hasEdit = React.useMemo(() => {
-    return (selectedDocument === null && (titleInput !== '' || mainInput !== ''))
-      || (selectedDocument !== null && (titleInput !== selectedDocument.name || mainInput !== selectedDocument.content))
-  }, [selectedDocument, titleInput, mainInput])
-
+  const hasEdit = useAppSelector(selectSelectedDocumentHasEdit)
   const confirmUnsavedDocument = React.useCallback((event: BeforeUnloadEvent): void => {
     event.preventDefault()
     if (!hasEdit) {
@@ -84,7 +51,7 @@ export const InputContextProvider = (props: {children: React.ReactNode}): JSX.El
   }, [confirmUnsavedDocument])
 
   return (
-    <InputContext.Provider value={{titleInput, setTitleInput, mainInput, setMainInput, confirmationState, setConfirmationState, hasEdit}}>
+    <InputContext.Provider value={{}}>
       {props.children}
     </InputContext.Provider>
   )

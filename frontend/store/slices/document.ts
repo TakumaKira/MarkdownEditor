@@ -2,8 +2,9 @@ import { DocumentsUploadResponse } from '@api/document'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import Constants from 'expo-constants'
 import { v4 as uuidv4 } from 'uuid'
+import { ConfirmationState } from '../../constants/confirmationMessages'
 import { sortDocumentsFromNewest } from '../../helpers/sortDocuments'
-import { Document, DocumentState } from '../models/document'
+import { ConfirmationStateProps, Document, DocumentOnEdit, DocumentState } from '../models/document'
 
 const generateNewDocument = (): Document => ({
   id: uuidv4(),
@@ -17,14 +18,27 @@ const generateNewDocument = (): Document => ({
 
 const initialState: DocumentState = {
   documentList: [],
-  selectedDocumentId: null,
-  latestUpdatedDocumentFromDBAt: null
+  documentOnEdit: {
+    id: null,
+    titleInput: '',
+    mainInput: ''
+  },
+  latestUpdatedDocumentFromDBAt: null,
+  confirmationState: {
+    state: ConfirmationState.NONE
+  }
 }
 
 const documentSlice = createSlice({
   name: 'document',
   initialState,
   reducers: {
+    updateTitleInput: (state, action: PayloadAction<string>) => {
+      state.documentOnEdit.titleInput = action.payload
+    },
+    updateMainInput: (state, action: PayloadAction<string>) => {
+      state.documentOnEdit.mainInput = action.payload
+    },
     addDocuments: (state, action: PayloadAction<{name: string, content: string}[]>) => {
       action.payload.forEach(({name, content}) => {
         const newDocument = generateNewDocument()
@@ -36,48 +50,62 @@ const documentSlice = createSlice({
     newDocument: state => {
       const newDocument = generateNewDocument()
       state.documentList.push(newDocument)
-      state.selectedDocumentId = newDocument.id
-    },
+      state.documentOnEdit.id = newDocument.id
+      state.documentOnEdit.titleInput = newDocument.name
+      state.documentOnEdit.mainInput = newDocument.content
+  },
     selectDocument: (state, action: PayloadAction<string>) => {
-      state.selectedDocumentId = action.payload
+      state.documentOnEdit.id = action.payload
+      const selectedDocumentOnList = selectSelectedDocumentOnList({document: state})
+      if (selectedDocumentOnList) {
+        state.documentOnEdit.titleInput = selectedDocumentOnList.name
+        state.documentOnEdit.mainInput = selectedDocumentOnList.content
+      }
     },
     /** Used only for load input from url params */
     deselectDocument: state => {
-      state.selectedDocumentId = null
+      state.documentOnEdit.id = null
     },
-    saveDocument: (state, action: PayloadAction<{titleInput: string, mainInput: string}>) => {
-      if (!state.selectedDocumentId) {
+    saveDocument: state => {
+      if (!state.documentOnEdit.id) {
         const newDocument = generateNewDocument()
         state.documentList.push(newDocument)
-        state.selectedDocumentId = newDocument.id
-      }
-      const selectedDocumentIndex = state.documentList.findIndex(({id}) => id === state.selectedDocumentId)
+        state.documentOnEdit.id = newDocument.id
+        state.documentOnEdit.titleInput = newDocument.name
+        state.documentOnEdit.mainInput = newDocument.content
+        }
+      const selectedDocumentIndex = state.documentList.findIndex(({id}) => id === state.documentOnEdit.id)
       if (selectedDocumentIndex !== -1) {
-        state.documentList[selectedDocumentIndex].name = action.payload.titleInput
-        state.documentList[selectedDocumentIndex].content = action.payload.mainInput
+        state.documentList[selectedDocumentIndex].name = state.documentOnEdit.titleInput
+        state.documentList[selectedDocumentIndex].content = state.documentOnEdit.mainInput
         state.documentList[selectedDocumentIndex].updatedAt = new Date().toISOString()
       }
     },
     deleteSelectedDocument: state => {
       const sorted = sortDocumentsFromNewest(state.documentList)
-      const selectedDocumentIndex = sorted.findIndex(({id}) => id === state.selectedDocumentId)
+      const selectedDocumentIndex = sorted.findIndex(({id}) => id === state.documentOnEdit.id)
       const nextSelectedDocumentIndex = selectedDocumentIndex === sorted.length - 1 ? selectedDocumentIndex - 1 : selectedDocumentIndex + 1
-      const nextSelectedDocumentId = sorted[nextSelectedDocumentIndex].id
-      const deletedDocumentId = state.selectedDocumentId
-      state.selectedDocumentId = nextSelectedDocumentId
-      state.documentList = state.documentList.filter(({id}) => id !== deletedDocumentId)
+      const nextSelectedDocument = sorted[nextSelectedDocumentIndex]
+      const deletedDocumentId = state.documentOnEdit.id
+      state.documentOnEdit.id = nextSelectedDocument.id
+      state.documentOnEdit.titleInput = nextSelectedDocument.name
+      state.documentOnEdit.mainInput = nextSelectedDocument.content
+    state.documentList = state.documentList.filter(({id}) => id !== deletedDocumentId)
     },
-    /** Used only for right after loaded and any document not selected yet despite of not loaded from url params */
+    /** Used only for right after loaded and any document not selected yet despite of not loaded from url params. */
     selectLatestDocument: state => {
       const sorted = sortDocumentsFromNewest(state.documentList)
-      state.selectedDocumentId = sorted[0]?.id || null
+      const latestDocument = sorted[0] as Document | undefined
+      state.documentOnEdit.id = latestDocument?.id ?? null
+      state.documentOnEdit.titleInput = latestDocument?.name ?? ''
+      state.documentOnEdit.mainInput = latestDocument?.content ?? ''
     },
     /** This reducer cannot be AsyncThunk as it has to dispatch acceptServerResponse using next inside middleware after askServerUpdate(async func). */
     restore: (state, action: PayloadAction<DocumentState | null>) => {
       const restored = action.payload
       if (restored) {
         state.documentList = restored.documentList
-        state.selectedDocumentId = restored.selectedDocumentId
+        state.documentOnEdit = restored.documentOnEdit
       }
     },
     acceptServerResponse: (state, action: PayloadAction<DocumentsUploadResponse | null>) => {
@@ -107,6 +135,16 @@ const documentSlice = createSlice({
         if (localIndex === -1) {
           state.documentList.push({...fromDB, isUploaded: true})
         } else {
+          if (fromDB.id === state.documentOnEdit.id && selectSelectedDocumentHasEdit({document: state})) {
+            state.documentOnEdit.titleInput = `[Conflicted]: ${state.documentOnEdit.titleInput}`
+            const newDocument = generateNewDocument()
+            newDocument.name = state.documentOnEdit.titleInput
+            newDocument.content = state.documentOnEdit.mainInput
+            state.documentList.push(newDocument)
+            state.documentOnEdit.id = newDocument.id
+            state.confirmationState = {state: ConfirmationState.UNSAVED_DOCUMENT_CONFLICTED}
+            // TODO: Upload conflicted document.
+          }
           state.documentList[localIndex] = {...fromDB, isUploaded: true}
         }
         if (latestUpdatedDocumentFromDBAt === null || fromDB.updatedAt > latestUpdatedDocumentFromDBAt) {
@@ -116,11 +154,16 @@ const documentSlice = createSlice({
 
       // Update latestUpdatedDocumentFromDBAt.
       state.latestUpdatedDocumentFromDBAt = latestUpdatedDocumentFromDBAt
-    }
+    },
+    confirmationStateChanged: (state, action: PayloadAction<ConfirmationStateProps>) => {
+      state.confirmationState = action.payload
+    },
   },
 })
 
 export const {
+  updateTitleInput,
+  updateMainInput,
   addDocuments,
   newDocument,
   selectDocument,
@@ -130,9 +173,20 @@ export const {
   selectLatestDocument,
   restore,
   acceptServerResponse,
+  confirmationStateChanged,
 } = documentSlice.actions
 
-export const selectSelectedDocument = (state: {document: DocumentState}): Document | null =>
-  state.document.documentList.find(({id}) => id === state.document.selectedDocumentId) ?? null
+export const selectSelectedDocumentOnList = (state: {document: DocumentState}): Document | null =>
+  state.document.documentList.find(({id}) => id === state.document.documentOnEdit.id) ?? null
+
+export const selectSelectedDocumentOnEdit = (state: {document: DocumentState}): DocumentOnEdit =>
+  state.document.documentOnEdit
+
+export const selectSelectedDocumentHasEdit = (state: {document: DocumentState}): boolean => {
+  const selectedDocumentOnList = selectSelectedDocumentOnList(state)
+  const {titleInput, mainInput} = selectSelectedDocumentOnEdit(state)
+  return (selectedDocumentOnList === null && (titleInput !== '' || mainInput !== ''))
+    || (selectedDocumentOnList !== null && (titleInput !== selectedDocumentOnList.name || mainInput !== selectedDocumentOnList.content))
+}
 
 export default documentSlice.reducer

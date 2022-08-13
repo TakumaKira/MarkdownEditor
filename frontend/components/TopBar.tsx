@@ -6,11 +6,12 @@ import DeleteIcon from '../assets/icon-delete.svg'
 import DocumentIcon from '../assets/icon-document.svg'
 import HamburgerIcon from '../assets/icon-menu.svg'
 import SaveIcon from '../assets/icon-save.svg'
-import { ConfirmationState, useInputContext } from '../contexts/inputContext'
+import { ConfirmationState } from '../constants/confirmationMessages'
+import { useInputContext } from '../contexts/inputContext'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import useWindowDimensions from '../hooks/useWindowDimensions'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { saveDocument, selectSelectedDocument } from '../store/slices/document'
+import { confirmationStateChanged, saveDocument, selectSelectedDocumentOnEdit, updateTitleInput } from '../store/slices/document'
 import { selectColorScheme } from '../store/slices/theme'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
@@ -119,7 +120,7 @@ const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showS
     mockWindowWidth,
   } = props
 
-  const {titleInput, mainInput, setConfirmationState} = useInputContext()
+  const {titleInput, mainInput} = useAppSelector(selectSelectedDocumentOnEdit)
   const dispatch = useAppDispatch()
   const mediaType = useMediaquery({width: mockWindowWidth})
 
@@ -136,8 +137,8 @@ const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showS
         <DocumentTitle checkLayout={checkLayout} mockWindowWidth={mockWindowWidth} />
       </View>
       <View style={styles.rightContainer}>
-        <DeleteButton onPress={() => setConfirmationState({state: ConfirmationState.DELETE})} />
-        <SaveButton onPress={() => dispatch(saveDocument({titleInput, mainInput}))} mockWindowWidth={mockWindowWidth} />
+        <DeleteButton onPress={() => dispatch(confirmationStateChanged({state: ConfirmationState.DELETE}))} />
+        <SaveButton onPress={() => dispatch(saveDocument())} mockWindowWidth={mockWindowWidth} />
       </View>
     </View>
   )
@@ -166,33 +167,27 @@ const DocumentTitle = (props: {checkLayout?: boolean, mockWindowWidth?: number})
     mockWindowWidth,
   } = props
 
-  const selectedDocument = useAppSelector(selectSelectedDocument)
-  React.useEffect(() => {
-    if (selectedDocument) {
-      setTitleInput(selectedDocument.name)
-    }
-  }, [selectedDocument])
-
-  const {titleInput, setTitleInput} = useInputContext()
+  const {titleInput} = useAppSelector(selectSelectedDocumentOnEdit)
+  const dispatch = useAppDispatch()
   // TODO: Needs tests
   const addExtension = () => {
     if (titleInput.replace(/\s*/, '') === '') {
-      setTitleInput(Constants.manifest?.extra?.NEW_DOCUMENT_TITLE)
+      dispatch(updateTitleInput(Constants.manifest?.extra?.NEW_DOCUMENT_TITLE))
       return
     }
     if (/\.md\s*$/.test(titleInput)) {
-      setTitleInput(documentTitle => `${documentTitle.replace(/^\s*/, '').replace(/\s*$/, '')}`)
+      dispatch(updateTitleInput(`${titleInput.replace(/^\s*/, '').replace(/\s*$/, '')}`))
       return
     }
     if (/\.m\s*$/.test(titleInput)) {
-      setTitleInput(documentTitle => `${documentTitle.replace(/^\s*/, '').replace(/\s*$/, '')}d`)
+      dispatch(updateTitleInput(`${titleInput.replace(/^\s*/, '').replace(/\s*$/, '')}d`))
       return
     }
     if (/\.\s*$/.test(titleInput)) {
-      setTitleInput(documentTitle => `${documentTitle.replace(/^\s*/, '').replace(/\s*$/, '')}md`)
+      dispatch(updateTitleInput(`${titleInput.replace(/^\s*/, '').replace(/\s*$/, '')}md`))
       return
     }
-    setTitleInput(documentTitle => `${documentTitle.replace(/^\s*/, '').replace(/\s*$/, '')}.md`)
+    dispatch(updateTitleInput(`${titleInput.replace(/^\s*/, '').replace(/\s*$/, '')}.md`))
   }
 
   const [onFocus, setOnFocus] = React.useState(false)
@@ -242,7 +237,7 @@ const DocumentTitle = (props: {checkLayout?: boolean, mockWindowWidth?: number})
           style={[styles.documentTitleInput, textStyles.headingM, {width: inputWidth}]}
           selectionColor={colors.Orange}
           value={titleInput}
-          onChangeText={setTitleInput}
+          onChangeText={text => dispatch(updateTitleInput(text))}
           onFocus={handleFocus}
           onBlur={handleBlur}
         />

@@ -5,11 +5,12 @@ import DarkIcon from '../assets/icon-dark-mode.svg'
 import DocumentIcon from '../assets/icon-document.svg'
 import LightIconHighlight from '../assets/icon-light-mode-highlight.svg'
 import LightIcon from '../assets/icon-light-mode.svg'
-import { ConfirmationState, useInputContext } from '../contexts/inputContext'
+import { ConfirmationState } from '../constants/confirmationMessages'
+import { useInputContext } from '../contexts/inputContext'
 import { sortDocumentsFromNewest } from '../helpers/sortDocuments'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { newDocument, selectDocument } from '../store/slices/document'
+import { confirmationStateChanged, newDocument, selectDocument, selectSelectedDocumentHasEdit } from '../store/slices/document'
 import { toggleTheme } from '../store/slices/theme'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
@@ -97,12 +98,11 @@ const SideBar = () => {
   const mediaType = useMediaquery()
   const documentList = useAppSelector(state => state.document.documentList)
   const dispatch = useAppDispatch()
-  const {setConfirmationState} = useInputContext()
-  const {hasEdit} = useInputContext()
+  const hasEdit = useAppSelector(selectSelectedDocumentHasEdit)
 
   const handlePressDocument = (id: string) => {
     if (hasEdit) {
-      setConfirmationState({state: ConfirmationState.LEAVE_UNSAVED_DOCUMENT, nextId: id})
+      dispatch(confirmationStateChanged({state: ConfirmationState.LEAVE_UNSAVED_DOCUMENT, nextId: id}))
     } else {
       dispatch(selectDocument(id))
     }

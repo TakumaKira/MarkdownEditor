@@ -4,10 +4,10 @@ import HideIconDark from '../assets/icon-hide-preview-for-dark-mode.svg'
 import HideIcon from '../assets/icon-hide-preview.svg'
 import ShowIconDark from '../assets/icon-show-preview-for-dark-mode.svg'
 import ShowIcon from '../assets/icon-show-preview.svg'
-import { useInputContext } from '../contexts/inputContext'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import useWindowDimensions from '../hooks/useWindowDimensions'
-import { useAppSelector } from '../store/hooks'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { selectSelectedDocumentOnEdit, updateMainInput } from '../store/slices/document'
 import { selectColorScheme } from '../store/slices/theme'
 import textStyles from '../theme/textStyles'
 import themeColors from '../theme/themeColors'
@@ -84,10 +84,11 @@ const EditorView = (props: {maxHeight?: number}) => {
     maxHeight,
   } = props
 
-  const {mainInput, setMainInput} = useInputContext()
   const {height: windowHeight} = useWindowDimensions()
   const scrollViewHeight = maxHeight ? maxHeight - HEADER_HEIGHT : windowHeight - HEADER_HEIGHT
   const [isEditable, toggleIsEditable] = React.useState(true)
+  const {mainInput} = useAppSelector(selectSelectedDocumentOnEdit)
+  const dispatch = useAppDispatch()
 
   const mediaType = useMediaquery()
   const isMobile = React.useMemo(() => {
@@ -116,7 +117,7 @@ const EditorView = (props: {maxHeight?: number}) => {
         style={[styles.scrollView, {height: scrollViewHeight}]}
         contentContainerStyle={[styles.viewContainer, {minHeight: scrollViewHeight}]}
       >
-        {showMarkdown && <MarkdownView showPreview={showPreview} input={mainInput} setInput={setMainInput} />}
+        {showMarkdown && <MarkdownView showPreview={showPreview} input={mainInput} setInput={input => dispatch(updateMainInput(input))} />}
         {showPreview && <PreviewView input={mainInput} />}
       </ScrollView>
     </View>
@@ -167,7 +168,7 @@ const MarkdownHeader = (props: {showPreview: boolean, isMobile: boolean, toggleM
     />
   )
 }
-const MarkdownView = (props: {showPreview: boolean, input: string, setInput: React.Dispatch<React.SetStateAction<string>>}) => {
+const MarkdownView = (props: {showPreview: boolean, input: string, setInput: (input: string) => void}) => {
   const {
     showPreview,
     input,

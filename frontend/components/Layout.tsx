@@ -1,9 +1,8 @@
 import React from 'react'
-import { confirmationMessages } from '../constants/confirmationMessages'
+import { confirmationMessages, ConfirmationState } from '../constants/confirmationMessages'
 import { useAuthContext } from '../contexts/authContext'
-import { ConfirmationState, useInputContext } from '../contexts/inputContext'
-import { useAppDispatch } from '../store/hooks'
-import { deleteSelectedDocument, selectDocument } from '../store/slices/document'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { confirmationStateChanged, deleteSelectedDocument, selectDocument, selectSelectedDocumentOnEdit } from '../store/slices/document'
 import Confirmation from './Confirmation'
 import Frame from './Frame'
 import MainView from './MainView'
@@ -11,7 +10,8 @@ import SafeArea from './SafeArea'
 import SideBar from './SideBar'
 
 const Layout = () => {
-  const {titleInput, confirmationState, setConfirmationState} = useInputContext()
+  const {titleInput} = useAppSelector(selectSelectedDocumentOnEdit)
+  const confirmationState = useAppSelector(state => state.document.confirmationState)
 
   const dispatch = useAppDispatch()
 
@@ -19,15 +19,16 @@ const Layout = () => {
   const {setToken} = useAuthContext()
 
   const handleOk = () => {
+    // TODO: This should not know too much detail of confirmation state.
     if (confirmationState.state === ConfirmationState.DELETE) {
       dispatch(deleteSelectedDocument())
     } else if (confirmationState.state === ConfirmationState.LEAVE_UNSAVED_DOCUMENT) {
       dispatch(selectDocument(confirmationState.nextId))
     }
-    setConfirmationState({state: ConfirmationState.NONE})
+    dispatch(confirmationStateChanged({state: ConfirmationState.NONE}))
   }
   const handleCancel = () => {
-    setConfirmationState({state: ConfirmationState.NONE})
+    dispatch(confirmationStateChanged({state: ConfirmationState.NONE}))
   }
 
   return (
