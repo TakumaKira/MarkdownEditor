@@ -9,7 +9,12 @@ import { acceptServerResponse } from '../store/slices/document'
 
 // TODO: Implement login/logout
 const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6IkpvaG5Eb2UiLCJpYXQiOjE2NTgyNDE0MTN9.zVQ2f1UWCS8B0UxDBscc9m81YS1WO1CTrmbt4MsPa0Y'
-AsyncStorage.setItem('token', TOKEN)
+const LOGIN_TOKEN_KEY = Constants.manifest?.extra?.LOGIN_TOKEN_KEY
+if (!LOGIN_TOKEN_KEY) {
+  throw new Error('LOGIN_TOKEN_KEY is not defined.')
+}
+
+AsyncStorage.setItem(LOGIN_TOKEN_KEY, TOKEN)
 
 const ORIGIN = Constants.manifest?.extra?.ORIGIN
 if (!ORIGIN) {
@@ -34,7 +39,7 @@ export const AuthContextProvider = (props: {children: React.ReactNode}): JSX.Ele
 
   React.useEffect(() => {
     (async () => {
-      const token = await AsyncStorage.getItem('token')
+      const token = await AsyncStorage.getItem(LOGIN_TOKEN_KEY)
       if (token) {
         setToken(token)
       }

@@ -4,8 +4,13 @@ import axios from 'axios';
 import Constants from 'expo-constants';
 import { DocumentState } from "../store/models/document";
 
+const LOGIN_TOKEN_KEY = Constants.manifest?.extra?.LOGIN_TOKEN_KEY
+if (!LOGIN_TOKEN_KEY) {
+  throw new Error('LOGIN_TOKEN_KEY is not defined.')
+}
+
 const getLoginToken = () => {
-  return AsyncStorage.getItem('token')
+  return AsyncStorage.getItem(LOGIN_TOKEN_KEY)
 }
 
 const isLoggedIn = async () => {
