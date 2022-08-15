@@ -4,9 +4,9 @@ import Constants from 'expo-constants'
 import { v4 as uuidv4 } from 'uuid'
 import { ConfirmationState } from '../../constants/confirmationMessages'
 import { sortDocumentsFromNewest } from '../../helpers/sortDocuments'
-import { ConfirmationStateProps, Document, DocumentOnEdit, DocumentState } from '../models/document'
+import { ConfirmationStateProps, DocumentOnDevice, DocumentOnEdit, DocumentState } from '../models/document'
 
-const generateNewDocument = (): Document => ({
+const generateNewDocument = (): DocumentOnDevice => ({
   id: uuidv4(),
   name: Constants.manifest?.extra?.NEW_DOCUMENT_TITLE,
   content: '',
@@ -103,7 +103,7 @@ const documentSlice = createSlice({
     /** Used only for right after loaded and any document not selected yet despite of not loaded from url params. */
     selectLatestDocument: state => {
       const sorted = sortDocumentsFromNewest(state.documentList)
-      const latestDocument = sorted[0] as Document | undefined
+      const latestDocument = sorted[0] as DocumentOnDevice | undefined
       state.documentOnEdit.id = latestDocument?.id ?? null
       state.documentOnEdit.titleInput = latestDocument?.name ?? ''
       state.documentOnEdit.mainInput = latestDocument?.content ?? ''
@@ -187,7 +187,7 @@ export const {
   confirmationStateChanged,
 } = documentSlice.actions
 
-export const selectSelectedDocumentOnList = (state: {document: DocumentState}): Document | null =>
+export const selectSelectedDocumentOnList = (state: {document: DocumentState}): DocumentOnDevice | null =>
   state.document.documentList.find(({id}) => id === state.document.documentOnEdit.id) ?? null
 
 export const selectSelectedDocumentOnEdit = (state: {document: DocumentState}): DocumentOnEdit =>
@@ -200,7 +200,7 @@ export const selectSelectedDocumentHasEdit = (state: {document: DocumentState}):
     || (selectedDocumentOnList !== null && (titleInput !== selectedDocumentOnList.name || mainInput !== selectedDocumentOnList.content))
 }
 
-export const selectLiveDocumentList = (state: {document: DocumentState}): Document[] =>
+export const selectLiveDocumentList = (state: {document: DocumentState}): DocumentOnDevice[] =>
   state.document.documentList.filter(({isDeleted}) => !isDeleted)
 
 export default documentSlice.reducer
