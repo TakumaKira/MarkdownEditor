@@ -170,7 +170,9 @@ const documentSlice = createSlice({
       state.documentList = state.documentList.filter(({isDeleted, isUploaded}) => !isDeleted || !isUploaded)
 
       // Update latestUpdatedDocumentFromDBAt.
-      state.latestUpdatedDocumentFromDBAt = latestUpdatedDocumentFromDBAt
+      if (latestUpdatedDocumentFromDBAt) {
+        state.latestUpdatedDocumentFromDBAt = latestUpdatedDocumentFromDBAt
+      }
     },
     confirmationStateChanged: (state, action: PayloadAction<ConfirmationStateProps>) => {
       state.confirmationState = action.payload
