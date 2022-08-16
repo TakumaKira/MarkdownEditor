@@ -4,7 +4,7 @@ import Constants from 'expo-constants'
 import { v4 as uuidv4 } from 'uuid'
 import { ConfirmationState } from '../../constants/confirmationMessages'
 import { sortDocumentsFromNewest } from '../../helpers/sortDocuments'
-import { ConfirmationStateProps, DocumentOnDevice, DocumentOnEdit, DocumentState } from '../models/document'
+import { ConfirmationStateProps, DocumentOnDevice, DocumentOnEdit, DocumentState, DocumentStateRestore } from '../models/document'
 
 const generateNewDocument = (): DocumentOnDevice => ({
   id: uuidv4(),
@@ -109,11 +109,17 @@ const documentSlice = createSlice({
       state.documentOnEdit.mainInput = latestDocument?.content ?? ''
     },
     /** This reducer cannot be AsyncThunk as it has to dispatch acceptServerResponse using next inside middleware after askServerUpdate(async func). */
-    restore: (state, action: PayloadAction<DocumentState | null>) => {
+    restore: (state, action: PayloadAction<DocumentStateRestore | null>) => {
       const restored = action.payload
       if (restored) {
-        state.documentList = restored.documentList
-        state.documentOnEdit = restored.documentOnEdit
+        try {
+          // TODO: Test automatically check to not miss restoring any property.
+          state.documentList = restored.documentList
+          state.documentOnEdit.id = restored.documentOnEdit.id
+          state.latestUpdatedDocumentFromDBAt = restored.latestUpdatedDocumentFromDBAt
+        } catch (err) {
+          console.error(err)
+        }
       }
     },
     acceptServerResponse: (state, action: PayloadAction<DocumentsUploadResponse | null>) => {

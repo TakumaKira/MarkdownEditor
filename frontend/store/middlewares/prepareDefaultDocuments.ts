@@ -1,7 +1,7 @@
 import { Middleware } from "@reduxjs/toolkit";
 import Constants from 'expo-constants';
 import { RootState } from "..";
-import { storeData } from "../../services/asyncStorage";
+import { filterToRestore, storeData } from "../../services/asyncStorage";
 import { acceptServerResponse, addDocuments } from "../slices/document";
 
 export const prepareDefaultDocumentsMiddleware: Middleware<{}, RootState> = store => next => action => {
@@ -19,7 +19,7 @@ export const prepareDefaultDocumentsMiddleware: Middleware<{}, RootState> = stor
       if (needToAdd.length > 0) {
         next(addDocuments(needToAdd))
       } else {
-        storeData('document', documentState)
+        storeData('document', filterToRestore(documentState))
       }
     }
   }

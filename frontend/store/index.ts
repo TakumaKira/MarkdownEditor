@@ -3,13 +3,17 @@ import { CurriedGetDefaultMiddleware } from '@reduxjs/toolkit/dist/getDefaultMid
 import { apiMiddleware } from './middlewares/api'
 import { asyncStorageMiddleware } from './middlewares/asyncStorage'
 import { prepareDefaultDocumentsMiddleware } from './middlewares/prepareDefaultDocuments'
-import { DocumentState } from './models/document'
+import { DocumentState, DocumentStateRestore } from './models/document'
 import { ThemeState } from './models/theme'
 import documentReducer from './slices/document'
 import themeReducer from './slices/theme'
 
 export type RootState = {
   document: DocumentState
+  theme: ThemeState
+}
+export type RootStateRestore = {
+  document: DocumentStateRestore
   theme: ThemeState
 }
 export const reducer = {

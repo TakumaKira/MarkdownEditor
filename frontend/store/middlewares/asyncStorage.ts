@@ -1,6 +1,6 @@
 import { Middleware, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "..";
-import { storeData } from "../../services/asyncStorage";
+import { filterToRestore, storeData } from "../../services/asyncStorage";
 import { DocumentState } from "../models/document";
 import { addDocuments, deleteSelectedDocument, newDocument, restore, saveDocument, selectDocument, selectLatestDocument } from "../slices/document";
 import { toggleTheme } from "../slices/theme";
@@ -18,7 +18,7 @@ export const asyncStorageMiddleware: Middleware<{}, RootState> = store => next =
     || action.type === selectLatestDocument.type
     || (action.type === restore.type && (action as PayloadAction<DocumentState | null>).payload === null)
   ) {
-    storeData('document', store.getState().document)
+    storeData('document', filterToRestore(store.getState().document))
   }
 
   if (
