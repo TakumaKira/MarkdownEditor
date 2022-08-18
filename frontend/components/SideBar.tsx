@@ -6,11 +6,10 @@ import DocumentIcon from '../assets/icon-document.svg'
 import LightIconHighlight from '../assets/icon-light-mode-highlight.svg'
 import LightIcon from '../assets/icon-light-mode.svg'
 import { ConfirmationState } from '../constants/confirmationMessages'
-import { useInputContext } from '../contexts/inputContext'
 import { sortDocumentsFromNewest } from '../helpers/sortDocuments'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { confirmationStateChanged, newDocument, selectDocument, selectLiveDocumentList, selectSelectedDocumentHasEdit } from '../store/slices/document'
+import { confirmationStateChanged, newDocument, selectDocument, selectLiveDocumentList, selectSelectedDocumentHasEdit, selectSelectedDocumentOnEdit } from '../store/slices/document'
 import { toggleTheme } from '../store/slices/theme'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
@@ -26,18 +25,20 @@ const styles = StyleSheet.create({
     width: SIDEBAR_WIDTH,
     flex: 1,
     backgroundColor: colors[900],
-    paddingLeft: 24,
-    paddingRight: 24,
+    paddingHorizontal: 16,
   },
   title: {
     marginTop: 27,
+    marginHorizontal: 8,
   },
   myDocuments: {
     color: colors[500],
     marginTop: 27,
+    marginHorizontal: 8,
   },
   addButton: {
     marginTop: 29,
+    marginHorizontal: 8,
     height: 40,
     borderRadius: 4,
     justifyContent: 'center',
@@ -47,13 +48,18 @@ const styles = StyleSheet.create({
     color: colors[100],
   },
   documentCardsContainer: {
-    marginTop: 24,
-    marginBottom: 24,
+    marginVertical: 17,
+  },
+  documentCardContainerSelected: {
+    backgroundColor: colors[800],
+    borderRadius: 4,
   },
   notFirstDocumentCard: {
-    marginTop: 26,
+    marginTop: 12,
   },
   documentCardContainer: {
+    paddingVertical: 7,
+    paddingHorizontal: 8,
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
@@ -95,10 +101,11 @@ const styles = StyleSheet.create({
 })
 
 const SideBar = () => {
-  const mediaType = useMediaquery()
-  const documentList = useAppSelector(selectLiveDocumentList)
   const dispatch = useAppDispatch()
+  const documentList = useAppSelector(selectLiveDocumentList)
+  const selectedDocumentOnEditId = useAppSelector(selectSelectedDocumentOnEdit).id
   const hasEdit = useAppSelector(selectSelectedDocumentHasEdit)
+  const mediaType = useMediaquery()
 
   const handlePressDocument = (id: string) => {
     if (hasEdit) {
@@ -121,6 +128,7 @@ const SideBar = () => {
             name={name ?? ''}
             style={i === 0 ? undefined : styles.notFirstDocumentCard}
             onPress={() => handlePressDocument(id)}
+            isSelected={id === selectedDocumentOnEditId}
           />
         )}
       </ScrollView>
@@ -141,16 +149,17 @@ const AddButton = (props: {onPress: () => void}) => {
   )
 }
 
-const DocumentCard = (props: {updatedAt: string, name: string, style?: StyleProp<ViewStyle>, onPress: () => void}) => {
+const DocumentCard = (props: {updatedAt: string, name: string, style?: StyleProp<ViewStyle>, onPress: () => void, isSelected: boolean}) => {
   const {
     updatedAt,
     name,
     style,
     onPress,
+    isSelected,
   } = props
 
   return (
-    <TouchableOpacity style={[styles.documentCardContainer, style]} onPress={onPress}>
+    <TouchableOpacity style={[styles.documentCardContainer, isSelected ? styles.documentCardContainerSelected : undefined, style]} onPress={onPress}>
       <View style={styles.documentIcon}>
         <SvgWrapper>
           <DocumentIcon />
