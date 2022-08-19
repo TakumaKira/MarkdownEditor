@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { acceptServerResponse } from '../store/slices/document'
 
 // TODO: Implement login/logout
-const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6IkpvaG5Eb2UiLCJpYXQiOjE2NTgyNDE0MTN9.zVQ2f1UWCS8B0UxDBscc9m81YS1WO1CTrmbt4MsPa0Y'
+const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6IkpvaG5Eb2VAbWFya2Rvd24uY29tIiwiaWF0IjoxNjYwOTE4OTIxfQ.KmSA0QLVIGxvWgqVSb67txi2hdXmFwf-xXrxpaoIbPg'
 const LOGIN_TOKEN_KEY = Constants.manifest?.extra?.LOGIN_TOKEN_KEY
 if (!LOGIN_TOKEN_KEY) {
   throw new Error('LOGIN_TOKEN_KEY is not defined.')

@@ -77,7 +77,7 @@ documentsRouter.post('/', authApi, async (req, res) => {
       CALL get_latest_update_time('${req.user.id}');
     `)
     const latestUpdatedAt = (rows2[0][0].updated_at as Date).toISOString()
-    wsServer.to(req.user.id).emit('documents_updated', latestUpdatedAt)
+    wsServer.to(req.user.id.toString()).emit('documents_updated', latestUpdatedAt)
   } catch (error) {
     console.error(error)
     res.status(500).send('Something went wrong.')

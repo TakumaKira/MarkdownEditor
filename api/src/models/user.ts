@@ -1,6 +1,11 @@
-type User = {
+export interface UserToken {
   id: number
-  name: string
+  email: string
   iat: number
 }
-export default User
+
+export interface UserOnDB {
+  id: number
+  email: string
+  password: string
+}

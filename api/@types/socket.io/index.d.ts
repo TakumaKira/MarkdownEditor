@@ -1,7 +1,7 @@
-import { User } from '../../src/models/user'
+import { UserToken } from '../../src/models/user'
 
 declare module 'socket.io' {
   interface Socket {
-    user: User
+    user: UserToken
   }
 }
