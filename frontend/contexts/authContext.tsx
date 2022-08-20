@@ -7,24 +7,14 @@ import { askServerUpdate } from '../services/api'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { acceptServerResponse } from '../store/slices/document'
 
-// TODO: Implement login/logout
-const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6IkpvaG5Eb2VAbWFya2Rvd24uY29tIiwiaWF0IjoxNjYwOTE4OTIxfQ.KmSA0QLVIGxvWgqVSb67txi2hdXmFwf-xXrxpaoIbPg'
 const LOGIN_TOKEN_KEY = Constants.manifest?.extra?.LOGIN_TOKEN_KEY
 if (!LOGIN_TOKEN_KEY) {
   throw new Error('LOGIN_TOKEN_KEY is not defined.')
 }
 
-AsyncStorage.setItem(LOGIN_TOKEN_KEY, TOKEN)
-
-const ORIGIN = Constants.manifest?.extra?.ORIGIN
-if (!ORIGIN) {
-  throw new Error('ORIGIN is not defined.')
-}
-
-const wsPort = Number(Constants.manifest?.extra?.wsPort)
-if (!wsPort) {
-  throw new Error('WS_PORT is not defined.')
-}
+// TODO: Implement login/logout
+// const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6IkpvaG5Eb2VAbWFya2Rvd24uY29tIiwiaWF0IjoxNjYwOTE4OTIxfQ.KmSA0QLVIGxvWgqVSb67txi2hdXmFwf-xXrxpaoIbPg'
+// AsyncStorage.setItem(LOGIN_TOKEN_KEY, TOKEN)
 
 type AuthContextState = {
   setToken: (token: string) => void
@@ -53,8 +43,17 @@ export const AuthContextProvider = (props: {children: React.ReactNode}): JSX.Ele
   }
 
   const subscribeToUpdate = (token: string) => {
+    const ORIGIN = Constants.manifest?.extra?.ORIGIN
+    if (!ORIGIN) {
+      throw new Error('ORIGIN is not defined.')
+    }
+    const WS_PORT = Number(Constants.manifest?.extra?.WS_PORT)
+    if (!WS_PORT) {
+      throw new Error('WS_PORT is not defined.')
+    }
+
     // TODO: Make this wss
-    const socket = io(`ws://${ORIGIN}:${wsPort}`, {auth: {token}})
+    const socket = io(`ws://${ORIGIN}:${WS_PORT}`, {auth: {token}})
     setSocket(socket)
   }
 

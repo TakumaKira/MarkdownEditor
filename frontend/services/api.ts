@@ -17,16 +17,6 @@ const isLoggedIn = async () => {
   return !!(await getLoginToken())
 }
 
-const ORIGIN = Constants.manifest?.extra?.ORIGIN
-if (!ORIGIN) {
-  throw new Error('ORIGIN is not defined.')
-}
-
-const apiPort = Number(Constants.manifest?.extra?.apiPort)
-if (!apiPort) {
-  throw new Error('API_PORT is not defined.')
-}
-
 export const askServerUpdate = async (documentState: DocumentState): Promise<DocumentsUploadResponse | null> => {
   if (await isLoggedIn()) {
     try {
@@ -42,11 +32,20 @@ export const askServerUpdate = async (documentState: DocumentState): Promise<Doc
 }
 
 const upload = async (documentState: DocumentState): Promise<DocumentsUploadResponse> => {
+  const ORIGIN = Constants.manifest?.extra?.ORIGIN
+  if (!ORIGIN) {
+    throw new Error('ORIGIN is not defined.')
+  }
+  const API_PORT = Number(Constants.manifest?.extra?.API_PORT)
+  if (!API_PORT) {
+    throw new Error('API_PORT is not defined.')
+  }
+
   const requestBody: DocumentsRequest = {
     updated: documentState.documentList.filter(({isUploaded}) => !isUploaded).map(({isUploaded, ...rest}) => rest),
     latestUpdatedDocumentFromDBAt: documentState.latestUpdatedDocumentFromDBAt
   }
   // TODO: Make this https
-  const response = await axios.post<DocumentsUploadResponse>(`http://${ORIGIN}:${apiPort}/api/documents`, requestBody)
+  const response = await axios.post<DocumentsUploadResponse>(`http://${ORIGIN}:${API_PORT}/api/documents`, requestBody)
   return response.data
 }

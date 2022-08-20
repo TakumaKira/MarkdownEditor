@@ -35,7 +35,7 @@ const authWs = (socket: Socket, next: (err?: ExtendedError) => void): void => {
 
   try {
     socket.user = decode(token, process.env.JWT_SECRET_KEY)
-    socket.join(socket.user.id)
+    socket.join(socket.user.id.toString())
     next()
   } catch (ex) {
     console.error(ex)

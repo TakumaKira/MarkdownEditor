@@ -4,18 +4,18 @@ import startWs from './server/ws'
 
 dotenv.config()
 
-const apiPort = Number(process.env.API_PORT)
-if (!apiPort) {
+const API_PORT = Number(process.env.API_PORT)
+if (!API_PORT) {
   throw new Error('API_PORT is not defined.')
 }
-startApi(apiPort)
+startApi(API_PORT)
 
-const wsPort = Number(process.env.WS_PORT)
-if (!wsPort) {
+const WS_PORT = Number(process.env.WS_PORT)
+if (!WS_PORT) {
   throw new Error('WS_PORT is not defined.')
 }
 const appPort = Number(process.env.APP_PORT)
 if (!appPort) {
   throw new Error('APP_PORT is not defined.')
 }
-export const wsServer = startWs(wsPort, appPort)
+export const wsServer = startWs(WS_PORT, appPort)

@@ -2,10 +2,10 @@ export default {
   name: 'Markdown Editor',
   version: '1.0.0',
   extra: {
-    loadStorybook: process.env.LOAD_STORYBOOK === 'true',
-    localIp: process.env.LOCAL_IP || '0.0.0.0',
-    apiPort: process.env.API_PORT,
-    wsPort: process.env.WS_PORT,
+    LOAD_STORYBOOK: process.env.LOAD_STORYBOOK === 'true',
+    LOCAL_IP: process.env.LOCAL_IP || '0.0.0.0', // TODO: Adjust URLs on docker-compose/storybook/frontend.
+    API_PORT: process.env.API_PORT,
+    WS_PORT: process.env.WS_PORT,
     breakpoints: {
       MOBILE_TABLET: 600,
       TABLET_DESKTOP: 1200,
