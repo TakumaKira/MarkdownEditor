@@ -1,17 +1,13 @@
 # Frontend Mentor - In-browser markdown editor solution
 
-This is a solution to the [In-browser markdown editor challenge on Frontend Mentor](https://www.frontendmentor.io/challenges/inbrowser-markdown-editor-r16TrrQX9). Frontend Mentor challenges help you improve your coding skills by building realistic projects.
+This is a full-stack solution to the [In-browser markdown editor challenge on Frontend Mentor](https://www.frontendmentor.io/challenges/inbrowser-markdown-editor-r16TrrQX9). Frontend Mentor challenges help you improve your coding skills by building realistic projects.
 
 ## Table of contents
 
 - [Frontend Mentor - In-browser markdown editor solution](#frontend-mentor---in-browser-markdown-editor-solution)
   - [Table of contents](#table-of-contents)
   - [Setup](#setup)
-    - [Run as docker container(re-build needed to run updated code)](#run-as-docker-containerre-build-needed-to-run-updated-code)
-    - [Run as node project(hot reload enabled)](#run-as-node-projecthot-reload-enabled)
-      - [Run simulators](#run-simulators)
-      - [Run Storybook](#run-storybook)
-      - [Run unit test](#run-unit-test)
+    - [Run as full-stack project](#run-as-full-stack-project)
   - [Overview](#overview)
     - [The challenge](#the-challenge)
     - [Screenshot](#screenshot)
@@ -25,32 +21,11 @@ This is a solution to the [In-browser markdown editor challenge on Frontend Ment
 
 ## Setup
 
-### Run as docker container(re-build needed to run updated code)
+### Run as full-stack project
 
-After cloning this repository, build docker image with ``docker build -t markdown-editor .`` from root of this frontend directory. This command will take a few minutes for the first build.
+After cloning this repository, build docker image with ``docker compose build`` from root of this project directory. This command will take a few minutes for the first build.
 
-Then you need to add .env file in root directory and add ``REACT_NATIVE_PACKAGER_HOSTNAME=<your local IP>`` line in it. Now you can run this image on the first terminal with ``docker run -p 7007:7007 -p 19000:19000 -p 19002:19002 -p 19006:19006 --env-file=.env -it markdown-editor sh`` command, and add more terminals for the running container with ``docker exec -it <running container ID for markdown-editor image> sh``.
-
-### Run as node project(hot reload enabled)
-
-After cloning this repository, you can run any commands start with ``yarn`` as yarn will takes care of installing dependencies.
-
-#### Run simulators
-
-Run ``yarn start`` to start Expo developer tools(will be available on http://your_local_IP:19002/), then you can start web/iOS/Android by clicking "Run in/on ~~" buttons on sidebar(If you want to run this on iOS/Android, you need to setup and get simulator ready beforehand).
-You can access the app by accessing http://localhost:19006/(web) or installing and starting Expo go app(iOS/Android).
-
-#### Run Storybook
-
-If you do not set ``LOCAL_IP`` variable on .env, storybook will start on your local IP ``0.0.0.0``. Or, you also can explicitly set your local IP address like ``LOCAL_IP=xxx.xxx.xx.x`` within .env file at your root directory.
-
-Then run ``yarn storybook`` and you will see Storybook UI page on http://your_local_IP_or_0.0.0.0:7007/, but stories won't show up at this point.
-
-Then run ``yarn start:storybook`` and access Expo developer tools on http://localhost:19002/(for as node project) or http://your_local_IP:19002/(for as docker container) then click "Run in web browser"/"Run on iOS simulator"/"Run on Android device/emulator"(You need to setup and get the simulator ready beforehand) on sidebar of Expo developer tools. You can access the rendered stories by accessing http://localhost:19006/(web) or installing and starting Expo go app(iOS/Android)(you might need to reload Storybook UI page) and should be able to select a story and web/ios/android simulator will show the selected story(You should be able to get logs on the main window).
-
-#### Run unit test
-
-Run ``yarn test``.
+Then you need to add .env file in root directory and add ``MYSQL_DATABASE_PASSWORD_FOR_APP=<your database password for user named app>`` line in it, and .env files to frontend/api/db directories with required constants defined in each README.md at the root of each directory. Now you can run this image on the first terminal with ``docker compose up`` command.
 
 ## Overview
 
