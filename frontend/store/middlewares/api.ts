@@ -1,7 +1,7 @@
 import { Middleware } from "@reduxjs/toolkit";
 import { RootState } from "..";
 import { askServerUpdate } from "../../services/api";
-import { acceptServerResponse, deleteSelectedDocument, newDocument, restore, saveDocument } from "../slices/document";
+import { deleteSelectedDocument, newDocument, restoreDocument, saveDocument } from "../slices/document";
 
 export const apiMiddleware: Middleware<{}, RootState> = store => next => action => {
   next(action)
@@ -10,12 +10,12 @@ export const apiMiddleware: Middleware<{}, RootState> = store => next => action 
     action.type === newDocument.type
     || action.type === saveDocument.type
     || action.type === deleteSelectedDocument.type
-    || action.type === restore.type
+    || action.type === restoreDocument.type
   ) {
-    const documentState = store.getState().document
-    askServerUpdate(documentState)
-      .then(response => {
-        next(acceptServerResponse(response))
-      })
+    const state = store.getState()
+    const isLoggedIn = !!state.user.token
+    if (isLoggedIn) {
+      askServerUpdate(state.document, next)
+    }
   }
 }

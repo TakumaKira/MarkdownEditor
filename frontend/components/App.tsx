@@ -1,19 +1,27 @@
 import 'react-native-get-random-values'
 import { Provider } from 'react-redux'
-import { AuthContextProvider } from '../contexts/authContext'
-import { InputContextProvider } from '../contexts/inputContext'
+import useApiAuth from '../hooks/useApiAuth'
+import useConfirmUnsavedDocument from '../hooks/useConfirmUnsavedDocument'
+import useInitialization from '../hooks/useInitialization'
+import useLoadInputFromUrlParams from '../hooks/useLoadInputFromUrlParams'
 import store from '../store'
 import Layout from './Layout'
 
 const App = () => {
   return (
     <Provider store={store}>
-      <AuthContextProvider>
-        <InputContextProvider>
-          <Layout />
-        </InputContextProvider>
-      </AuthContextProvider>
+      <Hooks>
+        <Layout />
+      </Hooks>
     </Provider>
   )
 }
 export default App
+
+const Hooks = (props: {children: JSX.Element}): JSX.Element => {
+  useInitialization()
+  useApiAuth()
+  useConfirmUnsavedDocument()
+  useLoadInputFromUrlParams()
+  return props.children
+}

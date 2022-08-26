@@ -1,10 +1,10 @@
-export interface UserToken {
+export interface UserInfoOnToken {
   id: number
   email: string
   iat: number
 }
 
-export interface UserOnDB {
+export interface UserInfoOnDB {
   id: number
   email: string
   password: string

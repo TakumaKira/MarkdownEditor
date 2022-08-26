@@ -109,7 +109,7 @@ const documentSlice = createSlice({
       state.documentOnEdit.mainInput = latestDocument?.content ?? ''
     },
     /** This reducer cannot be AsyncThunk as it has to dispatch acceptServerResponse using next inside middleware after askServerUpdate(async func). */
-    restore: (state, action: PayloadAction<DocumentStateRestore | null>) => {
+    restoreDocument: (state, action: PayloadAction<DocumentStateRestore | null>) => {
       const restored = action.payload
       if (restored) {
         try {
@@ -122,11 +122,8 @@ const documentSlice = createSlice({
         }
       }
     },
-    acceptServerResponse: (state, action: PayloadAction<DocumentsUploadResponse | null>) => {
+    acceptServerResponse: (state, action: PayloadAction<DocumentsUploadResponse>) => {
       const response = action.payload
-      if (!response) {
-        return
-      }
 
       let latestUpdatedDocumentFromDBAt: string | null = null
 
@@ -190,7 +187,7 @@ export const {
   saveDocument,
   deleteSelectedDocument,
   selectLatestDocument,
-  restore,
+  restoreDocument,
   acceptServerResponse,
   confirmationStateChanged,
 } = documentSlice.actions

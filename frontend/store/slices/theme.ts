@@ -1,7 +1,6 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
+import { createSlice, PayloadAction } from "@reduxjs/toolkit"
 import { Appearance } from "react-native"
-import { getData, storeData } from "../../services/asyncStorage"
-import { ThemeState } from "../models/theme"
+import { ThemeState, ThemeStateRestore } from "../models/theme"
 
 const initialState: ThemeState = {
   /** Appearance.getColorScheme() only gets initial value */
@@ -9,23 +8,17 @@ const initialState: ThemeState = {
   selectedColorSchemeIsDark: null,
 }
 
-export const getThemeStateFromAsyncStorage = createAsyncThunk(
-  'theme/getThemeStateFromAsyncStorage',
-  async() => getData('theme')
-)
-
 const themeSlice = createSlice({
   name: 'theme',
   initialState,
   reducers: {
     toggleTheme: state => {
       state.selectedColorSchemeIsDark = !state.selectedColorSchemeIsDark
-    }
-  },
-  extraReducers: builder => {
-    builder.addCase(getThemeStateFromAsyncStorage.fulfilled, (state, action) => {
+    },
+    restoreTheme: (state, action: PayloadAction<ThemeStateRestore | null>) => {
       const restored = action.payload
       if (restored) {
+        // TODO: Test automatically check to not miss restoring any property.
         if (restored.deviceColorSchemeIsDark === state.deviceColorSchemeIsDark) {
           // If device color scheme is the same as the last time, then restore user selection.
           state.selectedColorSchemeIsDark = restored.selectedColorSchemeIsDark
@@ -37,13 +30,13 @@ const themeSlice = createSlice({
         // If no previous setting, then start from device setting.
         state.selectedColorSchemeIsDark = state.deviceColorSchemeIsDark
       }
-      storeData('theme', state)
-    })
-  }
+    },
+  },
 })
 
 export const {
   toggleTheme,
+  restoreTheme,
 } = themeSlice.actions
 
 export const selectColorScheme = (state: {theme: ThemeState}): 'light' | 'dark' =>

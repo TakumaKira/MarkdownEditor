@@ -1,33 +1,16 @@
 import { DocumentsRequest, DocumentsUploadResponse } from '@api/document';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Dispatch } from '@reduxjs/toolkit';
 import axios from 'axios';
 import Constants from 'expo-constants';
 import { DocumentState } from "../store/models/document";
+import { acceptServerResponse } from '../store/slices/document';
 
-const LOGIN_TOKEN_KEY = Constants.manifest?.extra?.LOGIN_TOKEN_KEY
-if (!LOGIN_TOKEN_KEY) {
-  throw new Error('LOGIN_TOKEN_KEY is not defined.')
-}
-
-const getLoginToken = () => {
-  return AsyncStorage.getItem(LOGIN_TOKEN_KEY)
-}
-
-const isLoggedIn = async () => {
-  return !!(await getLoginToken())
-}
-
-export const askServerUpdate = async (documentState: DocumentState): Promise<DocumentsUploadResponse | null> => {
-  if (await isLoggedIn()) {
-    try {
-      const response = await upload(documentState)
-      return response
-    } catch (err) {
-      console.error(err)
-      return null
-    }
-  } else {
-    return null
+export const askServerUpdate = async (documentState: DocumentState, dispatch: Dispatch): Promise<void> => {
+  try {
+    const response = await upload(documentState)
+    dispatch(acceptServerResponse(response))
+  } catch (err) {
+    console.error(err)
   }
 }
 

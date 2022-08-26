@@ -3,7 +3,7 @@ import { Router } from 'express'
 import jwt from 'jsonwebtoken'
 import { RowDataPacket } from 'mysql2/promise'
 import getConnection from '../db/getConnection'
-import { UserOnDB } from '../models/user'
+import { UserInfoOnDB } from '../models/user'
 
 const authApiRouter = Router()
 authApiRouter.post('/', async (req, res) => {
@@ -13,7 +13,7 @@ authApiRouter.post('/', async (req, res) => {
       CALL get_user('${req.body.email}');
     `)
 
-    const user = rows[0][0] as unknown as UserOnDB
+    const user = rows[0][0] as unknown as UserInfoOnDB
     if (!user) return res.status(400).send('Invalid email or password.')
 
     const validPassword = await bcrypt.compare(req.body.password, user.password)

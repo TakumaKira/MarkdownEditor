@@ -37,7 +37,7 @@ After cloning this repository, you can run any commands start with ``yarn`` as y
 
 #### Run simulators
 
-Run ``yarn start`` to start Expo developer tools(will be available on http://your_local_IP:19002/), then you can start web/iOS/Android by clicking "Run in/on ~~" buttons on sidebar(If you want to run this on iOS/Android, you need to setup and get simulator ready beforehand).
+Run ``API_PORT=3000 WS_PORT=3001 yarn start`` to start Expo developer tools(will be available on http://your_local_IP:19002/), then you can start web/iOS/Android by clicking "Run in/on ~~" buttons on sidebar(If you want to run this on iOS/Android, you need to setup and get simulator ready beforehand).
 You can access the app by accessing http://localhost:19006/(web) or installing and starting Expo go app(iOS/Android).
 
 #### Run Storybook
@@ -46,7 +46,7 @@ If you do not set ``LOCAL_IP`` variable on .env, storybook will start on your lo
 
 Then run ``yarn storybook`` and you will see Storybook UI page on http://your_local_IP_or_0.0.0.0:7007/, but stories won't show up at this point.
 
-Then run ``yarn start:storybook`` and access Expo developer tools on http://localhost:19002/(for as node project) or http://your_local_IP:19002/(for as docker container) then click "Run in web browser"/"Run on iOS simulator"/"Run on Android device/emulator"(You need to setup and get the simulator ready beforehand) on sidebar of Expo developer tools. You can access the rendered stories by accessing http://localhost:19006/(web) or installing and starting Expo go app(iOS/Android)(you might need to reload Storybook UI page) and should be able to select a story and web/ios/android simulator will show the selected story(You should be able to get logs on the main window).
+Then run ``API_PORT=3000 WS_PORT=3001 yarn start:storybook`` and access Expo developer tools on http://localhost:19002/(for as node project) or http://your_local_IP:19002/(for as docker container) then click "Run in web browser"/"Run on iOS simulator"/"Run on Android device/emulator"(You need to setup and get the simulator ready beforehand) on sidebar of Expo developer tools. You can access the rendered stories by accessing http://localhost:19006/(web) or installing and starting Expo go app(iOS/Android)(you might need to reload Storybook UI page) and should be able to select a story and web/ios/android simulator will show the selected story(You should be able to get logs on the main window).
 
 #### Run unit test
 

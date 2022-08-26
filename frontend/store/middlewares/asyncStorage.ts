@@ -1,12 +1,23 @@
 import { Middleware, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "..";
-import { filterToRestore, storeData } from "../../services/asyncStorage";
+import { filterDocumentStateToRestore, filterThemeStateToRestore, filterUserStateToRestore, storeData } from "../../services/asyncStorage";
 import { DocumentState } from "../models/document";
-import { addDocuments, deleteSelectedDocument, newDocument, restore, saveDocument, selectDocument, selectLatestDocument } from "../slices/document";
-import { toggleTheme } from "../slices/theme";
+import { ThemeState } from "../models/theme";
+import { UserState } from "../models/user";
+import { addDocuments, deleteSelectedDocument, newDocument, restoreDocument, saveDocument, selectDocument, selectLatestDocument } from "../slices/document";
+import { restoreTheme, toggleTheme } from "../slices/theme";
+import { login, logout, restoreUser } from "../slices/user";
 
 export const asyncStorageMiddleware: Middleware<{}, RootState> = store => next => action => {
   next(action)
+
+  if (
+    action.type === login.type
+    || action.type === logout.type
+    || action.type === restoreUser.type && (action as PayloadAction<UserState | null>).payload === null
+  ) {
+    storeData('user', filterUserStateToRestore(store.getState().user))
+  }
 
   if (
     action.type === addDocuments.type
@@ -16,14 +27,15 @@ export const asyncStorageMiddleware: Middleware<{}, RootState> = store => next =
     || action.type === saveDocument.type
     || action.type === deleteSelectedDocument.type
     || action.type === selectLatestDocument.type
-    || (action.type === restore.type && (action as PayloadAction<DocumentState | null>).payload === null)
+    || (action.type === restoreDocument.type && (action as PayloadAction<DocumentState | null>).payload === null)
   ) {
-    storeData('document', filterToRestore(store.getState().document))
+    storeData('document', filterDocumentStateToRestore(store.getState().document))
   }
 
   if (
     action.type === toggleTheme.type
+    || action.type === restoreTheme.type && (action as PayloadAction<ThemeState | null>).payload === null
   ) {
-    storeData('theme', store.getState().theme)
+    storeData('theme', filterThemeStateToRestore(store.getState().theme))
   }
 }

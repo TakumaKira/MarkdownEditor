@@ -1,6 +1,5 @@
 import React from 'react'
 import { confirmationMessages, ConfirmationState } from '../constants/confirmationMessages'
-import { useAuthContext } from '../contexts/authContext'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { confirmationStateChanged, deleteSelectedDocument, selectDocument, selectSelectedDocumentOnEdit } from '../store/slices/document'
 import Confirmation from './Confirmation'
@@ -14,9 +13,6 @@ const Layout = () => {
   const confirmationState = useAppSelector(state => state.document.confirmationState)
 
   const dispatch = useAppDispatch()
-
-  // TODO: Set token when signing up or logging in.
-  const {setToken} = useAuthContext()
 
   const handleOk = () => {
     // TODO: This should not know too much detail of confirmation state.
