@@ -43,6 +43,8 @@ const styles = StyleSheet.create({
   menuButton: {
     height: TOP_BAR_HEIGHT,
     width: TOP_BAR_HEIGHT,
+  },
+  menuButtonContents: {
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -92,15 +94,19 @@ const styles = StyleSheet.create({
     height: 40,
     width: 40,
     borderRadius: 4,
+  },
+  deleteButtonContents: {
     justifyContent: 'center',
     alignItems: 'center',
   },
   saveButton: {
     marginRight: 16,
     height: 40,
+    borderRadius: 4,
+  },
+  saveButtonContents: {
     paddingLeft: 16,
     paddingRight: 16,
-    borderRadius: 4,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -119,7 +125,6 @@ const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showS
     mockWindowWidth,
   } = props
 
-  const {titleInput, mainInput} = useAppSelector(selectSelectedDocumentOnEdit)
   const dispatch = useAppDispatch()
   const mediaType = useMediaquery({width: mockWindowWidth})
 
@@ -150,7 +155,7 @@ const MenuButton = (props: {toggle: () => void, isOpen: boolean}) => {
   } = props
 
   return (
-    <ButtonWithHoverColorAnimation onPress={toggle} offBgColorRGB={colors[700]} onBgColorRGB={colors.Orange} duration={0} style={styles.menuButton}>
+    <ButtonWithHoverColorAnimation onPress={toggle} offBgColorRGB={colors[700]} onBgColorRGB={colors.Orange} duration={0} style={styles.menuButton} childrenWrapperStyle={styles.menuButtonContents}>
       <SvgWrapper>
         {isOpen ? <CloseIcon /> : <HamburgerIcon />}
       </SvgWrapper>
@@ -252,7 +257,7 @@ const DeleteButton = (props: {onPress: () => void}) => {
   } = props
 
   return (
-    <ButtonWithHoverColorAnimation onPress={onPress} offBgColorRGB={colors[800]} onBgColorRGB={colors[700]} style={styles.deleteButton}>
+    <ButtonWithHoverColorAnimation onPress={onPress} offBgColorRGB={colors[800]} onBgColorRGB={colors[700]} style={styles.deleteButton} childrenWrapperStyle={styles.deleteButtonContents} >
       <SvgWrapper>
         <DeleteIcon />
       </SvgWrapper>
@@ -269,7 +274,7 @@ const SaveButton = (props: {onPress: () => void, mockWindowWidth?: number}) => {
   const mediaType = useMediaquery({width: mockWindowWidth})
 
   return (
-    <ButtonWithHoverColorAnimation onPress={onPress} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={styles.saveButton}>
+    <ButtonWithHoverColorAnimation onPress={onPress} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={styles.saveButton} childrenWrapperStyle={styles.saveButtonContents}>
       <SvgWrapper>
         <SaveIcon />
       </SvgWrapper>

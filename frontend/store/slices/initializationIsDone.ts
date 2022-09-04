@@ -6,7 +6,7 @@ const storeInitializationIsDoneSlice = createSlice({
   name: 'storeInitializationIsDone',
   initialState,
   reducers: {
-    storeInitializationDone: state => {
+    storeInitializationDone: () => {
       return true
     },
   }

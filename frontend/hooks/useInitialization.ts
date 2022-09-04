@@ -12,7 +12,7 @@ const useInitialization = (): void => {
 
   // TODO: Remove the token below after login implemented.
   const mockLogin = () => {
-    const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6IkpvaG5Eb2VAbWFya2Rvd24uY29tIiwiaWF0IjoxNjYwOTE4OTIxfQ.KmSA0QLVIGxvWgqVSb67txi2hdXmFwf-xXrxpaoIbPg'
+    const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJKb2huRG9lQG1hcmtkb3duLmNvbSIsImlhdCI6MTY2MTY5NDcwNn0.dgNQF0kiFLOaL4zJl0Se_Xdrgenbsxa2ivd5J1cixBU'
     dispatch(login(mockToken))
     console.log('mockLogin')
   }

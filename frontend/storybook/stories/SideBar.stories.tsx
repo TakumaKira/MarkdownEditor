@@ -3,7 +3,8 @@ import { View } from 'react-native';
 import { Provider } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
 import SideBar from '../../components/SideBar';
-import { Document } from '../../store/slices/document';
+import { ConfirmationState } from "../../constants/confirmationMessages";
+import { DocumentOnDevice } from '../../store/models/document';
 import themeColors from '../../theme/themeColors';
 import { LONG_TITLE } from '../utils/constants';
 import getMockStore from '../utils/getMockStore';
@@ -12,33 +13,42 @@ import ThemeWrapper from '../utils/ThemeWrapper';
 
 const mockStore = getMockStore()
 
-const documentWithLongTitle = (): Document => ({
+const documentWithLongTitle = (): DocumentOnDevice => ({
   createdAt: '2022-04-01T00:00:00.000Z',
   updatedAt: '2022-04-01T00:00:00.000Z',
   name: LONG_TITLE + '.md',
   content: '',
   id: uuidv4(),
+  isUploaded: false,
+  isDeleted: false
 })
+const generateDocuments: (length: number) => DocumentOnDevice[] = length => {
+  return [...Array(length).keys()].map(() => documentWithLongTitle())
+}
+const documents = generateDocuments(10)
+const selectedDocumentIndex = 1
 const mockStoreWithManyDocumentsWithLongTitle = getMockStore({
   document: {
-    documentList: [
-      documentWithLongTitle(),
-      documentWithLongTitle(),
-      documentWithLongTitle(),
-      documentWithLongTitle(),
-      documentWithLongTitle(),
-      documentWithLongTitle(),
-      documentWithLongTitle(),
-      documentWithLongTitle(),
-      documentWithLongTitle(),
-      documentWithLongTitle(),
-    ],
-    selectedDocumentId: null,
+    documentList: documents,
+    documentOnEdit: {
+      id: documents[selectedDocumentIndex].id,
+      titleInput: documents[selectedDocumentIndex].name!,
+      mainInput: documents[selectedDocumentIndex].content!,
+    },
+    latestUpdatedDocumentFromDBAt: null,
+    confirmationState: {
+      state: ConfirmationState.NONE
+    },
   },
   theme: {
     deviceColorSchemeIsDark: false,
     selectedColorSchemeIsDark: false,
   },
+  user: {
+    token: null,
+    email: null,
+  },
+  initializationIsDone: true,
 })
 
 storiesOf('SideBar', module)

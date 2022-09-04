@@ -21,10 +21,12 @@ const styles = StyleSheet.create({
   message: {
     marginTop: 16,
   },
-  buttonContainer: {
+  button: {
     marginTop: 16,
     height: 40,
     borderRadius: 4,
+  },
+  buttonContents: {
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -49,7 +51,7 @@ const Confirmation = (props: {title: string, message: string, buttonLabel: strin
       <View style={[styles.modalContentContainer, themeColors[colorScheme].modalContentContainerBg]}>
         <Text style={[textStyles.previewH4, themeColors[colorScheme].confirmationTitle]}>{title}</Text>
         <Text style={[styles.message, textStyles.previewParagraph, themeColors[colorScheme].confirmationMessage]}>{message}</Text>
-        <ButtonWithHoverColorAnimation onPress={onPressButton} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={styles.buttonContainer}>
+        <ButtonWithHoverColorAnimation onPress={onPressButton} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={styles.button} childrenWrapperStyle={styles.buttonContents}>
           <Text style={[styles.buttonLabel, textStyles.headingM]}>{buttonLabel}</Text>
         </ButtonWithHoverColorAnimation>
       </View>

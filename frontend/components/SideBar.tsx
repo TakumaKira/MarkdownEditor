@@ -11,7 +11,9 @@ import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { confirmationStateChanged, newDocument, selectDocument, selectLiveDocumentList, selectSelectedDocumentHasEdit, selectSelectedDocumentOnEdit } from '../store/slices/document'
 import { toggleTheme } from '../store/slices/theme'
+import { login, logout } from '../store/slices/user'
 import colors from '../theme/colors'
+import fonts from '../theme/fonts'
 import textStyles from '../theme/textStyles'
 import ButtonWithHoverColorAnimation from './common/ButtonWithHoverColorAnimation'
 import SvgWrapper from './common/SvgWrapper'
@@ -41,6 +43,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     height: 40,
     borderRadius: 4,
+  },
+  addButtonContents: {
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -76,6 +80,40 @@ const styles = StyleSheet.create({
     marginTop: 3,
     color: colors[100],
     width: 170,
+  },
+  authContainerLoggedOut: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  authButtonsGap: {
+    width: 18,
+  },
+  authContainerLoggedIn: {
+    marginBottom: 24,
+  },
+  loggedInAs: {
+    color: colors[400],
+    marginBottom: 6,
+  },
+  userEmail: {
+    textAlign: 'center',
+    marginBottom: 18,
+    fontFamily: fonts.robotoRegular,
+    fontSize: 14,
+    color: colors[400],
+  },
+  authButton: {
+    flexGrow: 1,
+    height: 35,
+    borderRadius: 4,
+  },
+  authButtonContents: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  authButtonLabel: {
+    color: colors[100],
   },
   themeToggleContainer: {
     flexDirection: 'row',
@@ -132,6 +170,7 @@ const SideBar = () => {
           />
         )}
       </ScrollView>
+      <Auth />
       <ThemeToggle />
     </View>
   )
@@ -143,7 +182,7 @@ const AddButton = (props: {onPress: () => void}) => {
   } = props
 
   return (
-    <ButtonWithHoverColorAnimation onPress={onPress} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={styles.addButton}>
+    <ButtonWithHoverColorAnimation onPress={onPress} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={styles.addButton} childrenWrapperStyle={styles.addButtonContents} >
       <Text style={[styles.addButtonLabel, textStyles.headingM]}>+ New Document</Text>
     </ButtonWithHoverColorAnimation>
   )
@@ -184,6 +223,32 @@ const formatDate = (dateStr: string): string => {
   } catch {
     return dateStr
   }
+}
+
+const Auth = () => {
+  const userEmail = useAppSelector(state => state.user.email)
+  const dispatch = useAppDispatch()
+
+  const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJKb2huRG9lQG1hcmtkb3duLmNvbSIsImlhdCI6MTY2MTY5NDcwNn0.dgNQF0kiFLOaL4zJl0Se_Xdrgenbsxa2ivd5J1cixBU'
+
+  return (userEmail === null
+    ? <View style={styles.authContainerLoggedOut}>
+      <ButtonWithHoverColorAnimation onPress={() => console.log('signup')} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
+        <Text style={[styles.authButtonLabel]}>Signup</Text>
+      </ButtonWithHoverColorAnimation>
+      <View style={styles.authButtonsGap} />
+      <ButtonWithHoverColorAnimation onPress={() => dispatch(login(mockToken))} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
+        <Text style={[styles.authButtonLabel]}>Login</Text>
+      </ButtonWithHoverColorAnimation>
+    </View>
+    : <View style={styles.authContainerLoggedIn}>
+      <Text style={[textStyles.bodyM, styles.loggedInAs]}>Logged in as</Text>
+      <Text style={styles.userEmail}>{userEmail}</Text>
+      <ButtonWithHoverColorAnimation onPress={() => dispatch(logout())} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
+        <Text style={[styles.authButtonLabel]}>Logout</Text>
+      </ButtonWithHoverColorAnimation>
+    </View>
+  )
 }
 
 const ThemeToggle = () => {

@@ -16,9 +16,11 @@ const styles = StyleSheet.create({
   },
   button: {
     height: 40,
+    borderRadius: 4,
+  },
+  buttonContents: {
     paddingLeft: 16,
     paddingRight: 16,
-    borderRadius: 4,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -30,7 +32,7 @@ storiesOf('ButtonWithHover', module)
     const showSaveIcon = boolean('show save icon', true)
     return (
       <View style={styles.container}>
-        <ButtonWithHoverColorAnimation onPress={action('onPress')} offBgColorRGB={text('offColorRGB', colors.Orange as string)} onBgColorRGB={text('onColorRGB', colors.OrangeHover as string)} duration={number('duration', 100)} style={styles.button}>
+        <ButtonWithHoverColorAnimation onPress={action('onPress')} offBgColorRGB={text('offColorRGB', colors.Orange as string)} onBgColorRGB={text('onColorRGB', colors.OrangeHover as string)} duration={number('duration', 100)} style={styles.button} childrenWrapperStyle={styles.buttonContents}>
           {showSaveIcon &&
             <SvgWrapper>
               <SaveIcon />
