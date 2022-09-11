@@ -1,8 +1,9 @@
 import { UserInfoOnToken } from "@api/user";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosError } from 'axios';
 import jwt from 'jsonwebtoken';
 import { AuthStateTypes } from "../../components/AuthModal";
+import { login, signup } from "../../services/api";
 import { getData } from "../../services/asyncStorage";
 import { AuthStateLogin, AuthStateSignup, UserState } from "../models/user";
 
@@ -36,19 +37,9 @@ export const restoreUser = createAsyncThunk('user/restoreUser', () => {
   return getData('user')
 })
 
-export const askServerSignup = createAsyncThunk('user/askServerSignup', async (paylaod: {email: string, password: string, passwordConfirm: string}) => {
+export const askServerSignup = createAsyncThunk('user/askServerSignup', async (payload: {email: string, password: string}) => {
   try {
-    console.log('TODO: Implement asking API.')
-    const response = await new Promise<AxiosResponse<{message: string}>>((resolve, reject) => {
-      const hasError = false
-      if (!hasError) {
-        const response: AxiosResponse<{message: string}> = {data: {message: 'Confirmation email sent.'}, status: 200, statusText: 'OK', headers: {}, config: {}}
-        setTimeout(() => resolve(response), 3000)
-      } else {
-        const error: AxiosError<{message: string}> = {response: {data: {message: 'Email is already registered.'}, status: 401, statusText: 'Unauthorized', headers: {}, config: {}}, message: '', config: {}, isAxiosError: true, toJSON: () => ({}), name: ''}
-        setTimeout(() => reject(error), 3000)
-      }
-    })
+    const response = await signup(payload)
     return {successMessage: response.data.message}
   } catch (err: any) {
     if ('response' in err) {
@@ -62,20 +53,9 @@ export const askServerSignup = createAsyncThunk('user/askServerSignup', async (p
   }
 })
 
-export const askServerLogin = createAsyncThunk('user/askServerLogin', async (paylaod: {email: string, password: string}) => {
+export const askServerLogin = createAsyncThunk('user/askServerLogin', async (payload: {email: string, password: string}) => {
   try {
-    console.log('TODO: Implement asking API.')
-    const response = await new Promise<AxiosResponse<{message: string, token: string}>>((resolve, reject) => {
-      const hasError = false
-      if (!hasError) {
-        const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJKb2huRG9lQG1hcmtkb3duLmNvbSIsImlhdCI6MTY2MTY5NDcwNn0.dgNQF0kiFLOaL4zJl0Se_Xdrgenbsxa2ivd5J1cixBU'
-        const response: AxiosResponse<{message: string, token: string}> = {data: {message: 'Login successful.', token: mockToken}, status: 200, statusText: 'OK', headers: {}, config: {}}
-        setTimeout(() => resolve(response), 3000)
-      } else {
-        const error: AxiosError<{message: string}> = {response: {data: {message: 'Email/Password is incorrect.'}, status: 401, statusText: 'Unauthorized', headers: {}, config: {}}, message: '', config: {}, isAxiosError: true, toJSON: () => ({}), name: ''}
-        setTimeout(() => reject(error), 3000)
-      }
-    })
+    const response = await login(payload)
     return {token: response.data.token}
   } catch (err: any) {
     if ('response' in err) {

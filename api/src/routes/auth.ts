@@ -6,7 +6,12 @@ import getConnection from '../db/getConnection'
 import { UserInfoOnDB } from '../models/user'
 
 const authApiRouter = Router()
-authApiRouter.post('/', async (req, res) => {
+console.log('TODO: Share path.')
+authApiRouter.post('/signup', async (req, res, next) => {
+
+})
+console.log('TODO: Share path.')
+authApiRouter.get('/login', async (req, res, next) => {
   try {
     const connection = await getConnection()
     const [rows, fields] = await connection.execute<RowDataPacket[][]>(`

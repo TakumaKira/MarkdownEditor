@@ -6,6 +6,7 @@ const startApi = (apiPort: number) => {
   setupApi(expressApp)
 
   return expressApp.listen(apiPort, () => {
+    console.log('TODO: Switch origin with environment variables.')
     console.log(`⚡️[server]: Server is running at https://localhost:${apiPort}`)
   })
 }

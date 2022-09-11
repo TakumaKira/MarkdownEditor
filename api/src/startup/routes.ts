@@ -7,9 +7,10 @@ import authApiRouter from '../routes/auth'
 import documentsRouter from '../routes/documents'
 
 const apiRoutes = (expressApp: Express) => {
-  // TODO: Switch origin with environment variables
+  console.log('TODO: Switch origin with environment variables.')
   expressApp.use(cors({origin: 'http://localhost:19006'}))
   expressApp.use(express.json())
+  console.log('TODO: Share path.')
   expressApp.use('/api/auth', authApiRouter)
   expressApp.use('/api/documents', documentsRouter)
   expressApp.use(error)
