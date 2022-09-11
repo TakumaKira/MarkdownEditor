@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native'
 import colors from './colors';
 
+// TODO: Make sure every property is on each theme.
 const themeColors = {
   light: StyleSheet.create({
     editorHeaderBg: {
@@ -48,6 +49,15 @@ const themeColors = {
     confirmationMessage: {
       color: colors[500],
     },
+    inputText: {
+      color: colors[700],
+    },
+    inputUnderLabel: {
+      color: colors[600],
+    },
+    inputUnderline: {
+      color: colors[700],
+    },
   }),
   dark: StyleSheet.create({
     editorHeaderBg: {
@@ -94,6 +104,15 @@ const themeColors = {
     },
     confirmationMessage: {
       color: colors[400],
+    },
+    inputText: {
+      color: colors[100],
+    },
+    inputUnderLabel: {
+      color: colors[500],
+    },
+    inputUnderline: {
+      color: colors[100],
     },
   }),
 } as const

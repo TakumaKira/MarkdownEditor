@@ -1,10 +1,12 @@
 import { DocumentsUploadResponse } from '@api/document'
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { AsyncThunk, createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import Constants from 'expo-constants'
 import { v4 as uuidv4 } from 'uuid'
-import { ConfirmationState } from '../../constants/confirmationMessages'
+import { ConfirmationStateTypes } from '../../constants/confirmationMessages'
 import { sortDocumentsFromNewest } from '../../helpers/sortDocuments'
-import { ConfirmationStateProps, DocumentOnDevice, DocumentOnEdit, DocumentState, DocumentStateRestore } from '../models/document'
+import { upload } from '../../services/api'
+import { getData } from '../../services/asyncStorage'
+import { ConfirmationState, ConfirmationStateWithNextId, DocumentOnDevice, DocumentOnEdit, DocumentState } from '../models/document'
 
 const generateNewDocument = (): DocumentOnDevice => ({
   id: uuidv4(),
@@ -24,10 +26,22 @@ const initialState: DocumentState = {
     mainInput: ''
   },
   latestUpdatedDocumentFromDBAt: null,
-  confirmationState: {
-    state: ConfirmationState.NONE
-  }
+  confirmationState: null,
+  restoreIsDone: false
 }
+
+export const restoreDocument = createAsyncThunk('document/restoreDocument', () => {
+  return getData('document')
+})
+
+export const askServerUpdate: AsyncThunk<DocumentsUploadResponse | null, DocumentState, {}> = createAsyncThunk('document/askServerUpdate', (documentState: DocumentState) => {
+  try {
+    return upload(documentState)
+  } catch (err) {
+    console.error(err)
+    return null
+  }
+})
 
 const documentSlice = createSlice({
   name: 'document',
@@ -108,20 +122,6 @@ const documentSlice = createSlice({
       state.documentOnEdit.titleInput = latestDocument?.name ?? ''
       state.documentOnEdit.mainInput = latestDocument?.content ?? ''
     },
-    /** This reducer cannot be AsyncThunk as it has to dispatch acceptServerResponse using next inside middleware after askServerUpdate(async func). */
-    restoreDocument: (state, action: PayloadAction<DocumentStateRestore | null>) => {
-      const restored = action.payload
-      if (restored) {
-        try {
-          // TODO: Test automatically check to not miss restoring any property.
-          state.documentList = restored.documentList
-          state.documentOnEdit.id = restored.documentOnEdit.id
-          state.latestUpdatedDocumentFromDBAt = restored.latestUpdatedDocumentFromDBAt
-        } catch (err) {
-          console.error(err)
-        }
-      }
-    },
     acceptServerResponse: (state, action: PayloadAction<DocumentsUploadResponse>) => {
       const response = action.payload
 
@@ -153,7 +153,7 @@ const documentSlice = createSlice({
             newDocument.content = state.documentOnEdit.mainInput
             state.documentList.push(newDocument)
             state.documentOnEdit.id = newDocument.id
-            state.confirmationState = {state: ConfirmationState.UNSAVED_DOCUMENT_CONFLICTED}
+            state.confirmationState = {type: ConfirmationStateTypes.UNSAVED_DOCUMENT_CONFLICTED}
             // TODO: Upload conflicted document.
           }
           state.documentList[localIndex] = {...fromDB, isUploaded: true}
@@ -171,9 +171,25 @@ const documentSlice = createSlice({
         state.latestUpdatedDocumentFromDBAt = latestUpdatedDocumentFromDBAt
       }
     },
-    confirmationStateChanged: (state, action: PayloadAction<ConfirmationStateProps>) => {
+    confirmationStateChanged: (state, action: PayloadAction<DocumentState['confirmationState']>) => {
       state.confirmationState = action.payload
     },
+  },
+  extraReducers: builder => {
+    builder.addCase(restoreDocument.fulfilled, (state, action) => {
+      const restored = action.payload
+      if (restored) {
+        try {
+          // TODO: Test automatically check to not miss restoring any property.
+          state.documentList = restored.documentList
+          state.documentOnEdit.id = restored.documentOnEdit.id
+          state.latestUpdatedDocumentFromDBAt = restored.latestUpdatedDocumentFromDBAt
+        } catch (err) {
+          console.error(err)
+        }
+      }
+      state.restoreIsDone = true
+    })
   },
 })
 
@@ -187,7 +203,6 @@ export const {
   saveDocument,
   deleteSelectedDocument,
   selectLatestDocument,
-  restoreDocument,
   acceptServerResponse,
   confirmationStateChanged,
 } = documentSlice.actions

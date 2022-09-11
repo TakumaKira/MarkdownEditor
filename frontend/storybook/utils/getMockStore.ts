@@ -1,7 +1,7 @@
 import { configureStore, EnhancedStore } from "@reduxjs/toolkit"
 import { CurriedGetDefaultMiddleware } from "@reduxjs/toolkit/dist/getDefaultMiddleware"
-import { ConfirmationState } from "../../constants/confirmationMessages"
 import { reducer, RootState } from "../../store"
+import { authMiddleware } from "../../store/middlewares/auth"
 
 const defaultPreloadedState: RootState = {
   document: {
@@ -12,19 +12,21 @@ const defaultPreloadedState: RootState = {
       mainInput: '',
     },
     latestUpdatedDocumentFromDBAt: null,
-    confirmationState: {
-      state: ConfirmationState.NONE,
-    },
+    confirmationState: null,
+    restoreIsDone: true,
   },
   theme: {
     deviceColorSchemeIsDark: false,
     selectedColorSchemeIsDark: false,
+    restoreIsDone: true,
   },
   user: {
     token: null,
     email: null,
+    authState: null,
+    restoreIsDone: true,
   },
-  initializationIsDone: true,
+  storeInitializationIsDone: true,
 }
 export const preloadedStateInDarkScheme: RootState = {
   document: {
@@ -35,24 +37,32 @@ export const preloadedStateInDarkScheme: RootState = {
       mainInput: '',
     },
     latestUpdatedDocumentFromDBAt: null,
-    confirmationState: {
-      state: ConfirmationState.NONE,
-    },
+    confirmationState: null,
+    restoreIsDone: true,
   },
   theme: {
     deviceColorSchemeIsDark: true, // This will be reset on initialization.
     selectedColorSchemeIsDark: true,
+    restoreIsDone: true,
   },
   user: {
     token: null,
     email: null,
+    authState: null,
+    restoreIsDone: true,
   },
-  initializationIsDone: true,
+  storeInitializationIsDone: true,
 }
 const getMockStore = (preloadedState = defaultPreloadedState): EnhancedStore => {
   return configureStore({
     reducer,
-    middleware: (gDM: CurriedGetDefaultMiddleware<RootState>) => gDM(),
+    middleware: (gDM: CurriedGetDefaultMiddleware<RootState>) =>
+      gDM()
+        // .concat(storeInitializationDoneMiddleware)
+        // .concat(prepareDefaultDocumentsMiddleware)
+        // .concat(asyncStorageMiddleware)
+        .concat(authMiddleware),
+        // .concat(apiMiddleware),
     preloadedState,
   })
 }

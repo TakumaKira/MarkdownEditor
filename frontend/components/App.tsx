@@ -2,7 +2,7 @@ import 'react-native-get-random-values'
 import { Provider } from 'react-redux'
 import useApiAuth from '../hooks/useApiAuth'
 import useConfirmUnsavedDocument from '../hooks/useConfirmUnsavedDocument'
-import useInitialization from '../hooks/useInitialization'
+import useRestore from '../hooks/useRestore'
 import useLoadInputFromUrlParams from '../hooks/useLoadInputFromUrlParams'
 import store from '../store'
 import Layout from './Layout'
@@ -19,7 +19,7 @@ const App = () => {
 export default App
 
 const Hooks = (props: {children: JSX.Element}): JSX.Element => {
-  useInitialization()
+  useRestore()
   useApiAuth()
   useConfirmUnsavedDocument()
   useLoadInputFromUrlParams()

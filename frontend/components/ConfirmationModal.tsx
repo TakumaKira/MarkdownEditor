@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   },
 })
 
-const Confirmation = (props: {title: string, message: string, buttonLabel: string, onPressButton: () => void, onPressBackground: () => void}) => {
+const ConfirmationModal = (props: {title: string, message: string, buttonLabel: string, onPressButton: () => void, onPressBackground: () => void}) => {
   const {
     title,
     message,
@@ -58,4 +58,4 @@ const Confirmation = (props: {title: string, message: string, buttonLabel: strin
     </Modal>
   )
 }
-export default Confirmation
+export default ConfirmationModal

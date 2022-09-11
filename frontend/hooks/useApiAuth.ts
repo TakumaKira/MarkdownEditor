@@ -1,12 +1,13 @@
-import axios from 'axios'
 import Constants from 'expo-constants'
 import React from "react"
 import { io, Socket } from 'socket.io-client'
-import { askServerUpdate } from '../services/api'
+import { setTokenToRequestHeader } from '../services/api'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { askServerUpdate } from '../store/slices/document'
 
 /** Dependent on redux store. */
 const useApiAuth = (): void => {
+  const storeInitializationIsDone = useAppSelector(state => state.storeInitializationIsDone)
   const documentState = useAppSelector(state => state.document)
   const isLoggedIn = useAppSelector(state => !!state.user.token)
   const userState = useAppSelector(state => state.user)
@@ -15,20 +16,15 @@ const useApiAuth = (): void => {
   const [socket, setSocket] = React.useState<Socket>()
 
   React.useEffect(() => {
+    if (!storeInitializationIsDone) {
+      return
+    }
     const {token} = userState
     setTokenToRequestHeader(token)
     if (token) {
       getSocket(token)
     }
-  }, [userState.token])
-
-  const setTokenToRequestHeader = (token: string | null) => {
-    if (token) {
-      axios.defaults.headers.common['x-auth-token'] = token
-    } else {
-      delete axios.defaults.headers.common['x-auth-token']
-    }
-  }
+  }, [storeInitializationIsDone, userState.token])
 
   const getSocket = (token: string) => {
     const ORIGIN = Constants.manifest?.extra?.ORIGIN
@@ -47,7 +43,7 @@ const useApiAuth = (): void => {
 
   const documentsUpdated = React.useCallback((updatedAt: string) => {
     if (isLoggedIn && documentState.latestUpdatedDocumentFromDBAt! < updatedAt) {
-      askServerUpdate(documentState, dispatch)
+      dispatch(askServerUpdate(documentState))
     }
   }, [documentState, isLoggedIn])
 

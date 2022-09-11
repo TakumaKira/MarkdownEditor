@@ -1,4 +1,5 @@
-import { Middleware, PayloadAction } from "@reduxjs/toolkit";
+import { AnyAction, PayloadAction } from "@reduxjs/toolkit";
+import { ThunkMiddleware } from 'redux-thunk';
 import { RootState } from "..";
 import { filterDocumentStateToRestore, filterThemeStateToRestore, filterUserStateToRestore, storeData } from "../../services/asyncStorage";
 import { DocumentState } from "../models/document";
@@ -6,15 +7,15 @@ import { ThemeState } from "../models/theme";
 import { UserState } from "../models/user";
 import { addDocuments, deleteSelectedDocument, newDocument, restoreDocument, saveDocument, selectDocument, selectLatestDocument } from "../slices/document";
 import { restoreTheme, toggleTheme } from "../slices/theme";
-import { login, logout, restoreUser } from "../slices/user";
+import { askServerLogin, removeLoginToken, restoreUser } from "../slices/user";
 
-export const asyncStorageMiddleware: Middleware<{}, RootState> = store => next => action => {
+export const asyncStorageMiddleware: ThunkMiddleware<RootState, AnyAction> = store => next => action => {
   next(action)
 
   if (
-    action.type === login.type
-    || action.type === logout.type
-    || action.type === restoreUser.type && (action as PayloadAction<UserState | null>).payload === null
+    action.type === askServerLogin.fulfilled.type
+    || action.type === removeLoginToken.type
+    || action.type === restoreUser.fulfilled.type && (action as PayloadAction<UserState | null>).payload === null
   ) {
     storeData('user', filterUserStateToRestore(store.getState().user))
   }
@@ -27,14 +28,14 @@ export const asyncStorageMiddleware: Middleware<{}, RootState> = store => next =
     || action.type === saveDocument.type
     || action.type === deleteSelectedDocument.type
     || action.type === selectLatestDocument.type
-    || (action.type === restoreDocument.type && (action as PayloadAction<DocumentState | null>).payload === null)
+    || (action.type === restoreDocument.fulfilled.type && (action as PayloadAction<DocumentState | null>).payload === null)
   ) {
     storeData('document', filterDocumentStateToRestore(store.getState().document))
   }
 
   if (
     action.type === toggleTheme.type
-    || action.type === restoreTheme.type && (action as PayloadAction<ThemeState | null>).payload === null
+    || action.type === restoreTheme.fulfilled.type && (action as PayloadAction<ThemeState | null>).payload === null
   ) {
     storeData('theme', filterThemeStateToRestore(store.getState().theme))
   }

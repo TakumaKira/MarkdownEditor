@@ -4,8 +4,8 @@ import { storiesOf } from '@storybook/react-native';
 import React from 'react';
 import { View } from 'react-native';
 import { Provider } from 'react-redux';
-import Confirmation from '../../components/Confirmation';
-import { confirmationMessages, ConfirmationState } from '../../constants/confirmationMessages';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import { confirmationMessages, ConfirmationStateTypes } from '../../constants/confirmationMessages';
 import { LONG_TEXT, LONG_TITLE } from '../utils/constants';
 import getMockStore from '../utils/getMockStore';
 import MockText from '../utils/MockText';
@@ -14,7 +14,7 @@ import ThemeWrapper from '../utils/ThemeWrapper';
 
 const mockStore = getMockStore()
 
-storiesOf('Confirmation', module)
+storiesOf('ConfirmationModal', module)
   .addDecorator(story =>
     <Provider store={mockStore}>
       <ThemeWrapper isDark={boolean('dark mode', false)}>
@@ -30,25 +30,25 @@ storiesOf('Confirmation', module)
     </Provider>
   )
   .add('Delete', () =>
-    <Confirmation
-      title={text('title', confirmationMessages[ConfirmationState.DELETE].title)}
-      message={text('message', confirmationMessages[ConfirmationState.DELETE].message('Document Title.md'))}
-      buttonLabel={text('button label', confirmationMessages[ConfirmationState.DELETE].buttonLabel).replace('&amp;', '&')}
+    <ConfirmationModal
+      title={text('title', confirmationMessages[ConfirmationStateTypes.DELETE].title)}
+      message={text('message', confirmationMessages[ConfirmationStateTypes.DELETE].message('Document Title.md'))}
+      buttonLabel={text('button label', confirmationMessages[ConfirmationStateTypes.DELETE].buttonLabel).replace('&amp;', '&')}
       onPressButton={action('onPressButton')}
       onPressBackground={action('onPressBackground')}
     />
   )
   .add('Leaved unsaved document', () =>
-    <Confirmation
-      title={text('title', confirmationMessages[ConfirmationState.LEAVE_UNSAVED_DOCUMENT].title)}
-      message={text('message', confirmationMessages[ConfirmationState.LEAVE_UNSAVED_DOCUMENT].message('Document Title.md'))}
-      buttonLabel={text('button label', confirmationMessages[ConfirmationState.LEAVE_UNSAVED_DOCUMENT].buttonLabel).replace('&amp;', '&')}
+    <ConfirmationModal
+      title={text('title', confirmationMessages[ConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT].title)}
+      message={text('message', confirmationMessages[ConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT].message('Document Title.md'))}
+      buttonLabel={text('button label', confirmationMessages[ConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT].buttonLabel).replace('&amp;', '&')}
       onPressButton={action('onPressButton')}
       onPressBackground={action('onPressBackground')}
     />
   )
   .add('Long text', () =>
-    <Confirmation
+    <ConfirmationModal
       title={text('title', LONG_TITLE)}
       message={text('message', LONG_TEXT)}
       buttonLabel={text('button label', 'Click')}

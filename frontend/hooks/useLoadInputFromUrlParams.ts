@@ -6,7 +6,7 @@ import { deselectDocument, updateMainInput, updateTitleInput } from "../store/sl
 /** Dependent on redux store. */
 const useLoadInputFromUrlParams = () => {
   const dispatch = useAppDispatch()
-  const initializationIsDone = useAppSelector(state => state.initializationIsDone)
+  const storeInitializationIsDone = useAppSelector(state => state.storeInitializationIsDone)
 
   const tryLoadingInputFromUrlParams = () => {
     const search = window?.location?.search
@@ -22,9 +22,9 @@ const useLoadInputFromUrlParams = () => {
     dispatch(updateMainInput(decodeURIComponent(_input)))
   }
   React.useEffect(() => {
-    if (initializationIsDone) {
+    if (storeInitializationIsDone) {
       tryLoadingInputFromUrlParams()
     }
-  }, [initializationIsDone])
+  }, [storeInitializationIsDone])
 }
 export default useLoadInputFromUrlParams

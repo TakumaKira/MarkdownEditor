@@ -16,7 +16,7 @@ const styles = StyleSheet.create({
   },
 })
 
-const Modal = (props: {children: JSX.Element, onPressBackground: () => void}) => {
+const Modal = (props: {children: JSX.Element, onPressBackground?: () => void}) => {
   const {
     children,
     onPressBackground,
@@ -25,12 +25,12 @@ const Modal = (props: {children: JSX.Element, onPressBackground: () => void}) =>
   const colorScheme = useAppSelector(selectColorScheme)
 
   return (
-    <TouchableWithoutFeedback onPress={onPressBackground}>
-      <View style={styles.fullscreen}>
-        <View style={[styles.fullscreen, styles.background, themeColors[colorScheme].modalBackgroundColor]} />
-        {children}
-      </View>
-    </TouchableWithoutFeedback>
+    <View style={styles.fullscreen}>
+      <TouchableWithoutFeedback onPress={onPressBackground}>
+          <View style={[styles.fullscreen, styles.background, themeColors[colorScheme].modalBackgroundColor]} />
+      </TouchableWithoutFeedback>
+      {children}
+    </View>
   )
 }
 

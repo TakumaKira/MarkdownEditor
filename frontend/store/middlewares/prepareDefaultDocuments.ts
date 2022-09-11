@@ -1,10 +1,11 @@
-import { Middleware } from "@reduxjs/toolkit";
+import { AnyAction } from '@reduxjs/toolkit';
 import Constants from 'expo-constants';
+import { ThunkMiddleware } from 'redux-thunk';
 import { RootState } from "..";
 import { filterDocumentStateToRestore, storeData } from "../../services/asyncStorage";
 import { acceptServerResponse, addDocuments } from "../slices/document";
 
-export const prepareDefaultDocumentsMiddleware: Middleware<{}, RootState> = store => next => action => {
+export const prepareDefaultDocumentsMiddleware: ThunkMiddleware<RootState, AnyAction> = store => next => action => {
   next(action)
 
   if (

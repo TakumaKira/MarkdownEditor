@@ -5,16 +5,17 @@ import DarkIcon from '../assets/icon-dark-mode.svg'
 import DocumentIcon from '../assets/icon-document.svg'
 import LightIconHighlight from '../assets/icon-light-mode-highlight.svg'
 import LightIcon from '../assets/icon-light-mode.svg'
-import { ConfirmationState } from '../constants/confirmationMessages'
+import { ConfirmationStateTypes } from '../constants/confirmationMessages'
 import { sortDocumentsFromNewest } from '../helpers/sortDocuments'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { confirmationStateChanged, newDocument, selectDocument, selectLiveDocumentList, selectSelectedDocumentHasEdit, selectSelectedDocumentOnEdit } from '../store/slices/document'
 import { toggleTheme } from '../store/slices/theme'
-import { login, logout } from '../store/slices/user'
+import { callAuthModal, removeLoginToken } from '../store/slices/user'
 import colors from '../theme/colors'
 import fonts from '../theme/fonts'
 import textStyles from '../theme/textStyles'
+import { AuthStateTypes } from './AuthModal'
 import ButtonWithHoverColorAnimation from './common/ButtonWithHoverColorAnimation'
 import SvgWrapper from './common/SvgWrapper'
 import { Text } from './common/withCustomFont'
@@ -147,7 +148,7 @@ const SideBar = () => {
 
   const handlePressDocument = (id: string) => {
     if (hasEdit) {
-      dispatch(confirmationStateChanged({state: ConfirmationState.LEAVE_UNSAVED_DOCUMENT, nextId: id}))
+      dispatch(confirmationStateChanged({type: ConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT, nextId: id}))
     } else {
       dispatch(selectDocument(id))
     }
@@ -229,22 +230,20 @@ const Auth = () => {
   const userEmail = useAppSelector(state => state.user.email)
   const dispatch = useAppDispatch()
 
-  const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJKb2huRG9lQG1hcmtkb3duLmNvbSIsImlhdCI6MTY2MTY5NDcwNn0.dgNQF0kiFLOaL4zJl0Se_Xdrgenbsxa2ivd5J1cixBU'
-
   return (userEmail === null
     ? <View style={styles.authContainerLoggedOut}>
-      <ButtonWithHoverColorAnimation onPress={() => console.log('signup')} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
+      <ButtonWithHoverColorAnimation onPress={() => dispatch(callAuthModal(AuthStateTypes.LOGIN))} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
         <Text style={[styles.authButtonLabel]}>Signup</Text>
       </ButtonWithHoverColorAnimation>
       <View style={styles.authButtonsGap} />
-      <ButtonWithHoverColorAnimation onPress={() => dispatch(login(mockToken))} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
+      <ButtonWithHoverColorAnimation onPress={() => dispatch(callAuthModal(AuthStateTypes.LOGIN))} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
         <Text style={[styles.authButtonLabel]}>Login</Text>
       </ButtonWithHoverColorAnimation>
     </View>
     : <View style={styles.authContainerLoggedIn}>
       <Text style={[textStyles.bodyM, styles.loggedInAs]}>Logged in as</Text>
       <Text style={styles.userEmail}>{userEmail}</Text>
-      <ButtonWithHoverColorAnimation onPress={() => dispatch(logout())} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
+      <ButtonWithHoverColorAnimation onPress={() => dispatch(removeLoginToken())} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
         <Text style={[styles.authButtonLabel]}>Logout</Text>
       </ButtonWithHoverColorAnimation>
     </View>

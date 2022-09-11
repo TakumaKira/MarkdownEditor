@@ -1,8 +1,9 @@
 import React from 'react'
-import { confirmationMessages, ConfirmationState } from '../constants/confirmationMessages'
+import { confirmationMessages, ConfirmationStateTypes } from '../constants/confirmationMessages'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { ConfirmationStateWithNextId } from '../store/models/document'
 import { confirmationStateChanged, deleteSelectedDocument, selectDocument, selectSelectedDocumentOnEdit } from '../store/slices/document'
-import Confirmation from './Confirmation'
+import ConfirmationModal from './ConfirmationModal'
 import Frame from './Frame'
 import MainView from './MainView'
 import SafeArea from './SafeArea'
@@ -16,15 +17,15 @@ const Layout = () => {
 
   const handleOk = () => {
     // TODO: This should not know too much detail of confirmation state.
-    if (confirmationState.state === ConfirmationState.DELETE) {
+    if (confirmationState!.type === ConfirmationStateTypes.DELETE) {
       dispatch(deleteSelectedDocument())
-    } else if (confirmationState.state === ConfirmationState.LEAVE_UNSAVED_DOCUMENT) {
-      dispatch(selectDocument(confirmationState.nextId))
+    } else if (confirmationState!.type === ConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT) {
+      dispatch(selectDocument((confirmationState as ConfirmationStateWithNextId).nextId))
     }
-    dispatch(confirmationStateChanged({state: ConfirmationState.NONE}))
+    dispatch(confirmationStateChanged(null))
   }
   const handleCancel = () => {
-    dispatch(confirmationStateChanged({state: ConfirmationState.NONE}))
+    dispatch(confirmationStateChanged(null))
   }
 
   return (
@@ -33,15 +34,18 @@ const Layout = () => {
         sidebar={SideBar}
         main={MainView}
       />
-      {confirmationState.state !== ConfirmationState.NONE &&
-        <Confirmation
-          title={confirmationMessages[confirmationState.state].title}
-          message={confirmationMessages[confirmationState.state].message(titleInput)}
-          buttonLabel={confirmationMessages[confirmationState.state].buttonLabel}
+      {confirmationState &&
+        <ConfirmationModal
+          title={confirmationMessages[confirmationState.type].title}
+          message={confirmationMessages[confirmationState.type].message(titleInput)}
+          buttonLabel={confirmationMessages[confirmationState.type].buttonLabel}
           onPressButton={handleOk}
           onPressBackground={handleCancel}
         />
       }
+      {/* {authenticationState.state !== AuthenticationState.NONE &&
+        <Auth />
+      } */}
     </SafeArea>
   )
 }

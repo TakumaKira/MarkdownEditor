@@ -2,12 +2,14 @@ import { configureStore } from '@reduxjs/toolkit'
 import { CurriedGetDefaultMiddleware } from '@reduxjs/toolkit/dist/getDefaultMiddleware'
 import { apiMiddleware } from './middlewares/api'
 import { asyncStorageMiddleware } from './middlewares/asyncStorage'
+import { authMiddleware } from './middlewares/auth'
 import { prepareDefaultDocumentsMiddleware } from './middlewares/prepareDefaultDocuments'
+import { storeInitializationDoneMiddleware } from './middlewares/storeInitializationDone'
 import { DocumentState, DocumentStateRestore } from './models/document'
 import { ThemeState, ThemeStateRestore } from './models/theme'
 import { UserState, UserStateRestore } from './models/user'
 import documentReducer from './slices/document'
-import initializationIsDoneReducer from './slices/initializationIsDone'
+import storeInitializationIsDoneReducer from './slices/storeInitializationIsDone'
 import themeReducer from './slices/theme'
 import userReducer from './slices/user'
 
@@ -15,7 +17,7 @@ export type RootState = {
   document: DocumentState
   theme: ThemeState
   user: UserState
-  initializationIsDone: boolean
+  storeInitializationIsDone: boolean
 }
 export type RootStateRestore = {
   document: DocumentStateRestore
@@ -26,13 +28,15 @@ export const reducer = {
   document: documentReducer,
   theme: themeReducer,
   user: userReducer,
-  initializationIsDone: initializationIsDoneReducer,
+  storeInitializationIsDone: storeInitializationIsDoneReducer,
 }
 export const middleware = (gDM: CurriedGetDefaultMiddleware<RootState>) =>
   gDM()
-    .concat(asyncStorageMiddleware)
-    .concat(apiMiddleware)
+    .concat(storeInitializationDoneMiddleware)
     .concat(prepareDefaultDocumentsMiddleware)
+    .concat(asyncStorageMiddleware)
+    .concat(authMiddleware)
+    .concat(apiMiddleware)
 const store = configureStore({
   reducer,
   middleware,

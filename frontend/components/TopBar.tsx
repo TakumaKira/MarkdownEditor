@@ -6,7 +6,7 @@ import DeleteIcon from '../assets/icon-delete.svg'
 import DocumentIcon from '../assets/icon-document.svg'
 import HamburgerIcon from '../assets/icon-menu.svg'
 import SaveIcon from '../assets/icon-save.svg'
-import { ConfirmationState } from '../constants/confirmationMessages'
+import { ConfirmationStateTypes } from '../constants/confirmationMessages'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import useWindowDimensions from '../hooks/useWindowDimensions'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
@@ -141,7 +141,7 @@ const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showS
         <DocumentTitle checkLayout={checkLayout} mockWindowWidth={mockWindowWidth} />
       </View>
       <View style={styles.rightContainer}>
-        <DeleteButton onPress={() => dispatch(confirmationStateChanged({state: ConfirmationState.DELETE}))} />
+        <DeleteButton onPress={() => dispatch(confirmationStateChanged({type: ConfirmationStateTypes.DELETE}))} />
         <SaveButton onPress={() => dispatch(saveDocument())} mockWindowWidth={mockWindowWidth} />
       </View>
     </View>

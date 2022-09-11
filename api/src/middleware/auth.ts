@@ -1,10 +1,11 @@
 import { RequestHandler } from 'express';
 import { Socket } from 'socket.io';
 import { ExtendedError } from 'socket.io/dist/namespace';
+import { AUTH_TOKEN_KEY } from '../constants';
 import decode from '../helper/decode';
 
 const authApi: RequestHandler = (req, res, next) => {
-  const token = req.header('x-auth-token');
+  const token = req.header(AUTH_TOKEN_KEY)
   if (!token) {
     return res.status(401).send('Access denied. No token provided.')
   }
@@ -42,4 +43,5 @@ const authWs = (socket: Socket, next: (err?: ExtendedError) => void): void => {
     next(new Error('Invalid token.'))
   }
 }
-export { authApi, authWs }
+export { authApi, authWs };
+

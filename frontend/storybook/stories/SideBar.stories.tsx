@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { Provider } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
 import SideBar from '../../components/SideBar';
-import { ConfirmationState } from "../../constants/confirmationMessages";
+import { ConfirmationStateTypes } from "../../constants/confirmationMessages";
 import { DocumentOnDevice } from '../../store/models/document';
 import themeColors from '../../theme/themeColors';
 import { LONG_TITLE } from '../utils/constants';
@@ -36,19 +36,21 @@ const mockStoreWithManyDocumentsWithLongTitle = getMockStore({
       mainInput: documents[selectedDocumentIndex].content!,
     },
     latestUpdatedDocumentFromDBAt: null,
-    confirmationState: {
-      state: ConfirmationState.NONE
-    },
+    confirmationState: null,
+    restoreIsDone: true,
   },
   theme: {
     deviceColorSchemeIsDark: false,
     selectedColorSchemeIsDark: false,
+    restoreIsDone: true,
   },
   user: {
     token: null,
     email: null,
+    authState: null,
+    restoreIsDone: true,
   },
-  initializationIsDone: true,
+  storeInitializationIsDone: true,
 })
 
 storiesOf('SideBar', module)

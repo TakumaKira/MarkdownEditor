@@ -25,6 +25,7 @@ const ButtonWithHoverColorAnimation = (props: {
   duration?: number
   style?: StyleProp<ViewStyle>
   childrenWrapperStyle?: StyleProp<ViewStyle>
+  disabled?: boolean
 }) => {
   const {
     onPress,
@@ -34,6 +35,7 @@ const ButtonWithHoverColorAnimation = (props: {
     duration=100,
     style,
     childrenWrapperStyle,
+    disabled,
   } = props
 
   const ref = React.useRef(null)
@@ -41,8 +43,8 @@ const ButtonWithHoverColorAnimation = (props: {
   const interpolatedBgColor = useAnimatedColor(isHovered, duration, offBgColorRGB, onBgColorRGB)
 
   return (
-    <TouchableOpacity onPress={onPress} ref={ref} style={[styles.clip, style]}>
-      <Animated.View style={[styles.fill, {backgroundColor: interpolatedBgColor}]}>
+    <TouchableOpacity onPress={onPress} ref={ref} style={[styles.clip, style]} disabled={disabled}>
+      <Animated.View style={[styles.fill, {backgroundColor: disabled ? offBgColorRGB : interpolatedBgColor}]}>
         <View style={[styles.fill, childrenWrapperStyle]}>
           {children}
         </View>
