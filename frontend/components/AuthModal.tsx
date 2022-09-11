@@ -131,12 +131,9 @@ const AuthModal = () => {
     }
   }, [passwordConfirmInput])
 
-  const [submitEmail, setSubmitEmail] = React.useState<string>()
-
   const handleSubmit = () => {
     if (authState) {
       if (authState.type === AuthStateTypes.SIGNUP) {
-        setSubmitEmail(emailInput)
         dispatch(submitSignup({email: emailInput, password: passwordInput, passwordConfirm: passwordConfirmInput}))
       } else {
         dispatch(submitLogin({email: emailInput, password: passwordInput}))

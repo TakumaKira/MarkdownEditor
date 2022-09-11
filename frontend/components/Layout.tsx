@@ -3,6 +3,7 @@ import { confirmationMessages, ConfirmationStateTypes } from '../constants/confi
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { ConfirmationStateWithNextId } from '../store/models/document'
 import { confirmationStateChanged, deleteSelectedDocument, selectDocument, selectSelectedDocumentOnEdit } from '../store/slices/document'
+import AuthModal from './AuthModal'
 import ConfirmationModal from './ConfirmationModal'
 import Frame from './Frame'
 import MainView from './MainView'
@@ -11,6 +12,7 @@ import SideBar from './SideBar'
 
 const Layout = () => {
   const {titleInput} = useAppSelector(selectSelectedDocumentOnEdit)
+  const authState = useAppSelector(state => state.user.authState)
   const confirmationState = useAppSelector(state => state.document.confirmationState)
 
   const dispatch = useAppDispatch()
@@ -43,9 +45,9 @@ const Layout = () => {
           onPressBackground={handleCancel}
         />
       }
-      {/* {authenticationState.state !== AuthenticationState.NONE &&
-        <Auth />
-      } */}
+      {authState &&
+        <AuthModal />
+      }
     </SafeArea>
   )
 }
