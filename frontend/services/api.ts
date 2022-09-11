@@ -1,7 +1,7 @@
 import { DocumentsRequest, DocumentsUploadResponse } from '@api/document';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import Constants from 'expo-constants';
-import { AUTH_TOKEN_KEY } from '../constants';
+import { API_PATHS, AUTH_TOKEN_KEY } from '../constants';
 import { DocumentState } from "../store/models/document";
 
 const ORIGIN = Constants.manifest?.extra?.ORIGIN
@@ -15,6 +15,21 @@ if (!API_PORT) {
 // TODO: Make this https
 axios.defaults.baseURL = `http://${ORIGIN}:${API_PORT}`
 
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if ((error as AxiosError<{message: string}>).response?.data.message) {
+      // API server respond with error message.
+      return Promise.reject(error.response.data.message)
+    }
+    if (error.request.status === 0) {
+      // Network error(Server not respond).
+      return Promise.reject('Server not respond. Please check internet connection and try again later.')
+    }
+    return Promise.reject('Something went wrong.')
+  }
+)
+
 export const setTokenToRequestHeader = (token: string | null) => {
   if (token) {
     axios.defaults.headers.common[AUTH_TOKEN_KEY] = token
@@ -24,7 +39,9 @@ export const setTokenToRequestHeader = (token: string | null) => {
 }
 
 export const signup = async (credentials: {email: string, password: string}): Promise<AxiosResponse<{message: string}>> => {
-  console.log('TODO: Implement asking API.')
+  return await axios.post<{message: string, token: string}>(API_PATHS.AUTH.SIGNUP.path, credentials)
+
+  // Use below to mock API.
   return new Promise<AxiosResponse<{message: string}>>((resolve, reject) => {
     const hasError = false
     if (!hasError) {
@@ -38,7 +55,9 @@ export const signup = async (credentials: {email: string, password: string}): Pr
 }
 
 export const login = async (credentials: {email: string, password: string}): Promise<AxiosResponse<{message: string, token: string}>> => {
-  console.log('TODO: Implement asking API.')
+  return await axios.post<{message: string, token: string}>(API_PATHS.AUTH.LOGIN.path, credentials)
+
+  // Use below to mock API.
   return new Promise<AxiosResponse<{message: string, token: string}>>((resolve, reject) => {
     const hasError = false
     if (!hasError) {
@@ -57,7 +76,6 @@ export const upload = async (documentState: DocumentState): Promise<DocumentsUpl
     updated: documentState.documentList.filter(({isUploaded}) => !isUploaded).map(({isUploaded, ...rest}) => rest),
     latestUpdatedDocumentFromDBAt: documentState.latestUpdatedDocumentFromDBAt
   }
-  console.log('TODO: Share path.')
-  const response = await axios.post<DocumentsUploadResponse>('/api/documents', requestBody)
+  const response = await axios.post<DocumentsUploadResponse>(API_PATHS.DOCUMENTS.path, requestBody)
   return response.data
 }

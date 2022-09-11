@@ -41,15 +41,8 @@ export const askServerSignup = createAsyncThunk('user/askServerSignup', async (p
   try {
     const response = await signup(payload)
     return {successMessage: response.data.message}
-  } catch (err: any) {
-    if ('response' in err) {
-      throw new Error((err as AxiosError<{message: string}>).response?.data.message)
-    }
-    if ('message' in err) {
-      console.error((err as Error).message)
-    }
-    console.error(err.toString())
-    throw new Error('Something went wrong.')
+  } catch (err) {
+    return Promise.reject(err)
   }
 })
 
@@ -57,15 +50,8 @@ export const askServerLogin = createAsyncThunk('user/askServerLogin', async (pay
   try {
     const response = await login(payload)
     return {token: response.data.token}
-  } catch (err: any) {
-    if ('response' in err) {
-      throw new Error((err as AxiosError<{message: string}>).response?.data.message)
-    }
-    if ('message' in err) {
-      console.error((err as Error).message)
-    }
-    console.error(err.toString())
-    throw new Error('Something went wrong.')
+  } catch (err) {
+    return Promise.reject(err)
   }
 })
 

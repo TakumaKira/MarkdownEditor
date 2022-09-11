@@ -48,13 +48,13 @@ const LoadingCircles = (props: {
         toValue: 1,
         duration: unit * (4.5 + offset),
         easing: Easing.linear,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.timing(opacity, {
         toValue: 0,
         duration: unit * (9 + offset),
         easing: Easing.linear,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
     ])
   }

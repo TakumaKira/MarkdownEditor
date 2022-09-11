@@ -2,16 +2,15 @@ import bcrypt from 'bcrypt'
 import { Router } from 'express'
 import jwt from 'jsonwebtoken'
 import { RowDataPacket } from 'mysql2/promise'
+import { API_PATHS } from '../constants'
 import getConnection from '../db/getConnection'
 import { UserInfoOnDB } from '../models/user'
 
 const authApiRouter = Router()
-console.log('TODO: Share path.')
-authApiRouter.post('/signup', async (req, res, next) => {
+authApiRouter.post(API_PATHS.AUTH.SIGNUP.dir, async (req, res, next) => {
 
 })
-console.log('TODO: Share path.')
-authApiRouter.get('/login', async (req, res, next) => {
+authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
   try {
     const connection = await getConnection()
     const [rows, fields] = await connection.execute<RowDataPacket[][]>(`
