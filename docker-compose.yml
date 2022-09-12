@@ -14,7 +14,7 @@ x-app-port: &APP_PORT
   19006
 x-common-variables: &common-variables
   MYSQL_DATABASE: markdown_editor
-  MYSQL_DATABASE_USERNAME_FOR_APP: app
+  MYSQL_DATABASE_USERNAME_FOR_APP: markdown_editor_app
   MYSQL_DATABASE_PASSWORD_FOR_APP:
   API_PORT: *API_PORT
   WS_PORT: *WS_PORT
