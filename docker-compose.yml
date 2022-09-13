@@ -13,6 +13,7 @@ x-expo-dev-tools-port: &EXPO_DEV_TOOLS_PORT
 x-app-port: &APP_PORT
   19006
 x-common-variables: &common-variables
+  DATABASE_HOST: db
   MYSQL_DATABASE: markdown_editor
   MYSQL_DATABASE_USERNAME_FOR_APP: markdown_editor_app
   MYSQL_DATABASE_PASSWORD_FOR_APP:

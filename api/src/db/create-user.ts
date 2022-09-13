@@ -18,4 +18,11 @@ if (process.env.TEST_USER_EMAIL !== undefined && process.env.TEST_USER_PASSWORD 
     }
     process.exit()
   })(process.env.TEST_USER_EMAIL, process.env.TEST_USER_PASSWORD)
+} else {
+  if (!process.env.TEST_USER_EMAIL) {
+    console.error(`Please specify TEST_USER_EMAIL`)
+  }
+  if (!process.env.TEST_USER_PASSWORD) {
+    console.error(`Please specify TEST_USER_PASSWORD`)
+  }
 }

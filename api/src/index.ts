@@ -14,8 +14,8 @@ const WS_PORT = Number(process.env.WS_PORT)
 if (!WS_PORT) {
   throw new Error('WS_PORT is not defined.')
 }
-const appPort = Number(process.env.APP_PORT)
-if (!appPort) {
+const APP_PORT = Number(process.env.APP_PORT)
+if (!APP_PORT) {
   throw new Error('APP_PORT is not defined.')
 }
-export const wsServer = startWs(WS_PORT, appPort)
+export const wsServer = startWs(WS_PORT, APP_PORT)
