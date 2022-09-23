@@ -59,7 +59,7 @@ services:
         published: *DB_PORT
     volumes:
       - db:/var/lib/mysql
-      - ./db/init:/docker-entrypoint-initdb.d
+      - ./db/init/init-container.sh:/docker-entrypoint-initdb.d/1.sh
 volumes:
   db:
     driver: local

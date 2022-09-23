@@ -3,12 +3,12 @@ import { RowDataPacket } from 'mysql2/promise'
 import { v4 as uuidv4 } from 'uuid'
 import { wsServer } from '..'
 import getConnection from '../db/getConnection'
-import { authApi } from '../middleware/auth'
+import { authApiMiddleware } from '../middleware/auth'
 import { Document, DocumentFromDB, DocumentsRequest, DocumentsUploadResponse } from '../models/document'
 
 const documentsRouter = Router()
 
-documentsRouter.post('/', authApi, async (req, res) => {
+documentsRouter.post('/', authApiMiddleware, async (req, res) => {
   try {
     const requestBody: DocumentsRequest = req.body
     // TODO: Validate request data do not have extra property, especially "isUploaded".
@@ -84,6 +84,8 @@ documentsRouter.post('/', authApi, async (req, res) => {
   }
 })
 
+export default documentsRouter
+
 function fromISOStringToTimeStamp(isoString: string): string {
   return isoString.slice(0, -5).replace('T', ' ')
 }
@@ -118,5 +120,3 @@ function buildUpdateDocumentQuery(document: Document, userId: number) {
     );
   `
 }
-
-export default documentsRouter

@@ -6,3 +6,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE
 ON $MYSQL_DATABASE.*
 TO $MYSQL_DATABASE_USERNAME_FOR_APP;
 EOF
+
+mysql -u root -p$MYSQL_ROOT_PASSWORD $MYSQL_DATABASE < ./init/init-tables.sql
+mysql -u root -p$MYSQL_ROOT_PASSWORD $MYSQL_DATABASE < ./init/init-user-procedures.sql
+mysql -u root -p$MYSQL_ROOT_PASSWORD $MYSQL_DATABASE < ./init/init-document-procedures.sql

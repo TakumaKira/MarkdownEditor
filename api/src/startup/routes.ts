@@ -2,7 +2,7 @@ import cors from 'cors'
 import express, { Express } from 'express'
 import { Server } from 'socket.io'
 import { API_PATHS } from '../constants'
-import { authWs } from '../middleware/auth'
+import { authWsMiddleware } from '../middleware/auth'
 import error from '../middleware/error'
 import authApiRouter from '../routes/auth'
 import documentsRouter from '../routes/documents'
@@ -16,6 +16,6 @@ const apiRoutes = (expressApp: Express) => {
   expressApp.use(error)
 }
 const wsRoutes = (wsServer: Server) => {
-  wsServer.use(authWs)
+  wsServer.use(authWsMiddleware)
 }
 export { apiRoutes, wsRoutes }

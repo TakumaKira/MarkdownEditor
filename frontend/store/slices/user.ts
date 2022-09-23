@@ -1,6 +1,5 @@
 import { UserInfoOnToken } from "@api/user";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AxiosError } from 'axios';
 import jwt from 'jsonwebtoken';
 import { AuthStateTypes } from "../../components/AuthModal";
 import { login, signup } from "../../services/api";
