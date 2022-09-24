@@ -1,6 +1,18 @@
+import dotenv from 'dotenv'
 import { google } from 'googleapis'
 import nodemailer from 'nodemailer'
 import SMTPTransport from 'nodemailer/lib/smtp-transport'
+
+dotenv.config()
+
+if (
+  !process.env.OAUTH_USER
+  || !process.env.OAUTH_CLIENT_ID
+  || !process.env.OAUTH_CLIENT_SECRET
+  || !process.env.OAUTH_REFRESH_TOKEN
+) {
+  throw new Error('OAuth client information not provided.')
+}
 
 const OAuth2 = google.auth.OAuth2
 const OAuth2Client = new OAuth2(

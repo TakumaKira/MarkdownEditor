@@ -1,7 +1,8 @@
 import { AnyAction } from '@reduxjs/toolkit';
 import { ThunkMiddleware } from 'redux-thunk';
 import { RootState } from "..";
-import { askServerLogin, askServerSignup, submitLogin, submitSignup, validationError } from '../slices/user';
+import { AuthStateTypes } from '../../components/AuthModal';
+import { askServerConfirmSignupEmail, askServerLogin, askServerSignup, callAuthModal, submitLogin, submitSignup, validationError } from '../slices/user';
 
 export const authMiddleware: ThunkMiddleware<RootState, AnyAction> = store => next => action => {
   next(action)
@@ -15,6 +16,15 @@ export const authMiddleware: ThunkMiddleware<RootState, AnyAction> = store => ne
       next(validationError({emailValidationErrorMessage, passwordValidationErrorMessage, passwordConfirmValidationErrorMessage}))
     } else {
       store.dispatch(askServerSignup(_action.payload))
+    }
+  }
+
+  if (
+    action.type === callAuthModal.type && action.payload.authStateType === AuthStateTypes.CONFIRM_SIGNUP_EMAIL
+  ) {
+    const _action = action as ReturnType<typeof callAuthModal>
+    if (_action.payload.authStateType === AuthStateTypes.CONFIRM_SIGNUP_EMAIL) {
+      store.dispatch(askServerConfirmSignupEmail({token: _action.payload.token}))
     }
   }
 

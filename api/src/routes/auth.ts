@@ -11,17 +11,9 @@ import getSignupEmailConfirmation from '../emailTemplates/signupEmailConfirmatio
 import decode from '../helper/decode'
 import getTransport from '../helper/email'
 import { authApiMiddleware } from '../middleware/auth'
-import { UserInfoOnDB, UserInfoOnToken } from '../models/user'
+import { UserInfoOnDB } from '../models/user'
 
 dotenv.config()
-if (
-  !process.env.OAUTH_USER
-  || !process.env.OAUTH_CLIENT_ID
-  || !process.env.OAUTH_CLIENT_SECRET
-  || !process.env.OAUTH_REFRESH_TOKEN
-) {
-  throw new Error('OAuth client information not provided.')
-}
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY
 if (!JWT_SECRET_KEY) {
@@ -29,6 +21,8 @@ if (!JWT_SECRET_KEY) {
 }
 
 const authApiRouter = Router()
+
+// TODO: If something went wrong on the process, operation should be reverted.
 
 authApiRouter.post(API_PATHS.AUTH.SIGNUP.dir, async (req, res, next) => {
   const {email, password} = req.body as {email?: string, password?: string}

@@ -21,7 +21,7 @@ DELIMITER ;
 DROP PROCEDURE IF EXISTS activate_user;
 DELIMITER $$
 CREATE PROCEDURE activate_user (
-	p_email INT
+	p_email VARCHAR(50)
 )
 BEGIN
 	IF (

@@ -10,7 +10,7 @@ export const API_PATHS = {
       path: '/api/auth/signup', dir: '/signup',
     },
     CONFIRM_SIGNUP_EMAIL: {
-      path: '/api/auth/confirm-signup-email', dir: '/confirm',
+      path: '/api/auth/confirm-signup-email', dir: '/confirm-signup-email',
     },
     LOGIN: {
       path: '/api/auth/login', dir: '/login',
@@ -19,7 +19,7 @@ export const API_PATHS = {
       path: '/api/auth/edit', dir: '/edit',
     },
     CONFIRM_CHANGE_EMAIL: {
-      path: '/api/auth/confirm-change-email', dir: '/edit',
+      path: '/api/auth/confirm-change-email', dir: '/confirm-change-email',
     },
     RESET_PASSWORD: {
       path: '/api/auth/reset-password', dir: '/reset-password',

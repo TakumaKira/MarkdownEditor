@@ -1,5 +1,7 @@
+import { AnyAction, Dispatch, ThunkDispatch } from '@reduxjs/toolkit'
 import React from 'react'
 import { Platform, StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
+import { RootState } from '../store'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { selectColorScheme } from '../store/slices/theme'
 import { dismissAuthModal, resetErrorMessage, submitLogin, submitSignup } from '../store/slices/user'
@@ -14,6 +16,7 @@ import { Text, TextInput } from './common/withCustomFont'
 
 export enum AuthStateTypes {
   SIGNUP = 'signup',
+  CONFIRM_SIGNUP_EMAIL = 'confirmSignupEmail',
   LOGIN = 'login,'
 }
 
@@ -26,7 +29,7 @@ const styles = StyleSheet.create({
     paddingLeft: 24,
     paddingRight: 24,
   },
-  inputContainer: {
+  contentsContainer: {
     marginTop: 24,
   },
   input: {
@@ -81,18 +84,49 @@ const styles = StyleSheet.create({
   },
 })
 
+enum ContentTypes {
+  EMAIL_INPUT = 'emailInput',
+  PASSWORD_INPUT = 'passwordInput',
+  PASSWORD_CONFIRM_INPUT = 'passwordConfirmInput',
+  TEXT = 'text',
+}
+const authModalSettings: {[type in AuthStateTypes]: {
+  title: string
+  contents: ({type: ContentTypes.EMAIL_INPUT | ContentTypes.PASSWORD_INPUT | ContentTypes.PASSWORD_CONFIRM_INPUT} | {type: ContentTypes.TEXT, text: string})[]
+  submitButtonLabel?: string
+  handleSubmit?: (dispatch: ThunkDispatch<RootState, undefined, AnyAction> & Dispatch<AnyAction>, inputs: {emailInput: string, passwordInput: string, passwordConfirmInput: string}) => void
+  doneText: (option?: string) => string
+}} = {
+  [AuthStateTypes.SIGNUP]: {
+    title: 'Signup',
+    contents: [{type: ContentTypes.EMAIL_INPUT}, {type: ContentTypes.PASSWORD_INPUT}, {type: ContentTypes.PASSWORD_CONFIRM_INPUT}],
+    submitButtonLabel: 'Signup',
+    handleSubmit: (dispatch, {emailInput, passwordInput, passwordConfirmInput}) => dispatch(submitSignup({email: emailInput, password: passwordInput, passwordConfirm: passwordConfirmInput})),
+    doneText: email => `Confirmation email was sent to ${email}.\nPlease confirm to login.`,
+  },
+  [AuthStateTypes.CONFIRM_SIGNUP_EMAIL]: {
+    title: 'Confirm your email',
+    contents: [{type: ContentTypes.TEXT, text: 'Confirming your email...'}],
+    doneText: errorMessage => errorMessage || 'Your email is confirmed successfully.',
+  },
+  [AuthStateTypes.LOGIN]: {
+    title: 'Login',
+    contents: [{type: ContentTypes.EMAIL_INPUT}, {type: ContentTypes.PASSWORD_INPUT}],
+    submitButtonLabel: 'Login',
+    handleSubmit: (dispatch, {emailInput, passwordInput}) => dispatch(submitLogin({email: emailInput, password: passwordInput})),
+    doneText: () => 'Successfully logged in.',
+  },
+}
+
 const AuthModal = () => {
   const dispatch = useAppDispatch()
   const authState = useAppSelector(state => state.user.authState)
   const colorScheme = useAppSelector(selectColorScheme)
 
-  const label = {
-    none: '',
-    [AuthStateTypes.SIGNUP]: 'Signup',
-    [AuthStateTypes.LOGIN]: 'Login',
-  }[authState?.type || 'none']
-
   const handlePressBackground = () => {
+    if (authState?.isLoading) {
+      return
+    }
     dispatch(dismissAuthModal())
   }
 
@@ -102,7 +136,7 @@ const AuthModal = () => {
 
   React.useEffect(() => {
     if (authState) {
-      if (authState.emailValidationErrorMessage) {
+      if ('emailValidationErrorMessage' in authState && authState.emailValidationErrorMessage) {
         dispatch(resetErrorMessage('email'))
       }
       if (authState.serverErrorMessage) {
@@ -112,7 +146,7 @@ const AuthModal = () => {
   }, [emailInput])
   React.useEffect(() => {
     if (authState) {
-      if (authState.passwordValidationErrorMessage) {
+      if ('passwordValidationErrorMessage' in authState && authState.passwordValidationErrorMessage) {
         dispatch(resetErrorMessage('password'))
       }
       if (authState.serverErrorMessage) {
@@ -131,39 +165,44 @@ const AuthModal = () => {
     }
   }, [passwordConfirmInput])
 
+  const settings = authModalSettings[authState!.type]
+
   const handleSubmit = () => {
-    if (authState) {
-      if (authState.type === AuthStateTypes.SIGNUP) {
-        dispatch(submitSignup({email: emailInput, password: passwordInput, passwordConfirm: passwordConfirmInput}))
-      } else {
-        dispatch(submitLogin({email: emailInput, password: passwordInput}))
-      }
-    }
+    settings.handleSubmit?.(dispatch, {emailInput, passwordInput, passwordConfirmInput})
   }
 
-  const EMAIL_LABEL = 'Email'
-  const PASSWORD_LABEL = 'Password'
-  const PASSWORD_CONFIRM_LABEL = 'Password (Confirm)'
-
-  const successMessage = React.useMemo<string>(() => {
-    if (authState?.type === AuthStateTypes.SIGNUP) {
-      return `Confirmation email was sent to ${emailInput}.\nPlease confirm to login.`
+  const doneText = React.useMemo<string>(() => {
+    switch (authState?.type) {
+      case AuthStateTypes.SIGNUP:
+        return settings.doneText(emailInput)
+      case AuthStateTypes.CONFIRM_SIGNUP_EMAIL:
+        return settings.doneText(authState.serverErrorMessage ?? undefined)
     }
-    return 'Successfully logged in.'
+    return settings.doneText()
   }, [authState?.type, emailInput])
 
-  return (
-    <Modal onPressBackground={() => dispatch(dismissAuthModal())}>
+  return (authState &&
+    <Modal onPressBackground={handlePressBackground}>
       <View style={[styles.modalContentContainer, themeColors[colorScheme].modalContentContainerBg]}>
-        <Text style={[textStyles.previewH4, themeColors[colorScheme].confirmationTitle]}>{label}</Text>
-        {!authState?.isSuccess
+        <Text style={[textStyles.previewH4, themeColors[colorScheme].confirmationTitle]}>{settings.title}</Text>
+        {!authState.isDone
           ? <>
-            <View style={styles.inputContainer}>
-              <Input label={EMAIL_LABEL} input={emailInput} setInput={setEmailInput} errorMessage={authState?.emailValidationErrorMessage} />
-              <Input label={PASSWORD_LABEL} input={passwordInput} setInput={setPasswordInput} errorMessage={authState?.passwordValidationErrorMessage} style={styles.input} secureTextEntry />
-              {authState?.type === AuthStateTypes.SIGNUP &&
-                <Input label={PASSWORD_CONFIRM_LABEL} input={passwordConfirmInput} setInput={setPasswordConfirmInput} errorMessage={authState?.passwordConfirmValidationErrorMessage} style={styles.input} secureTextEntry />
-              }
+            <View style={styles.contentsContainer}>
+              {settings.contents.map((content, i) => {
+                switch (content.type) {
+                  case ContentTypes.EMAIL_INPUT:
+                    return 'emailValidationErrorMessage' in authState &&
+                      <Input key={i} label='Email' input={emailInput} setInput={setEmailInput} errorMessage={authState.emailValidationErrorMessage} />
+                  case ContentTypes.PASSWORD_INPUT:
+                    return 'passwordValidationErrorMessage' in authState &&
+                      <Input key={i} label='Password' input={passwordInput} setInput={setPasswordInput} errorMessage={authState.passwordValidationErrorMessage} style={styles.input} secureTextEntry />
+                  case ContentTypes.PASSWORD_CONFIRM_INPUT:
+                    return 'passwordConfirmValidationErrorMessage' in authState &&
+                      <Input key={i} label='Password (Confirm)' input={passwordConfirmInput} setInput={setPasswordConfirmInput} errorMessage={authState.passwordConfirmValidationErrorMessage} style={styles.input} secureTextEntry />
+                  case ContentTypes.TEXT:
+                    return <Text key={i} style={[styles.message, textStyles.previewParagraph, themeColors[colorScheme].confirmationMessage]}>{content.text}</Text>
+                }
+              })}
             </View>
             <ButtonWithHoverColorAnimation
               onPress={handleSubmit}
@@ -171,21 +210,23 @@ const AuthModal = () => {
               onBgColorRGB={colors.OrangeHover}
               style={styles.button}
               childrenWrapperStyle={styles.buttonContents}
-              disabled={authState?.isLoading}
+              disabled={authState.isLoading}
             >
-              {authState?.isLoading
+              {authState.isLoading
                 ? <View style={styles.loaderContainer}>
                   <LoadingCircles circleColorRGB="rgb(255,255,255)" />
                 </View>
                 : <Text style={[styles.buttonLabel, textStyles.headingM]}>
-                  {label}
+                  {settings.submitButtonLabel}
                 </Text>
               }
             </ButtonWithHoverColorAnimation>
-            {authState?.serverErrorMessage && <Text style={[styles.serverErrorMessage, styles.errorMessage]}>{authState.serverErrorMessage}</Text>}
+            {authState.serverErrorMessage &&
+              <Text style={[styles.serverErrorMessage, styles.errorMessage]}>{authState.serverErrorMessage}</Text>
+            }
           </>
           : <>
-            <Text style={[styles.message, textStyles.previewParagraph, themeColors[colorScheme].confirmationMessage]}>{successMessage}</Text>
+            <Text style={[styles.message, textStyles.previewParagraph, themeColors[colorScheme].confirmationMessage]}>{doneText}</Text>
             <ButtonWithHoverColorAnimation onPress={() => dispatch(dismissAuthModal())} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={styles.button} childrenWrapperStyle={styles.buttonContents}>
               <Text style={[styles.buttonLabel, textStyles.headingM]}>OK</Text>
             </ButtonWithHoverColorAnimation>

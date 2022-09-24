@@ -39,7 +39,7 @@ export const setTokenToRequestHeader = (token: string | null) => {
 }
 
 export const signup = async (credentials: {email: string, password: string}): Promise<AxiosResponse<{message: string}>> => {
-  return await axios.post<{message: string, token: string}>(API_PATHS.AUTH.SIGNUP.path, credentials)
+  return await axios.post<{message: string}>(API_PATHS.AUTH.SIGNUP.path, credentials)
 
   // Use below to mock API.
   return new Promise<AxiosResponse<{message: string}>>((resolve, reject) => {
@@ -52,6 +52,10 @@ export const signup = async (credentials: {email: string, password: string}): Pr
       setTimeout(() => reject(error), 3000)
     }
   })
+}
+
+export const confirmSignupEmail = async (credentials: {token: string}): Promise<AxiosResponse<{message: string, token: string}>> => {
+  return await axios.post<{message: string, token: string}>(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path, credentials)
 }
 
 export const login = async (credentials: {email: string, password: string}): Promise<AxiosResponse<{message: string, token: string}>> => {

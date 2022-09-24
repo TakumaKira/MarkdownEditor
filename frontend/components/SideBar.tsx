@@ -232,11 +232,11 @@ const Auth = () => {
 
   return (userEmail === null
     ? <View style={styles.authContainerLoggedOut}>
-      <ButtonWithHoverColorAnimation onPress={() => dispatch(callAuthModal(AuthStateTypes.SIGNUP))} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
+      <ButtonWithHoverColorAnimation onPress={() => dispatch(callAuthModal({authStateType: AuthStateTypes.SIGNUP}))} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
         <Text style={[styles.authButtonLabel]}>Signup</Text>
       </ButtonWithHoverColorAnimation>
       <View style={styles.authButtonsGap} />
-      <ButtonWithHoverColorAnimation onPress={() => dispatch(callAuthModal(AuthStateTypes.LOGIN))} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
+      <ButtonWithHoverColorAnimation onPress={() => dispatch(callAuthModal({authStateType: AuthStateTypes.LOGIN}))} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
         <Text style={[styles.authButtonLabel]}>Login</Text>
       </ButtonWithHoverColorAnimation>
     </View>
