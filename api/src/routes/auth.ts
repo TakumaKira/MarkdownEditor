@@ -97,7 +97,10 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir, async (req, res, nex
     const {id, is_activated} = rows[0][0] as unknown as {id: number, is_activated: boolean}
     const token = generateAuthToken(id, email, is_activated)
     return res.send({message: 'Confirmation successful.', token})
-  } catch (e) {
+  } catch (e: any) {
+    if (e.sqlMessage === 'User already activated.') {
+      return res.status(500).send({message: e.sqlMessage})
+    }
     console.error(e)
     // TODO: Return appropriate error message for its reasons like already-activated/id-not-exists.
     return res.status(500).send({message: 'Something went wrong.'})

@@ -190,6 +190,7 @@ const userSlice = createSlice({
       if (state.authState && errorMessage) {
         state.authState.serverErrorMessage = errorMessage
         state.authState.isLoading = false
+        state.authState.isDone = true
       }
     })
     builder.addCase(askServerLogin.pending, state => {

@@ -179,7 +179,7 @@ const AuthModal = () => {
         return settings.doneText(authState.serverErrorMessage ?? undefined)
     }
     return settings.doneText()
-  }, [authState?.type, emailInput])
+  }, [authState, emailInput])
 
   return (authState &&
     <Modal onPressBackground={handlePressBackground}>
