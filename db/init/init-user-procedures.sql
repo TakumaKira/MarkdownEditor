@@ -14,7 +14,8 @@ BEGIN
 	VALUES (
 		p_email,
 		p_password
-	);
+	)
+    ON DUPLICATE KEY UPDATE password = p_password;
 END $$
 DELIMITER ;
 
