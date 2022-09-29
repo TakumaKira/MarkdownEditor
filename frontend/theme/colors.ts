@@ -13,6 +13,8 @@ const colors: { [key: number | string]: ColorValue } = {
   100: 'rgb(255, 255, 255)', // '#FFFFFF',
   'Orange': 'rgb(228, 102, 67)', // '#E46643',
   'OrangeHover': 'rgb(243, 151, 101)', // '#F39765',
+  'Red': 'rgb(221, 0, 0)', // '#DD0000',
+  'RedHover': 'rgb(255, 83, 83)', // '#FF5353',
 } as const
 
 export default colors

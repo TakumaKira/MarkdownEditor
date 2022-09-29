@@ -1,10 +1,11 @@
 import { AnyAction, Dispatch, ThunkDispatch } from '@reduxjs/toolkit'
 import React from 'react'
-import { Platform, StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
+import { ColorValue, Platform, StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
 import { RootState } from '../store'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { NEEDS_AT_LEAST_EMAIL_OR_PASSWORD } from '../store/middlewares/auth'
 import { selectColorScheme } from '../store/slices/theme'
-import { dismissAuthModal, resetErrorMessage, submitLogin, submitSignup } from '../store/slices/user'
+import { dismissAuthModal, resetErrorMessage, submitConfirmNewEmail, submitEdit, submitLogin, submitSignup } from '../store/slices/user'
 import colors from '../theme/colors'
 import fonts from '../theme/fonts'
 import textStyles from '../theme/textStyles'
@@ -17,7 +18,10 @@ import { Text, TextInput } from './common/withCustomFont'
 export enum AuthStateTypes {
   SIGNUP = 'signup',
   CONFIRM_SIGNUP_EMAIL = 'confirmSignupEmail',
-  LOGIN = 'login,'
+  LOGIN = 'login,',
+  EDIT = 'edit,',
+  CONFIRM_CHANGE_EMAIL = 'confirmChangeEmail',
+  DELETE = 'delete,',
 }
 
 const styles = StyleSheet.create({
@@ -31,9 +35,6 @@ const styles = StyleSheet.create({
   },
   contentsContainer: {
     marginTop: 24,
-  },
-  input: {
-    marginTop: 18,
   },
   inputLabel: {
     color: colors[600],
@@ -79,8 +80,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: fonts.robotoRegular,
   },
-  message: {
-    marginTop: 16,
+  marginTop: {
+    marginTop: 18,
   },
 })
 
@@ -93,28 +94,68 @@ enum ContentTypes {
 const authModalSettings: {[type in AuthStateTypes]: {
   title: string
   contents: ({type: ContentTypes.EMAIL_INPUT | ContentTypes.PASSWORD_INPUT | ContentTypes.PASSWORD_CONFIRM_INPUT} | {type: ContentTypes.TEXT, text: string})[]
-  submitButtonLabel?: string
+  submitButton: {label: string, variant: 'primary' | 'danger'}
   handleSubmit?: (dispatch: ThunkDispatch<RootState, undefined, AnyAction> & Dispatch<AnyAction>, inputs: {emailInput: string, passwordInput: string, passwordConfirmInput: string}) => void
-  doneText: (option?: string) => string
+  getDoneText: (option?: string) => {text: string, isError?: boolean}
 }} = {
   [AuthStateTypes.SIGNUP]: {
     title: 'Signup',
-    contents: [{type: ContentTypes.EMAIL_INPUT}, {type: ContentTypes.PASSWORD_INPUT}, {type: ContentTypes.PASSWORD_CONFIRM_INPUT}],
-    submitButtonLabel: 'Signup',
+    contents: [
+      {type: ContentTypes.EMAIL_INPUT},
+      {type: ContentTypes.PASSWORD_INPUT},
+      {type: ContentTypes.PASSWORD_CONFIRM_INPUT},
+    ],
+    submitButton: {label: 'Signup', variant: 'primary'},
     handleSubmit: (dispatch, {emailInput, passwordInput, passwordConfirmInput}) => dispatch(submitSignup({email: emailInput, password: passwordInput, passwordConfirm: passwordConfirmInput})),
-    doneText: email => `Confirmation email was sent to ${email}.\nPlease confirm to login.`,
+    getDoneText: email => ({text: `Confirmation email was sent to ${email}.\nPlease confirm to login.`}),
   },
   [AuthStateTypes.CONFIRM_SIGNUP_EMAIL]: {
     title: 'Confirm your email',
-    contents: [{type: ContentTypes.TEXT, text: 'Confirming your email...'}],
-    doneText: errorMessage => errorMessage || 'Your email is confirmed successfully.',
+    contents: [
+      {type: ContentTypes.TEXT, text: 'Confirming your email...'},
+    ],
+    submitButton: {label: '', variant: 'primary'},
+    getDoneText: errorMessage => (errorMessage ? {text: errorMessage, isError: true} : {text: 'Your email is confirmed successfully.'}),
   },
   [AuthStateTypes.LOGIN]: {
     title: 'Login',
-    contents: [{type: ContentTypes.EMAIL_INPUT}, {type: ContentTypes.PASSWORD_INPUT}],
-    submitButtonLabel: 'Login',
+    contents: [
+      {type: ContentTypes.EMAIL_INPUT},
+      {type: ContentTypes.PASSWORD_INPUT},
+    ],
+    submitButton: {label: 'Login', variant: 'primary'},
     handleSubmit: (dispatch, {emailInput, passwordInput}) => dispatch(submitLogin({email: emailInput, password: passwordInput})),
-    doneText: () => 'Successfully logged in.',
+    getDoneText: () => ({text: 'Successfully logged in.'}),
+  },
+  [AuthStateTypes.EDIT]: {
+    title: 'Edit email/password',
+    contents: [
+      {type: ContentTypes.TEXT, text: "You can leave forms where you don't want to change."},
+      {type: ContentTypes.EMAIL_INPUT},
+      {type: ContentTypes.PASSWORD_INPUT},
+      {type: ContentTypes.PASSWORD_CONFIRM_INPUT},
+    ],
+    submitButton: {label: 'Save edit', variant: 'primary'},
+    handleSubmit: (dispatch, {emailInput, passwordInput, passwordConfirmInput}) => dispatch(submitEdit({email: emailInput, password: passwordInput, passwordConfirm: passwordConfirmInput})),
+    getDoneText: successMessage => ({text: successMessage!}),
+  },
+  [AuthStateTypes.CONFIRM_CHANGE_EMAIL]: {
+    title: 'Confirm new email',
+    contents: [
+      {type: ContentTypes.TEXT, text: 'Please enter your password to confirm new email.'},
+      {type: ContentTypes.PASSWORD_INPUT},
+    ],
+    submitButton: {label: 'Confirm', variant: 'primary'},
+    handleSubmit: (dispatch, {passwordInput}) => dispatch(submitConfirmNewEmail({password: passwordInput})),
+    getDoneText: errorMessage => (errorMessage ? {text: errorMessage, isError: true} : {text: 'Successfully confirmed.'}),
+  },
+  [AuthStateTypes.DELETE]: {
+    title: 'Delete account',
+    contents: [
+      {type: ContentTypes.TEXT, text: 'Are you really sure you want to delete this account?'},
+    ],
+    submitButton: {label: 'Delete', variant: 'danger'},
+    getDoneText: () => ({text: ''}),
   },
 }
 
@@ -155,8 +196,8 @@ const AuthModal = () => {
     }
   }, [passwordInput])
   React.useEffect(() => {
-    if (authState && 'passwordConfirmValidationErrorMessage' in authState) {
-      if (authState.passwordConfirmValidationErrorMessage) {
+    if (authState) {
+      if ('passwordConfirmValidationErrorMessage' in authState && authState.passwordConfirmValidationErrorMessage) {
         dispatch(resetErrorMessage('passwordConfirm'))
       }
       if (authState.serverErrorMessage) {
@@ -164,6 +205,19 @@ const AuthModal = () => {
       }
     }
   }, [passwordConfirmInput])
+  React.useEffect(() => {
+    if (authState) {
+      if ('emailValidationErrorMessage' in authState && authState.emailValidationErrorMessage === NEEDS_AT_LEAST_EMAIL_OR_PASSWORD) {
+        dispatch(resetErrorMessage('email'))
+      }
+      if ('passwordValidationErrorMessage' in authState && authState.passwordValidationErrorMessage === NEEDS_AT_LEAST_EMAIL_OR_PASSWORD) {
+        dispatch(resetErrorMessage('password'))
+      }
+      if ('passwordConfirmValidationErrorMessage' in authState && authState.passwordConfirmValidationErrorMessage === NEEDS_AT_LEAST_EMAIL_OR_PASSWORD) {
+        dispatch(resetErrorMessage('passwordConfirm'))
+      }
+    }
+  }, [emailInput, passwordInput, passwordConfirmInput])
 
   const settings = authModalSettings[authState!.type]
 
@@ -171,15 +225,29 @@ const AuthModal = () => {
     settings.handleSubmit?.(dispatch, {emailInput, passwordInput, passwordConfirmInput})
   }
 
-  const doneText = React.useMemo<string>(() => {
+  const doneText = React.useMemo<{text: string, isError?: boolean}>(() => {
     switch (authState?.type) {
       case AuthStateTypes.SIGNUP:
-        return settings.doneText(emailInput)
+        return settings.getDoneText(emailInput)
       case AuthStateTypes.CONFIRM_SIGNUP_EMAIL:
-        return settings.doneText(authState.serverErrorMessage ?? undefined)
-    }
-    return settings.doneText()
+        return settings.getDoneText(authState.serverErrorMessage ?? undefined)
+      case AuthStateTypes.EDIT:
+        const message = emailInput ? `Confirmation email sent to ${emailInput}. Please confirm.` : 'Password successfully changed.'
+        return settings.getDoneText(message)
+      case AuthStateTypes.CONFIRM_CHANGE_EMAIL:
+        return settings.getDoneText(authState.serverErrorMessage ?? undefined)
+      }
+    return settings.getDoneText()
   }, [authState, emailInput])
+
+  const submitButtonOffBgColor: {[key in typeof settings.submitButton.variant]: ColorValue} = {
+    primary: colors.Orange,
+    danger: colors.Red,
+  }
+  const submitButtonOnBgColor: {[key in typeof settings.submitButton.variant]: ColorValue} = {
+    primary: colors.OrangeHover,
+    danger: colors.RedHover,
+  }
 
   return (authState &&
     <Modal onPressBackground={handlePressBackground}>
@@ -192,22 +260,22 @@ const AuthModal = () => {
                 switch (content.type) {
                   case ContentTypes.EMAIL_INPUT:
                     return 'emailValidationErrorMessage' in authState &&
-                      <Input key={i} label='Email' input={emailInput} setInput={setEmailInput} errorMessage={authState.emailValidationErrorMessage} />
+                      <Input key={i} label='Email' input={emailInput} setInput={setEmailInput} errorMessage={authState.emailValidationErrorMessage} style={[i > 0 ? styles.marginTop : undefined]} />
                   case ContentTypes.PASSWORD_INPUT:
                     return 'passwordValidationErrorMessage' in authState &&
-                      <Input key={i} label='Password' input={passwordInput} setInput={setPasswordInput} errorMessage={authState.passwordValidationErrorMessage} style={styles.input} secureTextEntry />
+                      <Input key={i} label='Password' input={passwordInput} setInput={setPasswordInput} errorMessage={authState.passwordValidationErrorMessage} style={[i > 0 ? styles.marginTop : undefined]} secureTextEntry />
                   case ContentTypes.PASSWORD_CONFIRM_INPUT:
                     return 'passwordConfirmValidationErrorMessage' in authState &&
-                      <Input key={i} label='Password (Confirm)' input={passwordConfirmInput} setInput={setPasswordConfirmInput} errorMessage={authState.passwordConfirmValidationErrorMessage} style={styles.input} secureTextEntry />
+                      <Input key={i} label='Password (Confirm)' input={passwordConfirmInput} setInput={setPasswordConfirmInput} errorMessage={authState.passwordConfirmValidationErrorMessage} style={[i > 0 ? styles.marginTop : undefined]} secureTextEntry />
                   case ContentTypes.TEXT:
-                    return <Text key={i} style={[styles.message, textStyles.previewParagraph, themeColors[colorScheme].confirmationMessage]}>{content.text}</Text>
+                    return <Text key={i} style={[textStyles.previewParagraph, themeColors[colorScheme].confirmationMessage, i > 0 ? styles.marginTop : undefined]}>{content.text}</Text>
                 }
               })}
             </View>
             <ButtonWithHoverColorAnimation
               onPress={handleSubmit}
-              offBgColorRGB={colors.Orange}
-              onBgColorRGB={colors.OrangeHover}
+              offBgColorRGB={submitButtonOffBgColor[settings.submitButton.variant]}
+              onBgColorRGB={submitButtonOnBgColor[settings.submitButton.variant]}
               style={styles.button}
               childrenWrapperStyle={styles.buttonContents}
               disabled={authState.isLoading}
@@ -217,7 +285,7 @@ const AuthModal = () => {
                   <LoadingCircles circleColorRGB="rgb(255,255,255)" />
                 </View>
                 : <Text style={[styles.buttonLabel, textStyles.headingM]}>
-                  {settings.submitButtonLabel}
+                  {settings.submitButton.label}
                 </Text>
               }
             </ButtonWithHoverColorAnimation>
@@ -226,7 +294,7 @@ const AuthModal = () => {
             }
           </>
           : <>
-            <Text style={[styles.message, textStyles.previewParagraph, themeColors[colorScheme].confirmationMessage]}>{doneText}</Text>
+            <Text style={[styles.marginTop, textStyles.previewParagraph, doneText.isError ? {color: colors.Red} : themeColors[colorScheme].confirmationMessage]}>{doneText.text}</Text>
             <ButtonWithHoverColorAnimation onPress={() => dispatch(dismissAuthModal())} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={styles.button} childrenWrapperStyle={styles.buttonContents}>
               <Text style={[styles.buttonLabel, textStyles.headingM]}>OK</Text>
             </ButtonWithHoverColorAnimation>

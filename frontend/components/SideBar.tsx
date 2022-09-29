@@ -82,16 +82,17 @@ const styles = StyleSheet.create({
     color: colors[100],
     width: 170,
   },
-  authContainerLoggedOut: {
+  twoButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 24,
   },
-  authButtonsGap: {
+  buttonsGap: {
     width: 18,
   },
   authContainerLoggedIn: {
     marginBottom: 24,
+    marginHorizontal: 8,
   },
   loggedInAs: {
     color: colors[400],
@@ -108,6 +109,9 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     height: 35,
     borderRadius: 4,
+  },
+  twoButtons: {
+    flexBasis: 0,
   },
   authButtonContents: {
     justifyContent: 'center',
@@ -231,18 +235,27 @@ const Auth = () => {
   const dispatch = useAppDispatch()
 
   return (userEmail === null
-    ? <View style={styles.authContainerLoggedOut}>
-      <ButtonWithHoverColorAnimation onPress={() => dispatch(callAuthModal({authStateType: AuthStateTypes.SIGNUP}))} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
+    ? <View style={styles.twoButtonsContainer}>
+      <ButtonWithHoverColorAnimation onPress={() => dispatch(callAuthModal({authStateType: AuthStateTypes.SIGNUP}))} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton, styles.twoButtons]} childrenWrapperStyle={styles.authButtonContents}>
         <Text style={[styles.authButtonLabel]}>Signup</Text>
       </ButtonWithHoverColorAnimation>
-      <View style={styles.authButtonsGap} />
-      <ButtonWithHoverColorAnimation onPress={() => dispatch(callAuthModal({authStateType: AuthStateTypes.LOGIN}))} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
+      <View style={styles.buttonsGap} />
+      <ButtonWithHoverColorAnimation onPress={() => dispatch(callAuthModal({authStateType: AuthStateTypes.LOGIN}))} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton, styles.twoButtons]} childrenWrapperStyle={styles.authButtonContents}>
         <Text style={[styles.authButtonLabel]}>Login</Text>
       </ButtonWithHoverColorAnimation>
     </View>
     : <View style={styles.authContainerLoggedIn}>
       <Text style={[textStyles.bodyM, styles.loggedInAs]}>Logged in as</Text>
       <Text style={styles.userEmail}>{userEmail}</Text>
+      <View style={styles.twoButtonsContainer}>
+        <ButtonWithHoverColorAnimation onPress={() => dispatch(callAuthModal({authStateType: AuthStateTypes.EDIT}))} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton, styles.twoButtons]} childrenWrapperStyle={styles.authButtonContents}>
+          <Text style={[styles.authButtonLabel]}>Edit</Text>
+        </ButtonWithHoverColorAnimation>
+        <View style={styles.buttonsGap} />
+        <ButtonWithHoverColorAnimation onPress={() => dispatch(callAuthModal({authStateType: AuthStateTypes.DELETE}))} offBgColorRGB={colors.Red} onBgColorRGB={colors.RedHover} style={[styles.authButton, styles.twoButtons]} childrenWrapperStyle={styles.authButtonContents}>
+          <Text style={[styles.authButtonLabel]}>Delete</Text>
+        </ButtonWithHoverColorAnimation>
+      </View>
       <ButtonWithHoverColorAnimation onPress={() => dispatch(removeLoginToken())} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
         <Text style={[styles.authButtonLabel]}>Logout</Text>
       </ButtonWithHoverColorAnimation>

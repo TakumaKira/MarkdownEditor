@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt'
 import dotenv from 'dotenv'
 import { Router } from 'express'
-import jwt from 'jsonwebtoken'
+import jwt, { TokenExpiredError } from 'jsonwebtoken'
 import { RowDataPacket } from 'mysql2/promise'
 import { API_PATHS } from '../constants'
 import getConnection from '../db/getConnection'
@@ -39,6 +39,7 @@ authApiRouter.post(API_PATHS.AUTH.SIGNUP.dir, async (req, res, next) => {
       CALL create_user('${email}', '${hashedPassword}')
     `)
   } catch (error: any) {
+    // TODO: What should happen if passed token activated already?
     if (error?.code === 'ER_DUP_ENTRY') {
       return res.status(409).send({message: 'Email is already registered.'})
     }
@@ -203,6 +204,9 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
       throw new Error('oldEmail or newEmail is not defined on the token.')
     }
   } catch (e) {
+    if (e instanceof TokenExpiredError) {
+      return res.status(400).send({message: 'Token expired. Please try again.'})
+    }
     console.error(e)
     return res.status(400).send({message: 'Invalid token.'})
   }
