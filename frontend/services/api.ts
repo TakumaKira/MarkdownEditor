@@ -41,21 +41,23 @@ export const setTokenToRequestHeader = (token: string | null) => {
 export const signup = async (credentials: {email: string, password: string}): Promise<AxiosResponse<{message: string}>> => {
   return await axios.post<{message: string}>(API_PATHS.AUTH.SIGNUP.path, credentials)
 }
-
 export const confirmSignupEmail = async (credentials: {token: string}): Promise<AxiosResponse<{message: string, token: string}>> => {
   return await axios.post<{message: string, token: string}>(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path, credentials)
 }
-
 export const login = async (credentials: {email: string, password: string}): Promise<AxiosResponse<{message: string, token: string}>> => {
   return await axios.post<{message: string, token: string}>(API_PATHS.AUTH.LOGIN.path, credentials)
 }
-
 export const editUser = async (credentials: {email?: string, password?: string}): Promise<AxiosResponse<{message: string}>> => {
   return await axios.post<{message: string}>(API_PATHS.AUTH.EDIT.path, credentials)
 }
-
 export const confirmChangeEmail = async (credentials: {token: string, password: string}): Promise<AxiosResponse<{message: string, token: string}>> => {
   return await axios.post<{message: string, token: string}>(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path, credentials)
+}
+export const resetPassword = async (credentials: {email: string}): Promise<AxiosResponse<{message: string}>> => {
+  return await axios.post<{message: string}>(API_PATHS.AUTH.RESET_PASSWORD.path, credentials)
+}
+export const confirmResetPassword = async (credentials: {token: string, password: string}): Promise<AxiosResponse<{message: string, token: string}>> => {
+  return await axios.post<{message: string, token: string}>(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path, credentials)
 }
 
 export const upload = async (documentState: DocumentState): Promise<DocumentsUploadResponse> => {

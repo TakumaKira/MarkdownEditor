@@ -39,7 +39,7 @@ const useLoadPath = () => {
         token && dispatch(callAuthModal({authStateType: AuthStateTypes.CONFIRM_CHANGE_EMAIL, token}))
         break
       case API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir:
-        token && console.log(token) // TODO: Implement here.
+        token && dispatch(callAuthModal({authStateType: AuthStateTypes.CONFIRM_RESET_PASSWORD, token}))
         break
       default:
         input && tryLoadingInputFromUrlParams(input)

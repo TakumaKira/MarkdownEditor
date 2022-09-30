@@ -2,9 +2,9 @@ import { UserInfoOnToken } from "@api/user";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import jwt from 'jsonwebtoken';
 import { AuthStateTypes } from "../../components/AuthModal";
-import { confirmChangeEmail, confirmSignupEmail, editUser, login, signup } from "../../services/api";
+import { confirmChangeEmail, confirmResetPassword, confirmSignupEmail, editUser, login, resetPassword, signup } from "../../services/api";
 import { getData } from "../../services/asyncStorage";
-import { AuthStateConfirmChangeEmail, AuthStateConfirmSignupEmail, AuthStateDelete, AuthStateEdit, AuthStateLogin, AuthStateSignup, UserState } from "../models/user";
+import { AuthStateConfirmChangeEmail, AuthStateConfirmResetPassword, AuthStateConfirmSignupEmail, AuthStateDelete, AuthStateEdit, AuthStateLogin, AuthStateResetPassword, AuthStateSignup, UserState } from "../models/user";
 
 const initialState: UserState = {
   token: null,
@@ -12,7 +12,6 @@ const initialState: UserState = {
   authState: null,
   restoreIsDone: false
 }
-
 const initialAuthStateSignup: AuthStateSignup = {
   type: AuthStateTypes.SIGNUP,
   passwordConfirmValidationErrorMessage: null,
@@ -22,7 +21,6 @@ const initialAuthStateSignup: AuthStateSignup = {
   serverErrorMessage: null,
   isDone: false
 }
-
 const initialAuthStateLogin: AuthStateLogin = {
   type: AuthStateTypes.LOGIN,
   emailValidationErrorMessage: null,
@@ -31,14 +29,12 @@ const initialAuthStateLogin: AuthStateLogin = {
   serverErrorMessage: null,
   isDone: false
 }
-
 const initialConfirmStateSignup: AuthStateConfirmSignupEmail = {
   type: AuthStateTypes.CONFIRM_SIGNUP_EMAIL,
   isLoading: true,
   serverErrorMessage: null,
   isDone: false
 }
-
 const initialAuthStateEdit: AuthStateEdit = {
   type: AuthStateTypes.EDIT,
   emailValidationErrorMessage: null,
@@ -48,7 +44,6 @@ const initialAuthStateEdit: AuthStateEdit = {
   serverErrorMessage: null,
   isDone: false
 }
-
 const getInitialConfirmStateChangeEmail = (token: string): AuthStateConfirmChangeEmail => ({
   type: AuthStateTypes.CONFIRM_CHANGE_EMAIL,
   token,
@@ -57,7 +52,22 @@ const getInitialConfirmStateChangeEmail = (token: string): AuthStateConfirmChang
   serverErrorMessage: null,
   isDone: false
 })
-
+const initialAuthStateResetPassword: AuthStateResetPassword = {
+  type: AuthStateTypes.RESET_PASSWORD,
+  emailValidationErrorMessage: null,
+  isLoading: false,
+  serverErrorMessage: null,
+  isDone: false
+}
+const getInitialConfirmStateResetPassword = (token: string): AuthStateConfirmResetPassword => ({
+  type: AuthStateTypes.CONFIRM_RESET_PASSWORD,
+  token,
+  passwordValidationErrorMessage: null,
+  passwordConfirmValidationErrorMessage: null,
+  isLoading: false,
+  serverErrorMessage: null,
+  isDone: false
+})
 const initialAuthStateDelete: AuthStateDelete = {
   type: AuthStateTypes.DELETE,
   isLoading: false,
@@ -108,14 +118,30 @@ export const askServerConfirmChangeEmail = createAsyncThunk('user/askServerConfi
     return Promise.reject(err)
   }
 })
+export const askServerResetPassword = createAsyncThunk('user/askServerResetPassword', async (payload: {email: string}) => {
+  try {
+    const response = await resetPassword(payload)
+    return {successMessage: response.data.message}
+  } catch (err) {
+    return Promise.reject(err)
+  }
+})
+export const askServerConfirmResetPassword = createAsyncThunk('user/askServerConfirmResetPassword', async (payload: {token: string, password: string}) => {
+  try {
+    const response = await confirmResetPassword(payload)
+    return {successMessage: response.data.message, token: response.data.token}
+  } catch (err) {
+    return Promise.reject(err)
+  }
+})
 
 const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
     callAuthModal: (state, action: PayloadAction<
-      {authStateType: AuthStateTypes.SIGNUP | AuthStateTypes.LOGIN | AuthStateTypes.EDIT | AuthStateTypes.DELETE}
-      | {authStateType: AuthStateTypes.CONFIRM_SIGNUP_EMAIL | AuthStateTypes.CONFIRM_CHANGE_EMAIL, token: string}
+      {authStateType: AuthStateTypes.SIGNUP | AuthStateTypes.LOGIN | AuthStateTypes.EDIT | AuthStateTypes.RESET_PASSWORD | AuthStateTypes.DELETE}
+      | {authStateType: AuthStateTypes.CONFIRM_SIGNUP_EMAIL | AuthStateTypes.CONFIRM_CHANGE_EMAIL | AuthStateTypes.CONFIRM_RESET_PASSWORD, token: string}
     >) => {
       switch (action.payload.authStateType) {
         case AuthStateTypes.SIGNUP:
@@ -132,6 +158,12 @@ const userSlice = createSlice({
           break
         case AuthStateTypes.CONFIRM_CHANGE_EMAIL:
           state.authState = getInitialConfirmStateChangeEmail(action.payload.token)
+          break
+        case AuthStateTypes.RESET_PASSWORD:
+          state.authState = initialAuthStateResetPassword
+          break
+        case AuthStateTypes.CONFIRM_RESET_PASSWORD:
+          state.authState = getInitialConfirmStateResetPassword(action.payload.token)
           break
         case AuthStateTypes.DELETE:
           state.authState = initialAuthStateDelete
@@ -169,7 +201,9 @@ const userSlice = createSlice({
     submitLogin: (state, action: PayloadAction<{email: string, password: string}>) => {},
     submitEdit: (state, action: PayloadAction<{email: string, password: string, passwordConfirm: string}>) => {},
     submitConfirmNewEmail: (state, action: PayloadAction<{password: string}>) => {},
-    validationError: (state, action: PayloadAction<{emailValidationErrorMessage?: string | null, passwordValidationErrorMessage: string | null, passwordConfirmValidationErrorMessage?: string | null}>) => {
+    submitResetPassword: (state, action: PayloadAction<{email: string}>) => {},
+    submitNewPassword: (state, action: PayloadAction<{password: string, passwordConfirm: string}>) => {},
+    validationError: (state, action: PayloadAction<{emailValidationErrorMessage?: string | null, passwordValidationErrorMessage?: string | null, passwordConfirmValidationErrorMessage?: string | null}>) => {
       const {authState} = state
       const {emailValidationErrorMessage, passwordValidationErrorMessage, passwordConfirmValidationErrorMessage} = action.payload
       if (authState) {
@@ -216,8 +250,8 @@ const userSlice = createSlice({
     })
     builder.addCase(askServerSignup.rejected, (state, action) => {
       const errorMessage = action.error.message
-      if (state.authState && errorMessage) {
-        state.authState.serverErrorMessage = errorMessage
+      if (state.authState) {
+        state.authState.serverErrorMessage = errorMessage || 'Something went wrong.'
         state.authState.isLoading = false
       }
     })
@@ -237,8 +271,8 @@ const userSlice = createSlice({
     })
     builder.addCase(askServerConfirmSignupEmail.rejected, (state, action) => {
       const errorMessage = action.error.message
-      if (state.authState && errorMessage) {
-        state.authState.serverErrorMessage = errorMessage
+      if (state.authState) {
+        state.authState.serverErrorMessage = errorMessage || 'Something went wrong.'
         state.authState.isLoading = false
         state.authState.isDone = true
       }
@@ -264,8 +298,8 @@ const userSlice = createSlice({
     })
     builder.addCase(askServerLogin.rejected, (state, action) => {
       const errorMessage = action.error.message
-      if (state.authState && errorMessage) {
-        state.authState.serverErrorMessage = errorMessage
+      if (state.authState) {
+        state.authState.serverErrorMessage = errorMessage || 'Something went wrong.'
         state.authState.isLoading = false
       }
     })
@@ -282,8 +316,8 @@ const userSlice = createSlice({
     })
     builder.addCase(askServerEdit.rejected, (state, action) => {
       const errorMessage = action.error.message
-      if (state.authState && errorMessage) {
-        state.authState.serverErrorMessage = errorMessage
+      if (state.authState) {
+        state.authState.serverErrorMessage = errorMessage || 'Something went wrong.'
         state.authState.isLoading = false
       }
     })
@@ -308,10 +342,54 @@ const userSlice = createSlice({
     })
     builder.addCase(askServerConfirmChangeEmail.rejected, (state, action) => {
       const errorMessage = action.error.message
-      if (state.authState && errorMessage) {
-        state.authState.serverErrorMessage = errorMessage
+      if (state.authState) {
+        state.authState.serverErrorMessage = errorMessage || 'Something went wrong.'
         state.authState.isLoading = false
         state.authState.isDone = errorMessage !== 'Password is incorrect.'
+      }
+    })
+    builder.addCase(askServerResetPassword.pending, state => {
+      if (state.authState) {
+        state.authState.isLoading = true
+      }
+    })
+    builder.addCase(askServerResetPassword.fulfilled, state => {
+      if (state.authState) {
+        state.authState.isLoading = false
+        state.authState.isDone = true
+      }
+    })
+    builder.addCase(askServerResetPassword.rejected, (state, action) => {
+      const errorMessage = action.error.message
+      if (state.authState) {
+        state.authState.serverErrorMessage = errorMessage || 'Something went wrong.'
+        state.authState.isLoading = false
+      }
+    })
+    builder.addCase(askServerConfirmResetPassword.pending, state => {
+      if (state.authState) {
+        state.authState.isLoading = true
+      }
+    })
+    builder.addCase(askServerConfirmResetPassword.fulfilled, (state, action) => {
+      const token = action.payload.token as string
+      try {
+        const {email} = jwt.decode(token) as UserInfoOnToken
+        state.token = token
+        state.email = email
+        if (state.authState) {
+          state.authState.isLoading = false
+          state.authState.isDone = true
+        }
+      } catch (err) {
+        console.log(err)
+      }
+    })
+    builder.addCase(askServerConfirmResetPassword.rejected, (state, action) => {
+      const errorMessage = action.error.message
+      if (state.authState) {
+        state.authState.serverErrorMessage = errorMessage || 'Something went wrong.'
+        state.authState.isLoading = false
       }
     })
   }
@@ -325,6 +403,8 @@ export const {
   submitLogin,
   submitEdit,
   submitConfirmNewEmail,
+  submitResetPassword,
+  submitNewPassword,
   validationError,
   removeLoginToken,
 } = userSlice.actions

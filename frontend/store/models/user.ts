@@ -26,18 +26,28 @@ export interface AuthStateEdit extends AuthStateBase {
   passwordValidationErrorMessage: string | null
   passwordConfirmValidationErrorMessage: string | null
 }
-export interface AuthStateDelete extends AuthStateBase {
-  type: AuthStateTypes.DELETE
-}
 export interface AuthStateConfirmChangeEmail extends AuthStateBase {
   type: AuthStateTypes.CONFIRM_CHANGE_EMAIL
   token: string
   passwordValidationErrorMessage: string | null
 }
+export interface AuthStateResetPassword extends AuthStateBase {
+  type: AuthStateTypes.RESET_PASSWORD
+  emailValidationErrorMessage: string | null
+}
+export interface AuthStateConfirmResetPassword extends AuthStateBase {
+  type: AuthStateTypes.CONFIRM_RESET_PASSWORD
+  token: string
+  passwordValidationErrorMessage: string | null
+  passwordConfirmValidationErrorMessage: string | null
+}
+export interface AuthStateDelete extends AuthStateBase {
+  type: AuthStateTypes.DELETE
+}
 export interface UserState {
   token: string | null
   email: string | null
-  authState: null | AuthStateSignup | AuthStateConfirmSignupEmail | AuthStateLogin | AuthStateEdit | AuthStateConfirmChangeEmail | AuthStateDelete
+  authState: null | AuthStateSignup | AuthStateConfirmSignupEmail | AuthStateLogin | AuthStateEdit | AuthStateConfirmChangeEmail | AuthStateResetPassword | AuthStateConfirmResetPassword | AuthStateDelete
   restoreIsDone: boolean
 }
 export interface UserStateRestore {

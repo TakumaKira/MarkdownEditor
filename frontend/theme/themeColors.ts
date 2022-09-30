@@ -58,6 +58,9 @@ const themeColors = {
     inputUnderline: {
       color: colors[700],
     },
+    link: {
+      color: colors[700],
+    },
   }),
   dark: StyleSheet.create({
     editorHeaderBg: {
@@ -112,6 +115,9 @@ const themeColors = {
       color: colors[500],
     },
     inputUnderline: {
+      color: colors[100],
+    },
+    link: {
       color: colors[100],
     },
   }),

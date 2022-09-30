@@ -2,14 +2,16 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { ThunkMiddleware } from 'redux-thunk';
 import { RootState } from "..";
 import { AuthStateTypes } from '../../components/AuthModal';
-import { AuthStateConfirmChangeEmail } from '../models/user';
-import { askServerConfirmChangeEmail, askServerConfirmSignupEmail, askServerEdit, askServerLogin, askServerSignup, callAuthModal, submitConfirmNewEmail, submitEdit, submitLogin, submitSignup, validationError } from '../slices/user';
+import { AuthStateConfirmChangeEmail, AuthStateConfirmResetPassword } from '../models/user';
+import { askServerConfirmChangeEmail, askServerConfirmResetPassword, askServerConfirmSignupEmail, askServerEdit, askServerLogin, askServerResetPassword, askServerSignup, callAuthModal, submitConfirmNewEmail, submitEdit, submitLogin, submitNewPassword, submitResetPassword, submitSignup, validationError } from '../slices/user';
 
 enum SubmitTypes {
   SIGNUP = 'signup',
   LOGIN = 'login',
   EDIT = 'edit',
   CONFIRM_CHANGE_EMAIL = 'confirmChangeEmail',
+  RESET_PASSWORD = 'resetPassword',
+  CONFIRM_RESET_PASSWORD = 'confirmResetPassword',
 }
 
 export const authMiddleware: ThunkMiddleware<RootState, AnyAction> = store => next => action => {
@@ -77,20 +79,53 @@ export const authMiddleware: ThunkMiddleware<RootState, AnyAction> = store => ne
       store.dispatch(askServerConfirmChangeEmail({token, password}))
     }
   }
+
+  if (
+    action.type === submitResetPassword.type
+  ) {
+    const _action = action as ReturnType<typeof submitResetPassword>
+    const {email} = _action.payload
+    const {emailValidationErrorMessage} = validate({type: SubmitTypes.RESET_PASSWORD, params: {email}})
+    if (emailValidationErrorMessage) {
+      next(validationError({emailValidationErrorMessage}))
+    } else {
+      store.dispatch(askServerResetPassword({email}))
+    }
+  }
+
+  if (
+    action.type === submitNewPassword.type
+  ) {
+    const _action = action as ReturnType<typeof submitNewPassword>
+    const {password, passwordConfirm} = _action.payload
+    const {token} = store.getState().user.authState as AuthStateConfirmResetPassword
+    const {passwordValidationErrorMessage, passwordConfirmValidationErrorMessage} = validate({type: SubmitTypes.CONFIRM_RESET_PASSWORD, params: {password, passwordConfirm}})
+    if (passwordValidationErrorMessage || passwordConfirmValidationErrorMessage) {
+      next(validationError({passwordValidationErrorMessage, passwordConfirmValidationErrorMessage}))
+    } else {
+      store.dispatch(askServerConfirmResetPassword({token, password}))
+    }
+  }
 }
 function validate(args: {type: SubmitTypes.SIGNUP, params: Parameters<typeof validateSignup>[0]}): ReturnType<typeof validateSignup>
 function validate(args: {type: SubmitTypes.LOGIN, params: Parameters<typeof validateLogin>[0]}): ReturnType<typeof validateLogin>
 function validate(args: {type: SubmitTypes.EDIT, params: Parameters<typeof validateEdit>[0]}): ReturnType<typeof validateEdit>
 function validate(args: {type: SubmitTypes.CONFIRM_CHANGE_EMAIL, params: Parameters<typeof validateConfirmChangeEmail>[0]}): ReturnType<typeof validateConfirmChangeEmail>
+function validate(args: {type: SubmitTypes.RESET_PASSWORD, params: Parameters<typeof validateResetPassword>[0]}): ReturnType<typeof validateResetPassword>
+function validate(args: {type: SubmitTypes.CONFIRM_RESET_PASSWORD, params: Parameters<typeof validateConfirmResetPassword>[0]}): ReturnType<typeof validateConfirmResetPassword>
 function validate(args:
   {type: SubmitTypes.SIGNUP, params: Parameters<typeof validateSignup>[0]}
   | {type: SubmitTypes.LOGIN, params: Parameters<typeof validateLogin>[0]}
   | {type: SubmitTypes.EDIT, params: Parameters<typeof validateEdit>[0]}
   | {type: SubmitTypes.CONFIRM_CHANGE_EMAIL, params: Parameters<typeof validateConfirmChangeEmail>[0]}
+  | {type: SubmitTypes.RESET_PASSWORD, params: Parameters<typeof validateResetPassword>[0]}
+  | {type: SubmitTypes.CONFIRM_RESET_PASSWORD, params: Parameters<typeof validateConfirmResetPassword>[0]}
 ): ReturnType<typeof validateSignup>
   | ReturnType<typeof validateLogin>
   | ReturnType<typeof validateEdit>
-  | ReturnType<typeof validateConfirmChangeEmail> {
+  | ReturnType<typeof validateConfirmChangeEmail>
+  | ReturnType<typeof validateResetPassword>
+  | ReturnType<typeof validateConfirmResetPassword> {
   switch (args.type) {
     case SubmitTypes.SIGNUP:
       return validateSignup(args.params)
@@ -100,6 +135,10 @@ function validate(args:
       return validateEdit(args.params)
     case SubmitTypes.CONFIRM_CHANGE_EMAIL:
       return validateConfirmChangeEmail(args.params)
+    case SubmitTypes.RESET_PASSWORD:
+      return validateResetPassword(args.params)
+    case SubmitTypes.CONFIRM_RESET_PASSWORD:
+      return validateConfirmResetPassword(args.params)
   }
 }
 const MIN_PASSWORD_LENGTH = 8
@@ -131,6 +170,17 @@ function validateConfirmChangeEmail(params: {password: string}): {passwordValida
   const {password} = params
   const passwordValidationErrorMessage = _validate('Password', password, {required: true, minLength: MIN_PASSWORD_LENGTH})
   return {passwordValidationErrorMessage}
+}
+function validateResetPassword(params: {email: string}): {emailValidationErrorMessage: string | null} {
+  const {email} = params
+  const emailValidationErrorMessage = _validate('Email', email, {required: true, isEmail: true})
+  return {emailValidationErrorMessage}
+}
+function validateConfirmResetPassword(params: {password: string, passwordConfirm: string}): {passwordValidationErrorMessage: string | null, passwordConfirmValidationErrorMessage: string | null} {
+  const {password, passwordConfirm} = params
+  const passwordValidationErrorMessage = _validate('Password', password, {required: true, minLength: MIN_PASSWORD_LENGTH})
+  const passwordConfirmValidationErrorMessage = _validate('Password (Confirm)', passwordConfirm, {required: true, matchWith: {label: 'Password', input: password}})
+  return {passwordValidationErrorMessage, passwordConfirmValidationErrorMessage}
 }
 function _validate(label: string, input: string, options?: {required?: boolean, minLength?: number, isEmail?: boolean, matchWith?: {label: string, input: string}}): string | null {
   if (options?.required && input === '') {
