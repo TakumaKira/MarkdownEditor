@@ -59,6 +59,9 @@ export const resetPassword = async (credentials: {email: string}): Promise<Axios
 export const confirmResetPassword = async (credentials: {token: string, password: string}): Promise<AxiosResponse<{message: string, token: string}>> => {
   return await axios.post<{message: string, token: string}>(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path, credentials)
 }
+export const deleteUser = async (): Promise<AxiosResponse<{message: string}>> => {
+  return await axios.post<never>(API_PATHS.AUTH.DELETE.path)
+}
 
 export const upload = async (documentState: DocumentState): Promise<DocumentsUploadResponse> => {
   const requestBody: DocumentsRequest = {

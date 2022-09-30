@@ -2,7 +2,7 @@ import { UserInfoOnToken } from "@api/user";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import jwt from 'jsonwebtoken';
 import { AuthStateTypes } from "../../components/AuthModal";
-import { confirmChangeEmail, confirmResetPassword, confirmSignupEmail, editUser, login, resetPassword, signup } from "../../services/api";
+import { confirmChangeEmail, confirmResetPassword, confirmSignupEmail, deleteUser, editUser, login, resetPassword, signup } from "../../services/api";
 import { getData } from "../../services/asyncStorage";
 import { AuthStateConfirmChangeEmail, AuthStateConfirmResetPassword, AuthStateConfirmSignupEmail, AuthStateDelete, AuthStateEdit, AuthStateLogin, AuthStateResetPassword, AuthStateSignup, UserState } from "../models/user";
 
@@ -130,6 +130,14 @@ export const askServerConfirmResetPassword = createAsyncThunk('user/askServerCon
   try {
     const response = await confirmResetPassword(payload)
     return {successMessage: response.data.message, token: response.data.token}
+  } catch (err) {
+    return Promise.reject(err)
+  }
+})
+export const askServerDeleteAccount = createAsyncThunk('user/askServerDeleteAccount', async () => {
+  try {
+    const response = await deleteUser()
+    return {successMessage: response.data.message}
   } catch (err) {
     return Promise.reject(err)
   }
@@ -386,6 +394,26 @@ const userSlice = createSlice({
       }
     })
     builder.addCase(askServerConfirmResetPassword.rejected, (state, action) => {
+      const errorMessage = action.error.message
+      if (state.authState) {
+        state.authState.serverErrorMessage = errorMessage || 'Something went wrong.'
+        state.authState.isLoading = false
+      }
+    })
+    builder.addCase(askServerDeleteAccount.pending, state => {
+      if (state.authState) {
+        state.authState.isLoading = true
+      }
+    })
+    builder.addCase(askServerDeleteAccount.fulfilled, state => {
+      state.token = null
+      state.email = null
+      if (state.authState) {
+        state.authState.isLoading = false
+        state.authState.isDone = true
+      }
+    })
+    builder.addCase(askServerDeleteAccount.rejected, (state, action) => {
       const errorMessage = action.error.message
       if (state.authState) {
         state.authState.serverErrorMessage = errorMessage || 'Something went wrong.'

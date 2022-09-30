@@ -5,7 +5,7 @@ import { RootState } from '../store'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { NEEDS_AT_LEAST_EMAIL_OR_PASSWORD } from '../store/middlewares/auth'
 import { selectColorScheme } from '../store/slices/theme'
-import { callAuthModal, dismissAuthModal, resetErrorMessage, submitConfirmNewEmail, submitEdit, submitLogin, submitNewPassword, submitResetPassword, submitSignup } from '../store/slices/user'
+import { askServerDeleteAccount, callAuthModal, dismissAuthModal, resetErrorMessage, submitConfirmNewEmail, submitEdit, submitLogin, submitNewPassword, submitResetPassword, submitSignup } from '../store/slices/user'
 import colors from '../theme/colors'
 import fonts from '../theme/fonts'
 import textStyles from '../theme/textStyles'
@@ -55,7 +55,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   button: {
-    marginTop: 30,
     height: 40,
     borderRadius: 4,
   },
@@ -175,16 +174,16 @@ const authModalSettings: {[type in AuthStateTypes]: {
       {type: ContentTypes.PASSWORD_CONFIRM_INPUT},
       {type: ContentTypes.BUTTON, label: 'Save new password', variant: 'primary', createAction: ({passwordInput, passwordConfirmInput}) => submitNewPassword({password: passwordInput, passwordConfirm: passwordConfirmInput})},
     ],
-    getDoneText: errorMessage => (errorMessage ? {text: errorMessage, isError: true} : {text: 'Successfully set new password.'}),
+    getDoneText: () => ({text: 'Successfully set new password.'}),
   },
   [AuthStateTypes.DELETE]: {
     title: 'Delete account',
     contents: [
       {type: ContentTypes.TEXT, text: 'Are you really sure you want to delete this account?'},
       {type: ContentTypes.BUTTON, label: 'Cancel', variant: 'primary', createAction: () => dismissAuthModal()},
-      {type: ContentTypes.BUTTON, label: 'Delete', variant: 'danger'},
+      {type: ContentTypes.BUTTON, label: 'Delete', variant: 'danger', createAction: () => askServerDeleteAccount()},
     ],
-    getDoneText: () => ({text: ''}),
+    getDoneText: () => ({text: 'Successfully delete account.'}),
   },
 }
 
@@ -336,6 +335,7 @@ const AuthModal = () => {
                         isLoading={authState.isLoading}
                         label={content.label}
                         serverErrorMessage={authState.serverErrorMessage}
+                        style={[i > 0 ? styles.marginTop : undefined]}
                       />
                     )
                   case ContentTypes.LINK:
@@ -346,12 +346,12 @@ const AuthModal = () => {
               })}
             </View>
           </>
-          : <>
+          : <View>
             <Text style={[styles.marginTop, textStyles.previewParagraph, doneText.isError ? {color: colors.Red} : themeColors[colorScheme].confirmationMessage]}>{doneText.text}</Text>
-            <ButtonWithHoverColorAnimation onPress={() => dispatch(dismissAuthModal())} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={styles.button} childrenWrapperStyle={styles.buttonContents}>
+            <ButtonWithHoverColorAnimation onPress={() => dispatch(dismissAuthModal())} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.button, styles.marginTop]} childrenWrapperStyle={styles.buttonContents}>
               <Text style={[styles.buttonLabel, textStyles.headingM]}>OK</Text>
             </ButtonWithHoverColorAnimation>
-          </>
+          </View>
         }
       </View>
     </Modal>
@@ -385,6 +385,7 @@ const SubmitButton = (props: {
   isLoading: boolean
   label: string
   serverErrorMessage: string | null
+  style?: StyleProp<ViewStyle>
 }) => {
   const {
     onPress,
@@ -393,6 +394,7 @@ const SubmitButton = (props: {
     isLoading,
     label,
     serverErrorMessage,
+    style,
   } = props
 
   return (
@@ -401,7 +403,7 @@ const SubmitButton = (props: {
         onPress={onPress}
         offBgColorRGB={offBgColorRGB}
         onBgColorRGB={onBgColorRGB}
-        style={styles.button}
+        style={[styles.button, style]}
         childrenWrapperStyle={styles.buttonContents}
         disabled={isLoading}
       >
