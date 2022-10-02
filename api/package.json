@@ -6,8 +6,7 @@
     "build": "npx tsc",
     "prestart": "yarn build",
     "start": "node dist/index.js",
-    "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/index.js\"",
-    "create-user": "yarn build && node dist/db/create-user.js"
+    "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/index.js\""
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",

@@ -1,2 +1,5 @@
 node_modules/
 dist/
+
+# Downloaded OAuth secret json file.
+client_secret_*.apps.googleusercontent.com.json

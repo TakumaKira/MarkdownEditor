@@ -6,8 +6,5 @@ echo "Waiting for DB to start..."
 echo "Building..."
 yarn build
 
-echo "Creating the user..."
-yarn create-user
-
 echo "Starting the server..."
 yarn start
