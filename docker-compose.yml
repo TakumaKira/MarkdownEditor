@@ -1,62 +1,61 @@
-x-db-port: &DB_PORT
-  3306
-x-api-port: &API_PORT
-  3000
-x-ws-port: &WS_PORT
-  3001
-x-storybook-ui-port: &STORYBOOK_UI_PORT
-  7007
-x-expo-go-app-port: &EXPO_GO_APP_PORT
-  19000
-x-expo-dev-tools-port: &EXPO_DEV_TOOLS_PORT
-  19002
-x-app-port: &APP_PORT
-  19006
-x-common-variables: &common-variables
-  DATABASE_HOST: db
-  MYSQL_DATABASE: markdown_editor
-  MYSQL_DATABASE_USERNAME_FOR_APP: markdown_editor_app
-  MYSQL_DATABASE_PASSWORD_FOR_APP:
-  API_PORT: *API_PORT
-  WS_PORT: *WS_PORT
-  APP_PORT: *APP_PORT
+version: "3.2"
 
 services:
   frontend:
     build: ./frontend
-    environment: *common-variables
+    environment:
+      DATABASE_HOST: db
+      MYSQL_DATABASE: markdown_editor
+      MYSQL_DATABASE_USERNAME_FOR_APP: markdown_editor_app
+      MYSQL_DATABASE_PASSWORD_FOR_APP:
+      API_PORT: 3000
+      WS_PORT: 3001
+      APP_PORT: 19006
     env_file:
       - ./frontend/.env
     ports:
-      - target: *STORYBOOK_UI_PORT
-        published: *STORYBOOK_UI_PORT
-      - target: *EXPO_GO_APP_PORT
-        published: *EXPO_GO_APP_PORT
-      - target: *EXPO_DEV_TOOLS_PORT
-        published: *EXPO_DEV_TOOLS_PORT
-      - target: *APP_PORT
-        published: *APP_PORT
+      - target: 7007
+        published: 7007
+      - target: 19000
+        published: 19000
+      - target: 19002
+        published: 19002
+      - target: 19006
+        published: 19006
     command: yarn start
   api:
     depends_on:
       - "db"
     build: ./api
     environment:
-      <<: *common-variables
+      DATABASE_HOST: db
+      MYSQL_DATABASE: markdown_editor
+      MYSQL_DATABASE_USERNAME_FOR_APP: markdown_editor_app
+      MYSQL_DATABASE_PASSWORD_FOR_APP:
+      API_PORT: 3000
+      WS_PORT: 3001
+      APP_PORT: 19006
     ports:
-      - target: *API_PORT
-        published: *API_PORT
-      - target: *WS_PORT
-        published: *WS_PORT
+      - target: 3000
+        published: 3000
+      - target: 3001
+        published: 3001
     command: sh -c ./docker-entrypoint.sh
   db:
     image: mysql:8.0.29
-    environment: *common-variables
+    environment:
+      DATABASE_HOST: db
+      MYSQL_DATABASE: markdown_editor
+      MYSQL_DATABASE_USERNAME_FOR_APP: markdown_editor_app
+      MYSQL_DATABASE_PASSWORD_FOR_APP:
+      API_PORT: 3000
+      WS_PORT: 3001
+      APP_PORT: 19006
     env_file:
       - ./db/.env
     ports:
-      - target: *DB_PORT
-        published: *DB_PORT
+      - target: 3306
+        published: 3306
     volumes:
       - db:/var/lib/mysql
       - ./db/init/init-container.sh:/docker-entrypoint-initdb.d/1.sh
