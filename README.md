@@ -34,6 +34,25 @@ Run ``kompose convert --volumes hostPath`` to generate yaml files to apply to Ku
 Then run ``docker compose build && docker compose up`` to generate images. Once images are generated, stop these images.
 Edit image name from ``frontend`` to ``markdowneditor-frontend``(specifying local image) and add ``imagePullPolicy: IfNotPresent``(preferring local image than remote) on generated ``frontend-deployment.yaml`` and ``api`` to ``markdowneditor-api`` and add ``imagePullPolicy: IfNotPresent`` on generated ``api-deployment.yaml`` as well.
 Then add ``type: LoadBalancer`` to every generated ``*-service.yaml`` files.
+Then create [secret](https://kubernetes.io/docs/concepts/configuration/secret/) to store password by running
+
+```sh
+kubectl create secret generic db-user-pass-for-app \
+  --from-literal=password='<your_password_for_app_to_communicate_database>'
+```
+
+and you can verify it by running ``kubectl get secrets``.
+You can clean up by running ``kubectl delete secret db-user-pass-for-app`` afterwords.
+Then you can use the password from container by adding lines below on env section of ``*-deployment.yaml``.
+
+```yaml
+- name: MYSQL_DATABASE_PASSWORD_FOR_APP
+  valueFrom:
+    secretKeyRef:
+      name: db-user-pass-for-app
+      key: password
+      optional: false
+```
 
 Now you can apply these files by running ``kubectl apply -f api-service.yaml,db-service.yaml,frontend-service.yaml,api-deployment.yaml,db-deployment.yaml,db--env-configmap.yaml,frontend-deployment.yaml,frontend--env-configmap.yaml`` command.
 If applied successfully, you can see these.

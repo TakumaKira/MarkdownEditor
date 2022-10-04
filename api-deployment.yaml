@@ -39,6 +39,12 @@ spec:
               value: markdown_editor
             - name: MYSQL_DATABASE_USERNAME_FOR_APP
               value: markdown_editor_app
+            - name: MYSQL_DATABASE_PASSWORD_FOR_APP
+              valueFrom:
+                secretKeyRef:
+                  name: db-user-pass-for-app
+                  key: password
+                  optional: false
             - name: WS_PORT
               value: "3001"
           image: markdowneditor-api

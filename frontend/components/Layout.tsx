@@ -36,6 +36,7 @@ const Layout = () => {
         sidebar={SideBar}
         main={MainView}
       />
+      {/* TODO: Unify both modals? */}
       {confirmationState &&
         <ConfirmationModal
           title={confirmationMessages[confirmationState.type].title}

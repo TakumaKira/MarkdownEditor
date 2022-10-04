@@ -7,7 +7,6 @@ services:
       DATABASE_HOST: db
       MYSQL_DATABASE: markdown_editor
       MYSQL_DATABASE_USERNAME_FOR_APP: markdown_editor_app
-      MYSQL_DATABASE_PASSWORD_FOR_APP:
       API_PORT: 3000
       WS_PORT: 3001
       APP_PORT: 19006
@@ -31,7 +30,6 @@ services:
       DATABASE_HOST: db
       MYSQL_DATABASE: markdown_editor
       MYSQL_DATABASE_USERNAME_FOR_APP: markdown_editor_app
-      MYSQL_DATABASE_PASSWORD_FOR_APP:
       API_PORT: 3000
       WS_PORT: 3001
       APP_PORT: 19006
@@ -47,7 +45,6 @@ services:
       DATABASE_HOST: db
       MYSQL_DATABASE: markdown_editor
       MYSQL_DATABASE_USERNAME_FOR_APP: markdown_editor_app
-      MYSQL_DATABASE_PASSWORD_FOR_APP:
       API_PORT: 3000
       WS_PORT: 3001
       APP_PORT: 19006

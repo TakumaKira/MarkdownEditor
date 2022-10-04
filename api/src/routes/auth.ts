@@ -362,12 +362,6 @@ export default authApiRouter
 
 // TODO: Modify frontend
 
-// Add confirmation route to switch isActivated on database to true and notify confirmation is successful.
-
-// Add frontend URL for confirmation.
-
-// By clicking the link, frontend ask API to activate the user.
-
 // Add message saying confirmation is successful and logged in.
 
 // If the activation was successful, frontend login by accepting the token.
