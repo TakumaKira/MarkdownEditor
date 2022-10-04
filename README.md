@@ -8,6 +8,7 @@ This is a full-stack solution to the [In-browser markdown editor challenge on Fr
   - [Table of contents](#table-of-contents)
   - [Setup](#setup)
     - [Run as full-stack project](#run-as-full-stack-project)
+  - [Run on kubernetes on local](#run-on-kubernetes-on-local)
   - [Overview](#overview)
     - [The challenge](#the-challenge)
     - [Screenshot](#screenshot)
@@ -26,6 +27,21 @@ This is a full-stack solution to the [In-browser markdown editor challenge on Fr
 After cloning this repository, build docker image with ``docker compose build`` from root of this project directory. This command will take a few minutes for the first build.
 
 Then you need to add .env file in root directory and add ``MYSQL_DATABASE_PASSWORD_FOR_APP=<your database password for user named app>`` line in it, and .env files to frontend/api/db directories with required constants defined in each README.md at the root of each directory. Now you can run this image on the first terminal with ``docker compose up`` command.
+
+## Run on kubernetes on local
+
+Run ``kompose convert --volumes hostPath`` to generate yaml files to apply to Kubernetes.
+Then run ``docker compose build && docker compose up`` to generate images. Once images are generated, stop these images.
+Edit image name from ``frontend`` to ``markdowneditor-frontend``(specifying local image) and add ``imagePullPolicy: IfNotPresent``(preferring local image than remote) on generated ``frontend-deployment.yaml`` and ``api`` to ``markdowneditor-api`` and add ``imagePullPolicy: IfNotPresent`` on generated ``api-deployment.yaml`` as well.
+Then add ``type: LoadBalancer`` to every generated ``*-service.yaml`` files.
+
+Now you can apply these files by running ``kubectl apply -f api-service.yaml,db-service.yaml,frontend-service.yaml,api-deployment.yaml,db-deployment.yaml,db--env-configmap.yaml,frontend-deployment.yaml,frontend--env-configmap.yaml`` command.
+If applied successfully, you can see these.
+
+- ``kubectl get po`` command will show you ``frontend-<some_id>``/``api-<some_id>``/``db-<some_id>`` are running with ``READY 1/1`` and ``STATUS Running``. If not, you can inspect its problem with ``kubectl describe pod frontend-<some_id>``/``kubectl describe pod api-<some_id>````kubectl describe pod db-<some_id>`` command, which will show you what happened on ``Events`` section.
+- ``kubectl get svc`` command will show you frontend/api/db with localhost as EXTERNAL-IP and you can see them running on ``http://<your_local_ip>:19002/``(Expo developer tools)/``http://localhost:19006/``(Web version frontend).
+
+Then you can stop them by running ``kubectl delete -f api-service.yaml,db-service.yaml,frontend-service.yaml,api-deployment.yaml,db-deployment.yaml,db--env-configmap.yaml,frontend-deployment.yaml,frontend--env-configmap.yaml`` command.
 
 ## Overview
 
