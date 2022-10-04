@@ -41,11 +41,12 @@ spec:
               value: markdown_editor_app
             - name: WS_PORT
               value: "3001"
-          image: api
+          image: markdowneditor-api
           name: api
           ports:
             - containerPort: 3000
             - containerPort: 3001
           resources: {}
+          imagePullPolicy: IfNotPresent
       restartPolicy: Always
 status: {}

@@ -45,7 +45,7 @@ spec:
                   name: frontend--env
             - name: WS_PORT
               value: "3001"
-          image: frontend
+          image: markdowneditor-frontend
           name: frontend
           ports:
             - containerPort: 7007
@@ -53,5 +53,6 @@ spec:
             - containerPort: 19002
             - containerPort: 19006
           resources: {}
+          imagePullPolicy: IfNotPresent
       restartPolicy: Always
 status: {}
