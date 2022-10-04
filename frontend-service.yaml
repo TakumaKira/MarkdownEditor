@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --volumes hostPath
+    kompose.version: 1.26.1 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: frontend
+  name: frontend
+spec:
+  ports:
+    - name: "7007"
+      port: 7007
+      targetPort: 7007
+    - name: "19000"
+      port: 19000
+      targetPort: 19000
+    - name: "19002"
+      port: 19002
+      targetPort: 19002
+    - name: "19006"
+      port: 19006
+      targetPort: 19006
+  selector:
+    io.kompose.service: frontend
+status:
+  loadBalancer: {}

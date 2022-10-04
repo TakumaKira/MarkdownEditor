@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --volumes hostPath
+    kompose.version: 1.26.1 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: db
+  name: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: db
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert --volumes hostPath
+        kompose.version: 1.26.1 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: db
+    spec:
+      containers:
+        - env:
+            - name: API_PORT
+              value: "3000"
+            - name: APP_PORT
+              value: "19006"
+            - name: DATABASE_HOST
+              value: db
+            - name: MYSQL_DATABASE
+              value: markdown_editor
+            - name: MYSQL_DATABASE_USERNAME_FOR_APP
+              value: markdown_editor_app
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  key: MYSQL_ROOT_PASSWORD
+                  name: db--env
+            - name: WS_PORT
+              value: "3001"
+          image: mysql:8.0.29
+          name: db
+          ports:
+            - containerPort: 3306
+          resources: {}
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: db
+            - mountPath: /docker-entrypoint-initdb.d/1.sh
+              name: db-hostpath1
+            - mountPath: /docker-entrypoint-initdb.d/2.sql
+              name: db-hostpath2
+            - mountPath: /docker-entrypoint-initdb.d/3.sql
+              name: db-hostpath3
+            - mountPath: /docker-entrypoint-initdb.d/4.sql
+              name: db-hostpath4
+      restartPolicy: Always
+      volumes:
+        - hostPath:
+            path: /Users/Kira/Desktop/Git/MarkdownEditor
+          name: db
+        - hostPath:
+            path: /Users/Kira/Desktop/Git/MarkdownEditor/db/init/init-container.sh
+          name: db-hostpath1
+        - hostPath:
+            path: /Users/Kira/Desktop/Git/MarkdownEditor/db/init/init-tables.sql
+          name: db-hostpath2
+        - hostPath:
+            path: /Users/Kira/Desktop/Git/MarkdownEditor/db/init/init-user-procedures.sql
+          name: db-hostpath3
+        - hostPath:
+            path: /Users/Kira/Desktop/Git/MarkdownEditor/db/init/init-document-procedures.sql
+          name: db-hostpath4
+status: {}
