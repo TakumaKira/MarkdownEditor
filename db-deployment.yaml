@@ -44,9 +44,10 @@ spec:
                   optional: false
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
-                configMapKeyRef:
-                  key: MYSQL_ROOT_PASSWORD
-                  name: db--env
+                secretKeyRef:
+                  name: db-user-pass-for-app
+                  key: rootPassword
+                  optional: false
             - name: WS_PORT
               value: "3001"
           image: mysql:8.0.29
@@ -67,9 +68,9 @@ spec:
               name: db-hostpath4
       restartPolicy: Always
       volumes:
-        - hostPath:
-            path: /Users/Kira/Desktop/Git/MarkdownEditor
-          name: db
+        - name: db
+          persistentVolumeClaim:
+            claimName: db-pv-claim
         - hostPath:
             path: /Users/Kira/Desktop/Git/MarkdownEditor/db/init/init-container.sh
           name: db-hostpath1

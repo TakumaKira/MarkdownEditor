@@ -33,17 +33,18 @@ Then you need to add .env file in root directory and add ``MYSQL_DATABASE_PASSWO
 Run ``kompose convert --volumes hostPath`` to generate yaml files to apply to Kubernetes.
 Then run ``docker compose build && docker compose up`` to generate images. Once images are generated, stop these images.
 Edit image name from ``frontend`` to ``markdowneditor-frontend``(specifying local image) and add ``imagePullPolicy: IfNotPresent``(preferring local image than remote) on generated ``frontend-deployment.yaml`` and ``api`` to ``markdowneditor-api`` and add ``imagePullPolicy: IfNotPresent`` on generated ``api-deployment.yaml`` as well.
-Then add ``type: LoadBalancer`` to every generated ``*-service.yaml`` files.
+Then add ``type: LoadBalancer`` to every generated ``frontend-service.yaml`` and ``api-service.yaml`` files.
 Then create [secret](https://kubernetes.io/docs/concepts/configuration/secret/) to store password by running
 
 ```sh
 kubectl create secret generic db-user-pass-for-app \
-  --from-literal=password='<your_password_for_app_to_communicate_database>'
+  --from-literal=password='<your_password_for_app_to_communicate_database>' \
+  --from-literal=rootPassword='<your_password_for_your_kubernetes_container_MySQL_server_root_user>'
 ```
 
 and you can verify it by running ``kubectl get secrets``.
 You can clean up by running ``kubectl delete secret db-user-pass-for-app`` afterwords.
-Then you can use the password from container by adding lines below on env section of ``*-deployment.yaml``.
+Then you can use the password from container by adding lines below on env section of ``api-deployment.yaml``/``db-deployment.yaml``
 
 ```yaml
 - name: MYSQL_DATABASE_PASSWORD_FOR_APP
@@ -54,13 +55,25 @@ Then you can use the password from container by adding lines below on env sectio
       optional: false
 ```
 
-Now you can apply these files by running ``kubectl apply -f api-service.yaml,db-service.yaml,frontend-service.yaml,api-deployment.yaml,db-deployment.yaml,db--env-configmap.yaml,frontend-deployment.yaml,frontend--env-configmap.yaml`` command.
+and below on ``db-deployment.yaml``.
+
+```yaml
+- name: MYSQL_ROOT_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: db-user-pass-for-app
+      key: rootPassword
+      optional: false
+```
+
+Now you can apply these files by running ``kubectl apply -f db-pv.yaml,api-service.yaml,db-service.yaml,frontend-service.yaml,api-deployment.yaml,db-deployment.yaml,frontend-deployment.yaml,frontend--env-configmap.yaml`` command.
 If applied successfully, you can see these.
 
 - ``kubectl get po`` command will show you ``frontend-<some_id>``/``api-<some_id>``/``db-<some_id>`` are running with ``READY 1/1`` and ``STATUS Running``. If not, you can inspect its problem with ``kubectl describe pod frontend-<some_id>``/``kubectl describe pod api-<some_id>````kubectl describe pod db-<some_id>`` command, which will show you what happened on ``Events`` section.
 - ``kubectl get svc`` command will show you frontend/api/db with localhost as EXTERNAL-IP and you can see them running on ``http://<your_local_ip>:19002/``(Expo developer tools)/``http://localhost:19006/``(Web version frontend).
+- By running ``kubectl run -it --rm --image=mysql:8.0.29 --restart=Never mysql-client -- mysql -h db -p<your_password_for_your_kubernetes_container_MySQL_server_root_user>`` command, you will be able to run query for the database(run ``exit`` command to exit).
 
-Then you can stop them by running ``kubectl delete -f api-service.yaml,db-service.yaml,frontend-service.yaml,api-deployment.yaml,db-deployment.yaml,db--env-configmap.yaml,frontend-deployment.yaml,frontend--env-configmap.yaml`` command.
+Then you can stop them by running ``kubectl delete -f db-pv.yaml,api-service.yaml,db-service.yaml,frontend-service.yaml,api-deployment.yaml,db-deployment.yaml,frontend-deployment.yaml,frontend--env-configmap.yaml`` command.
 
 ## Overview
 

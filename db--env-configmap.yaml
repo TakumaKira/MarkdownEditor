@@ -1,9 +1,0 @@
-apiVersion: v1
-data:
-  MYSQL_ROOT_PASSWORD: "1234"
-kind: ConfigMap
-metadata:
-  creationTimestamp: null
-  labels:
-    io.kompose.service: db-db--env
-  name: db--env
