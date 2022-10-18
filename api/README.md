@@ -19,3 +19,28 @@ Please follow [this page](https://alexb72.medium.com/how-to-send-emails-using-a-
 ## How to run for development
 
 Run `DATABASE_HOST=localhost MYSQL_DATABASE_USERNAME_FOR_APP=markdown_editor_app MYSQL_DATABASE_PASSWORD_FOR_APP=<your_password_for_app_to_communicate_database> MYSQL_DATABASE=markdown_editor API_PORT=3000 WS_PORT=3001 APP_PORT=19006 yarn dev`.
+
+## How to build and run as a docker image
+
+Run `docker build -t api .` from /MarkdownEditor/api to build image.
+Then run
+
+```bash
+docker run \
+-e ORIGIN=http://localhost \
+-e API_PORT=3000 \
+-e WS_PORT=3001 \
+-e APP_PORT=19006 \
+-e DATABASE_HOST=localhost \
+-e MYSQL_DATABASE_USERNAME_FOR_APP=markdown_editor_app \
+-e MYSQL_DATABASE_PASSWORD_FOR_APP=<your_password_for_app_to_communicate_database> \
+-e MYSQL_DATABASE=markdown_editor \
+-e JWT_SECRET_KEY=<your_jwt_secret_key> \
+-e OAUTH_USER=<your_oAuth_user> \
+-e OAUTH_CLIENT_ID=<your_oAuth_client_id> \
+-e OAUTH_CLIENT_SECRET=<your_oAuth_client_secret> \
+-e OAUTH_REFRESH_TOKEN=<your_oAuth_refresh_token> \
+api
+```
+
+(you can change any in relation with frontend/database) to start container with required environment variables.

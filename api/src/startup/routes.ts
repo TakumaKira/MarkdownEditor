@@ -7,9 +7,8 @@ import error from '../middleware/error'
 import authApiRouter from '../routes/auth'
 import documentsRouter from '../routes/documents'
 
-const apiRoutes = (expressApp: Express) => {
-  console.log('TODO: Switch origin with environment variables.')
-  expressApp.use(cors({origin: 'http://localhost:19006'}))
+const apiRoutes = (expressApp: Express, origin: string, appPort: number) => {
+  expressApp.use(cors({origin: `${origin}:${appPort}`}))
   expressApp.use(express.json())
   expressApp.use(API_PATHS.AUTH.path, authApiRouter)
   expressApp.use(API_PATHS.DOCUMENTS.path, documentsRouter)

@@ -1,26 +1,15 @@
-import dotenv from 'dotenv'
 import { google } from 'googleapis'
 import nodemailer from 'nodemailer'
 import SMTPTransport from 'nodemailer/lib/smtp-transport'
-
-dotenv.config()
-
-if (
-  !process.env.OAUTH_USER
-  || !process.env.OAUTH_CLIENT_ID
-  || !process.env.OAUTH_CLIENT_SECRET
-  || !process.env.OAUTH_REFRESH_TOKEN
-) {
-  throw new Error('OAuth client information not provided.')
-}
+import { OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_REFRESH_TOKEN, OAUTH_USER } from '../getEnvs'
 
 const OAuth2 = google.auth.OAuth2
 const OAuth2Client = new OAuth2(
-  process.env.OAUTH_CLIENT_ID,
-  process.env.OAUTH_CLIENT_SECRET,
+  OAUTH_CLIENT_ID,
+  OAUTH_CLIENT_SECRET,
 )
 OAuth2Client.setCredentials({
-  refresh_token: process.env.OAUTH_REFRESH_TOKEN
+  refresh_token: OAUTH_REFRESH_TOKEN
 })
 
 const getTransport = async (): Promise<nodemailer.Transporter<SMTPTransport.SentMessageInfo>> => {
@@ -33,10 +22,10 @@ const getTransport = async (): Promise<nodemailer.Transporter<SMTPTransport.Sent
     service: 'gmail',
     auth: {
       type: 'OAuth2',
-      user: process.env.OAUTH_USER,
-      clientId: process.env.OAUTH_CLIENT_ID,
-      clientSecret: process.env.OAUTH_CLIENT_SECRET,
-      refreshToken: process.env.OAUTH_REFRESH_TOKEN,
+      user: OAUTH_USER,
+      clientId: OAUTH_CLIENT_ID,
+      clientSecret: OAUTH_CLIENT_SECRET,
+      refreshToken: OAUTH_REFRESH_TOKEN,
       accessToken,
     }
   })

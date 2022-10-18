@@ -1,5 +1,4 @@
 import bcrypt from 'bcrypt'
-import dotenv from 'dotenv'
 import { Router } from 'express'
 import jwt, { TokenExpiredError } from 'jsonwebtoken'
 import { RowDataPacket } from 'mysql2/promise'
@@ -8,17 +7,11 @@ import getConnection from '../db/getConnection'
 import getChangeEmailConfirmation from '../emailTemplates/changeEmailConfirmation'
 import getResetPasswordConfirmation from '../emailTemplates/resetPasswordConfirmation'
 import getSignupEmailConfirmation from '../emailTemplates/signupEmailConfirmation'
+import { APP_PORT, JWT_SECRET_KEY, ORIGIN } from '../getEnvs'
 import decode from '../helper/decode'
 import getTransport from '../helper/email'
 import { authApiMiddleware } from '../middleware/auth'
 import { UserInfoOnDB } from '../models/user'
-
-dotenv.config()
-
-const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY
-if (!JWT_SECRET_KEY) {
-  throw new Error('JWT_SECRET_KEY is not defined.')
-}
 
 const authApiRouter = Router()
 
@@ -63,7 +56,7 @@ authApiRouter.post(API_PATHS.AUTH.SIGNUP.dir, async (req, res, next) => {
     from: {name: 'no-reply@markdown.com', address: 'no-reply@markdown.com'},
     to: email,
     subject: 'Welcome to Markdown Editor!',
-    html: getSignupEmailConfirmation('http://localhost:19006', token)
+    html: getSignupEmailConfirmation(`${ORIGIN}:${APP_PORT}`, token)
   }
   try {
     await transport.sendMail(mailOptions)
@@ -176,7 +169,7 @@ authApiRouter.post(API_PATHS.AUTH.EDIT.dir, authApiMiddleware, async (req, res, 
         from: {name: 'no-reply@markdown.com', address: 'no-reply@markdown.com'},
         to: newEmail,
         subject: 'Markdown: Confirm your new email address.',
-        html: getChangeEmailConfirmation('http://localhost:19006', token)
+        html: getChangeEmailConfirmation(`${ORIGIN}:${APP_PORT}`, token)
       }
 
       await transport.sendMail(mailOptions)
@@ -280,7 +273,7 @@ authApiRouter.post(API_PATHS.AUTH.RESET_PASSWORD.dir, async (req, res, next) => 
       from: {name: 'no-reply@markdown.com', address: 'no-reply@markdown.com'},
       to: user.email,
       subject: 'Markdown: You asked to reset your password.',
-      html: getResetPasswordConfirmation('http://localhost:19006', token)
+      html: getResetPasswordConfirmation(`${ORIGIN}:${APP_PORT}`, token)
     }
 
     await transport.sendMail(mailOptions)

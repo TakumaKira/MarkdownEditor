@@ -1,13 +1,12 @@
 import express from "express"
 import { setupApi } from "../startup"
 
-const startApi = (apiPort: number) => {
+const startApi = (origin: string, apiPort: number, appPort: number) => {
   const expressApp = express()
-  setupApi(expressApp)
+  setupApi(expressApp, origin, appPort)
 
   return expressApp.listen(apiPort, () => {
-    console.log('TODO: Switch origin with environment variables.')
-    console.log(`⚡️[server]: Server is running at https://localhost:${apiPort}`)
+    console.log(`⚡️[server]: Server is running at ${origin}:${apiPort}`)
   })
 }
 export default startApi
