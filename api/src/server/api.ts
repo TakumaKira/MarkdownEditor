@@ -6,7 +6,7 @@ const startApi = (origin: string, apiPort: number, appPort: number) => {
   setupApi(expressApp, origin, appPort)
 
   return expressApp.listen(apiPort, () => {
-    console.log(`⚡️[server]: Server is running at ${origin}:${apiPort}`)
+    console.log(`⚡️[server]: API server is running at ${origin}:${apiPort}`)
   })
 }
 export default startApi
