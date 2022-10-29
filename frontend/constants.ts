@@ -3,6 +3,9 @@
 export const AUTH_TOKEN_KEY = 'x-auth-token'
 
 export const API_PATHS = {
+  ROOT: {
+    path: '/', dir: '/'
+  },
   path: '/api', dir: '/api',
   AUTH: {
     path: '/api/auth', dir: '/auth',
