@@ -1,0 +1,4 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '--build-arg', 'API_DOMAIN=markdown.kirakiraworx.com', '--build-arg', 'API_PORT=80', '--build-arg', 'WS_PORT=80', '-t', 'gcr.io/markdown-editor-362715/github.com/takumakira/markdowneditor/frontend:$COMMIT_SHA', '.']
+  dir: frontend
