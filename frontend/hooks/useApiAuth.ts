@@ -1,6 +1,7 @@
 import Constants from 'expo-constants'
 import React from "react"
 import { io, Socket } from 'socket.io-client'
+import { ManifestExtra } from '../app.config.manifestExtra'
 import { setTokenToRequestHeader } from '../services/api'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { askServerUpdate } from '../store/slices/document'
@@ -27,17 +28,17 @@ const useApiAuth = (): void => {
   }, [storeInitializationIsDone, userState.token])
 
   const getSocket = (token: string) => {
-    const ORIGIN = Constants.manifest?.extra?.ORIGIN
-    if (!ORIGIN) {
-      throw new Error('ORIGIN is not defined.')
+    const API_DOMAIN = ((Constants.manifest?.extra as ManifestExtra) as ManifestExtra)?.API_DOMAIN
+    if (!API_DOMAIN) {
+      throw new Error('API_DOMAIN is not defined.')
     }
-    const WS_PORT = Number(Constants.manifest?.extra?.WS_PORT)
+    const WS_PORT = Number(((Constants.manifest?.extra as ManifestExtra) as ManifestExtra)?.WS_PORT)
     if (!WS_PORT) {
       throw new Error('WS_PORT is not defined.')
     }
 
     // TODO: Make this wss
-    const socket = io(`ws://${ORIGIN}:${WS_PORT}`, {auth: {token}})
+    const socket = io(`ws://${API_DOMAIN}:${WS_PORT}`, {auth: {token}})
     setSocket(socket)
   }
 

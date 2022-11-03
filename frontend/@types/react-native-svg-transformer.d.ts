@@ -1,5 +1,7 @@
-// react-native-svg-transformer with TypeScript needs this.
-// See https://github.com/kristerkari/react-native-svg-transformer#using-typescript
+/**
+ * react-native-svg-transformer with TypeScript needs this.
+ * @see https://github.com/kristerkari/react-native-svg-transformer#using-typescript
+ */
 
 declare module "*.svg" {
   import React from 'react';

@@ -1,15 +1,35 @@
+if (
+  !process.env.API_DOMAIN
+  || !process.env.API_PORT
+  || !process.env.WS_PORT
+) {
+  if (!process.env.API_DOMAIN) {
+    console.error('API_DOMAIN is not defined.')
+  }
+  if (!process.env.API_PORT) {
+    console.error('API_PORT is not defined.')
+  }
+  if (!process.env.WS_PORT) {
+    console.error('WS_PORT is not defined.')
+  }
+  throw new Error('Missing environment variables.')
+}
+
 export default {
   name: 'Markdown Editor',
   version: '1.0.0',
   extra: {
-    LOAD_STORYBOOK: process.env.LOAD_STORYBOOK === 'true',
-    LOCAL_IP: process.env.LOCAL_IP || '0.0.0.0', // TODO: Adjust URLs on docker-compose/storybook/frontend.
+    API_DOMAIN: process.env.API_DOMAIN,
     API_PORT: process.env.API_PORT,
     WS_PORT: process.env.WS_PORT,
+    LOAD_STORYBOOK: process.env.LOAD_STORYBOOK === 'true',
+    /** IP for Storybook development server. */
+    DEVELOPMENT_MACHINE_LOCAL_IP: process.env.DEVELOPMENT_MACHINE_LOCAL_IP || '0.0.0.0',
     breakpoints: {
       MOBILE_TABLET: 600,
       TABLET_DESKTOP: 1200,
     },
+    /** Link for falling back native app rendering issue. */
     WEB_VERSION_URL: 'https://markdown-editor-git-master-takumakira.vercel.app/',
     NEW_DOCUMENT_TITLE: 'Untitled Document.md',
     INITIAL_DOCUMENTS: [
@@ -20,6 +40,5 @@ export default {
     ],
     STATE_STORAGE_KEY: 'MARKDOWN_EDITOR_STATE',
     LOGIN_TOKEN_KEY: 'MARKDOWN_EDITOR_LOGIN_TOKEN',
-    ORIGIN: 'localhost', // TODO: Switch origin with environment variables
   },
 }

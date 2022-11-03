@@ -7,7 +7,7 @@ import getConnection from '../db/getConnection'
 import getChangeEmailConfirmation from '../emailTemplates/changeEmailConfirmation'
 import getResetPasswordConfirmation from '../emailTemplates/resetPasswordConfirmation'
 import getSignupEmailConfirmation from '../emailTemplates/signupEmailConfirmation'
-import { APP_PORT, JWT_SECRET_KEY, ORIGIN } from '../getEnvs'
+import { FRONTEND_PORT, JWT_SECRET_KEY, FRONTEND_DOMAIN } from '../getEnvs'
 import decode from '../helper/decode'
 import getTransport from '../helper/email'
 import { authApiMiddleware } from '../middleware/auth'
@@ -56,7 +56,7 @@ authApiRouter.post(API_PATHS.AUTH.SIGNUP.dir, async (req, res, next) => {
     from: {name: 'no-reply@markdown.com', address: 'no-reply@markdown.com'},
     to: email,
     subject: 'Welcome to Markdown Editor!',
-    html: getSignupEmailConfirmation(`${ORIGIN}:${APP_PORT}`, token)
+    html: getSignupEmailConfirmation(`${FRONTEND_DOMAIN}:${FRONTEND_PORT}`, token)
   }
   try {
     await transport.sendMail(mailOptions)
@@ -169,7 +169,7 @@ authApiRouter.post(API_PATHS.AUTH.EDIT.dir, authApiMiddleware, async (req, res, 
         from: {name: 'no-reply@markdown.com', address: 'no-reply@markdown.com'},
         to: newEmail,
         subject: 'Markdown: Confirm your new email address.',
-        html: getChangeEmailConfirmation(`${ORIGIN}:${APP_PORT}`, token)
+        html: getChangeEmailConfirmation(`${FRONTEND_DOMAIN}:${FRONTEND_PORT}`, token)
       }
 
       await transport.sendMail(mailOptions)
@@ -273,7 +273,7 @@ authApiRouter.post(API_PATHS.AUTH.RESET_PASSWORD.dir, async (req, res, next) => 
       from: {name: 'no-reply@markdown.com', address: 'no-reply@markdown.com'},
       to: user.email,
       subject: 'Markdown: You asked to reset your password.',
-      html: getResetPasswordConfirmation(`${ORIGIN}:${APP_PORT}`, token)
+      html: getResetPasswordConfirmation(`${FRONTEND_DOMAIN}:${FRONTEND_PORT}`, token)
     }
 
     await transport.sendMail(mailOptions)

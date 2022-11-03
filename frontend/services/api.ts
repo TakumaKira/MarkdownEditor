@@ -1,19 +1,20 @@
 import { DocumentsRequest, DocumentsUploadResponse } from '@api/document';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import Constants from 'expo-constants';
+import { ManifestExtra } from '../app.config.manifestExtra';
 import { API_PATHS, AUTH_TOKEN_KEY } from '../constants';
 import { DocumentState } from "../store/models/document";
 
-const ORIGIN = Constants.manifest?.extra?.ORIGIN
-if (!ORIGIN) {
-  throw new Error('ORIGIN is not defined.')
+const API_DOMAIN = (Constants.manifest?.extra as ManifestExtra)?.API_DOMAIN
+if (!API_DOMAIN) {
+  throw new Error('API_DOMAIN is not defined.')
 }
-const API_PORT = Number(Constants.manifest?.extra?.API_PORT)
+const API_PORT = Number((Constants.manifest?.extra as ManifestExtra)?.API_PORT)
 if (!API_PORT) {
   throw new Error('API_PORT is not defined.')
 }
 // TODO: Make this https
-axios.defaults.baseURL = `http://${ORIGIN}:${API_PORT}`
+axios.defaults.baseURL = `http://${API_DOMAIN}:${API_PORT}`
 
 axios.interceptors.response.use(
   response => response,

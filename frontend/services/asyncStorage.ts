@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
+import { ManifestExtra } from '../app.config.manifestExtra';
 import { RootStateRestore } from "../store";
 import { DocumentState, DocumentStateRestore } from '../store/models/document';
 import { ThemeState, ThemeStateRestore } from '../store/models/theme';
 import { UserState, UserStateRestore } from '../store/models/user';
 
-const asyncStorageKey = (key: string): string => `${Constants.manifest?.extra?.STATE_STORAGE_KEY}_${key}`
+const asyncStorageKey = (key: string): string => `${(Constants.manifest?.extra as ManifestExtra)?.STATE_STORAGE_KEY}_${key}`
 export const storeData = async <Key extends keyof RootStateRestore>(key: Key, value: RootStateRestore[Key]): Promise<void> => {
   try {
     const jsonValue = JSON.stringify(value)

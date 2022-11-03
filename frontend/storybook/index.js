@@ -20,7 +20,7 @@ configure(() => {
 // To find allowed options for getStorybookUI
 const StorybookUIRoot = Constants.manifest?.extra?.LOAD_STORYBOOK
   ? getStorybookUI({
-    host: Constants.manifest?.extra?.LOCAL_IP,
+    host: Constants.manifest?.extra?.DEVELOPMENT_MACHINE_LOCAL_IP,
     port: '7007',
     asyncStorage: require('@react-native-async-storage/async-storage').default,
   })

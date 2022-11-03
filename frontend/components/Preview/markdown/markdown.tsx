@@ -1,4 +1,5 @@
 import Constants from 'expo-constants'
+import { ManifestExtra } from '../../../app.config.manifestExtra'
 import * as WebBrowser from 'expo-web-browser'
 import React from "react"
 import { Image, Platform } from 'react-native'
@@ -310,7 +311,7 @@ export const Inline: {[key in 'Default' | 'Code' | 'Link' | 'Bold' | 'Italic' | 
 
     // Currently, this escapes all image markdown on iOS/Android due to layout issue of inline image. When removing the escape, this should also support SVG on iOS/Android.
     return ((!disableImageEscapeOnMobile && Platform.OS !== 'web')
-      ? <Text style={[textStyles.link, {color: colors[400]}]} onPress={() => WebBrowser.openBrowserAsync(`${Constants.manifest?.extra?.WEB_VERSION_URL}?input=${encodeURIComponent(input)}`)}>
+      ? <Text style={[textStyles.link, {color: colors[400]}]} onPress={() => WebBrowser.openBrowserAsync(`${(Constants.manifest?.extra as ManifestExtra)?.WEB_VERSION_URL}?input=${encodeURIComponent(input)}`)}>
         {`[Markdown "![${props.text}](${props.url})" is escaped to avoid not the best rendering result of inline images in React Native on iOS/Android. Please check your result on web version of this app.]`}
       </Text>
       // TODO: Is there any way to cancel async function when this is unmounted before the async function was executed

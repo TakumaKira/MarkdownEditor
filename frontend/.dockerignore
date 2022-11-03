@@ -1,2 +1,5 @@
 coverage/
 node_modules/
+.env
+web-build/
+preview.jpg

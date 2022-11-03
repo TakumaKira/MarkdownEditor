@@ -2,10 +2,10 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-const origin = process.env.ORIGIN
 const apiPort = process.env.API_PORT
 const wsPort = process.env.WS_PORT
-const appPort = process.env.APP_PORT
+const frontendDomain = process.env.FRONTEND_DOMAIN
+const frontendPort = process.env.FRONTEND_PORT
 
 const databaseHost = process.env.DATABASE_HOST
 const mysqlDatabaseUsernameForApp = process.env.MYSQL_DATABASE_USERNAME_FOR_APP
@@ -20,10 +20,10 @@ const oAuthClientSecret = process.env.OAUTH_CLIENT_SECRET
 const oAuthRefreshToken = process.env.OAUTH_REFRESH_TOKEN
 
 if (
-  !origin
-  || !apiPort
+  !apiPort
   || !wsPort
-  || !appPort
+  || !frontendDomain
+  || !frontendPort
   || !databaseHost
   || !mysqlDatabaseUsernameForApp
   || !mysqlDatabasePasswordForApp
@@ -34,17 +34,17 @@ if (
   || !oAuthClientSecret
   || !oAuthRefreshToken
 ) {
-  if (!origin) {
-    console.error('ORIGIN is not defined.')
-  }
   if (!apiPort) {
     console.error('API_PORT is not defined.')
   }
   if (!wsPort) {
     console.error('WS_PORT is not defined.')
   }
-  if (!appPort) {
-    console.error('APP_PORT is not defined.')
+  if (!frontendDomain) {
+    console.error('FRONTEND_DOMAIN is not defined.')
+  }
+  if (!frontendPort) {
+    console.error('FRONTEND_PORT is not defined.')
   }
   if (!databaseHost) {
     console.error('DATABASE_HOST is not defined.')
@@ -76,10 +76,10 @@ if (
   throw new Error('Missing environment variables.')
 }
 
-export const ORIGIN = origin
 export const API_PORT = Number(apiPort)
 export const WS_PORT = Number(wsPort)
-export const APP_PORT = Number(appPort)
+export const FRONTEND_DOMAIN = frontendDomain
+export const FRONTEND_PORT = Number(frontendPort)
 export const DATABASE_HOST = databaseHost
 export const MYSQL_DATABASE_USERNAME_FOR_APP = mysqlDatabaseUsernameForApp
 export const MYSQL_DATABASE_PASSWORD_FOR_APP = mysqlDatabasePasswordForApp

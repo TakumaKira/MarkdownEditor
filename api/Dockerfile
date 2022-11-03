@@ -5,4 +5,3 @@ RUN yarn
 COPY . .
 RUN npx tsc
 CMD node dist/index.js
-EXPOSE 3000 3001
