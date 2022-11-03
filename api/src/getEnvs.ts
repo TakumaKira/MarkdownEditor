@@ -5,7 +5,6 @@ dotenv.config()
 const apiPort = process.env.API_PORT
 const wsPort = process.env.WS_PORT
 const frontendDomain = process.env.FRONTEND_DOMAIN
-const frontendPort = process.env.FRONTEND_PORT
 
 const databaseHost = process.env.DATABASE_HOST
 const mysqlDatabaseUsernameForApp = process.env.MYSQL_DATABASE_USERNAME_FOR_APP
@@ -23,7 +22,6 @@ if (
   !apiPort
   || !wsPort
   || !frontendDomain
-  || !frontendPort
   || !databaseHost
   || !mysqlDatabaseUsernameForApp
   || !mysqlDatabasePasswordForApp
@@ -42,9 +40,6 @@ if (
   }
   if (!frontendDomain) {
     console.error('FRONTEND_DOMAIN is not defined.')
-  }
-  if (!frontendPort) {
-    console.error('FRONTEND_PORT is not defined.')
   }
   if (!databaseHost) {
     console.error('DATABASE_HOST is not defined.')
@@ -79,7 +74,6 @@ if (
 export const API_PORT = Number(apiPort)
 export const WS_PORT = Number(wsPort)
 export const FRONTEND_DOMAIN = frontendDomain
-export const FRONTEND_PORT = Number(frontendPort)
 export const DATABASE_HOST = databaseHost
 export const MYSQL_DATABASE_USERNAME_FOR_APP = mysqlDatabaseUsernameForApp
 export const MYSQL_DATABASE_PASSWORD_FOR_APP = mysqlDatabasePasswordForApp

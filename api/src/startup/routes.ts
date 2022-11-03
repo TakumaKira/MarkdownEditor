@@ -8,8 +8,8 @@ import authApiRouter from '../routes/auth'
 import documentsRouter from '../routes/documents'
 import rootRouter from '../routes/root'
 
-const apiRoutes = (expressApp: Express, frontendDomain: string, frontendPort: number) => {
-  expressApp.use(cors({origin: `http://${frontendDomain}:${frontendPort}`}))
+const apiRoutes = (expressApp: Express, frontendDomain: string) => {
+  expressApp.use(cors({origin: `http://${frontendDomain}`}))
   expressApp.use(express.json())
   expressApp.use(API_PATHS.ROOT.path, rootRouter)
   expressApp.use(API_PATHS.AUTH.path, authApiRouter)
