@@ -1,6 +1,6 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '--build-arg', 'USE_SECURE_PROTOCOL=true', '--build-arg', 'API_DOMAIN=markdown.kirakiraworx.com', '--build-arg', 'API_PORT=80', '--build-arg', 'WS_PORT=80', '--build-arg', 'WEB_VERSION_URL=https://markdown.kirakiraworx.com', '-t', 'gcr.io/markdown-editor-362715/github.com/takumakira/markdowneditor/frontend:$COMMIT_SHA', '.']
+  args: ['build', '--build-arg', 'USE_SECURE_PROTOCOL=true', '--build-arg', 'API_DOMAIN=markdown.kirakiraworx.com', '--build-arg', 'API_PORT=443', '--build-arg', 'WS_PORT=443', '--build-arg', 'WEB_VERSION_URL=https://markdown.kirakiraworx.com', '-t', 'gcr.io/markdown-editor-362715/github.com/takumakira/markdowneditor/frontend:$COMMIT_SHA', '.']
   dir: frontend
 images:
 - gcr.io/markdown-editor-362715/github.com/takumakira/markdowneditor/frontend:$COMMIT_SHA
