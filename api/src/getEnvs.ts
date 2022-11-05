@@ -4,6 +4,7 @@ dotenv.config()
 
 const apiPort = process.env.API_PORT
 const wsPort = process.env.WS_PORT
+const frontendProtocol = process.env.USE_SECURE_PROTOCOL === 'true' ? 'https' : 'http'
 const frontendDomain = process.env.FRONTEND_DOMAIN
 
 const databaseHost = process.env.DATABASE_HOST
@@ -73,6 +74,7 @@ if (
 
 export const API_PORT = Number(apiPort)
 export const WS_PORT = Number(wsPort)
+export const FRONTEND_PROTOCOL = frontendProtocol
 export const FRONTEND_DOMAIN = frontendDomain
 export const DATABASE_HOST = databaseHost
 export const MYSQL_DATABASE_USERNAME_FOR_APP = mysqlDatabaseUsernameForApp

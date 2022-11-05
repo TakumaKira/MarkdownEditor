@@ -5,6 +5,10 @@ import { ManifestExtra } from '../app.config.manifestExtra';
 import { API_PATHS, AUTH_TOKEN_KEY } from '../constants';
 import { DocumentState } from "../store/models/document";
 
+const API_PROTOCOL = (Constants.manifest?.extra as ManifestExtra)?.API_PROTOCOL
+if (!API_PROTOCOL) {
+  throw new Error('API_PROTOCOL is not defined.')
+}
 const API_DOMAIN = (Constants.manifest?.extra as ManifestExtra)?.API_DOMAIN
 if (!API_DOMAIN) {
   throw new Error('API_DOMAIN is not defined.')
@@ -13,8 +17,7 @@ const API_PORT = Number((Constants.manifest?.extra as ManifestExtra)?.API_PORT)
 if (!API_PORT) {
   throw new Error('API_PORT is not defined.')
 }
-// TODO: Make this https
-axios.defaults.baseURL = `http://${API_DOMAIN}:${API_PORT}`
+axios.defaults.baseURL = `${API_PROTOCOL}://${API_DOMAIN}:${API_PORT}`
 
 axios.interceptors.response.use(
   response => response,

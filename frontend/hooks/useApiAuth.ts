@@ -28,6 +28,10 @@ const useApiAuth = (): void => {
   }, [storeInitializationIsDone, userState.token])
 
   const getSocket = (token: string) => {
+    const WS_PROTOCOL = (Constants.manifest?.extra as ManifestExtra)?.WS_PROTOCOL
+    if (!WS_PROTOCOL) {
+      throw new Error('WS_PROTOCOL is not defined.')
+    }
     const API_DOMAIN = ((Constants.manifest?.extra as ManifestExtra) as ManifestExtra)?.API_DOMAIN
     if (!API_DOMAIN) {
       throw new Error('API_DOMAIN is not defined.')
@@ -37,8 +41,7 @@ const useApiAuth = (): void => {
       throw new Error('WS_PORT is not defined.')
     }
 
-    // TODO: Make this wss
-    const socket = io(`ws://${API_DOMAIN}:${WS_PORT}`, {auth: {token}})
+    const socket = io(`${WS_PROTOCOL}://${API_DOMAIN}:${WS_PORT}`, {auth: {token}})
     setSocket(socket)
   }
 

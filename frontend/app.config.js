@@ -2,6 +2,7 @@ if (
   !process.env.API_DOMAIN
   || !process.env.API_PORT
   || !process.env.WS_PORT
+  || !process.env.WEB_VERSION_URL
 ) {
   if (!process.env.API_DOMAIN) {
     console.error('API_DOMAIN is not defined.')
@@ -12,6 +13,9 @@ if (
   if (!process.env.WS_PORT) {
     console.error('WS_PORT is not defined.')
   }
+  if (!process.env.WEB_VERSION_URL) {
+    console.error('WEB_VERSION_URL is not defined.')
+  }
   throw new Error('Missing environment variables.')
 }
 
@@ -20,7 +24,9 @@ export default {
   version: '1.0.0',
   extra: {
     API_DOMAIN: process.env.API_DOMAIN,
+    API_PROTOCOL: process.env.USE_SECURE_PROTOCOL === 'true' ? 'https' : 'http',
     API_PORT: process.env.API_PORT,
+    WS_PROTOCOL: process.env.USE_SECURE_PROTOCOL === 'true' ? 'wss' : 'ws',
     WS_PORT: process.env.WS_PORT,
     LOAD_STORYBOOK: process.env.LOAD_STORYBOOK === 'true',
     /** IP for Storybook development server. */
@@ -30,7 +36,7 @@ export default {
       TABLET_DESKTOP: 1200,
     },
     /** Link for falling back native app rendering issue. */
-    WEB_VERSION_URL: 'https://markdown-editor-git-master-takumakira.vercel.app/',
+    WEB_VERSION_URL: process.env.WEB_VERSION_URL,
     NEW_DOCUMENT_TITLE: 'Untitled Document.md',
     INITIAL_DOCUMENTS: [
       {
