@@ -4,12 +4,9 @@ import jwt, { TokenExpiredError } from 'jsonwebtoken'
 import { RowDataPacket } from 'mysql2/promise'
 import { API_PATHS } from '../constants'
 import getConnection from '../db/getConnection'
-import getChangeEmailConfirmation from '../emailTemplates/changeEmailConfirmation'
-import getResetPasswordConfirmation from '../emailTemplates/resetPasswordConfirmation'
-import getSignupEmailConfirmation from '../emailTemplates/signupEmailConfirmation'
-import { JWT_SECRET_KEY, FRONTEND_DOMAIN } from '../getEnvs'
+import getConfirmationEmail from '../emailTemplates'
+import { JWT_SECRET_KEY, FRONTEND_DOMAIN, mailServer } from '../getEnvs'
 import decode from '../helper/decode'
-import getTransport from '../helper/email'
 import { authApiMiddleware } from '../middleware/auth'
 import { UserInfoOnDB } from '../models/user'
 
@@ -40,29 +37,15 @@ authApiRouter.post(API_PATHS.AUTH.SIGNUP.dir, async (req, res, next) => {
     return res.status(500).send({message: 'Something went wrong.'})
   }
 
-  try {
-    var transport = await getTransport()
-  } catch (e) {
-    console.error(e)
-    return res.status(500).send({message: 'Something went wrong.'})
-  }
-
   const token = generateEmailConfirmationToken(email)
-  const mailOptions = {
-    /**
-     * Gmail server will overwrite to your gmail address.
-     * @see https://nodemailer.com/usage/using-gmail/
-    */
-    from: {name: 'no-reply@markdown.com', address: 'no-reply@markdown.com'},
-    to: email,
-    subject: 'Welcome to Markdown Editor!',
-    html: getSignupEmailConfirmation(`${FRONTEND_DOMAIN}`, token)
-  }
+  const {subject, text, html} = getConfirmationEmail('signup', token)
+
   try {
-    await transport.sendMail(mailOptions)
+    await mailServer.send(email, subject, text, html)
     res.send({message: 'Confirmation email sent.'})
-  } catch (error) {
+  } catch (error: any) {
     console.error(error)
+    console.error(JSON.stringify(error.response.body.errors))
     res.status(500).send({message: 'Something went wrong.'})
   }
 })
@@ -152,27 +135,9 @@ authApiRouter.post(API_PATHS.AUTH.EDIT.dir, authApiMiddleware, async (req, res, 
       `)
     }
     if (newEmail) {
-      try {
-        var transport = await getTransport()
-      } catch (e) {
-        console.error(e)
-        return res.status(500).send({message: 'Something went wrong.'})
-      }
-
-      // TODO: Test expiration.
       const token = generateEmailChangeToken(oldEmail, newEmail, {expiresIn: '30m'})
-      const mailOptions = {
-        /**
-         * Gmail server will overwrite to your gmail address.
-         * @see https://nodemailer.com/usage/using-gmail/
-        */
-        from: {name: 'no-reply@markdown.com', address: 'no-reply@markdown.com'},
-        to: newEmail,
-        subject: 'Markdown: Confirm your new email address.',
-        html: getChangeEmailConfirmation(`${FRONTEND_DOMAIN}`, token)
-      }
-
-      await transport.sendMail(mailOptions)
+      const {subject, text, html} = getConfirmationEmail('changeEmail', token)
+      await mailServer.send(newEmail, subject, text, html)
       res.send({message: 'Confirmation email sent.'})
     } else {
       return res.send({message: 'Password update successful.'})
@@ -256,27 +221,9 @@ authApiRouter.post(API_PATHS.AUTH.RESET_PASSWORD.dir, async (req, res, next) => 
 
     if (!user.is_activated) return res.status(401).send({message: 'This user is not activated.'})
 
-    try {
-      var transport = await getTransport()
-    } catch (e) {
-      console.error(e)
-      return res.status(500).send({message: 'Something went wrong.'})
-    }
-
-    // TODO: Test expiration.
     const token = generateEmailConfirmationToken(user.email, {expiresIn: '30m'})
-    const mailOptions = {
-      /**
-       * Gmail server will overwrite to your gmail address.
-       * @see https://nodemailer.com/usage/using-gmail/
-      */
-      from: {name: 'no-reply@markdown.com', address: 'no-reply@markdown.com'},
-      to: user.email,
-      subject: 'Markdown: You asked to reset your password.',
-      html: getResetPasswordConfirmation(`${FRONTEND_DOMAIN}`, token)
-    }
-
-    await transport.sendMail(mailOptions)
+    const {subject, text, html} = getConfirmationEmail('resetPassword', token)
+    await mailServer.send(user.email, subject, text, html)
     res.send({message: 'Confirmation email sent.'})
   } catch (error) {
     console.error(error)
