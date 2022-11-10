@@ -1,6 +1,9 @@
 steps:
 - name: node
   entrypoint: yarn
+  dir: frontend
+- name: node
+  entrypoint: yarn
   args: ['test:ci']
   dir: frontend
 - name: gcr.io/cloud-builders/docker
