@@ -12,6 +12,7 @@
     "ios": "expo start --ios",
     "android": "expo start --android",
     "test": "jest --watchAll --coverage",
+    "test:ci": "jest",
     "eject": "expo eject"
   },
   "dependencies": {
