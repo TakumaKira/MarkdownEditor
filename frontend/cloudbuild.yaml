@@ -1,8 +1,8 @@
 steps:
-- name: node
+- name: node:16.18.0
   entrypoint: yarn
   dir: frontend
-- name: node
+- name: node:16.18.0
   entrypoint: yarn
   args: ['test:ci']
   dir: frontend
