@@ -1,9 +1,9 @@
-if (
+if (process.env.NODE_ENV !== 'test' && (
   !process.env.API_DOMAIN
   || !process.env.API_PORT
   || !process.env.WS_PORT
   || !process.env.WEB_VERSION_URL
-) {
+)) {
   if (!process.env.API_DOMAIN) {
     console.error('API_DOMAIN is not defined.')
   }
