@@ -1,7 +1,6 @@
-import Constants from 'expo-constants'
 import React, { Dispatch, SetStateAction } from 'react'
 import { Animated, Platform, StyleSheet, View } from 'react-native'
-import { ManifestExtra } from '../app.config.manifestExtra'
+import env from '../env'
 import CloseIcon from '../assets/icon-close.svg'
 import DeleteIcon from '../assets/icon-delete.svg'
 import DocumentIcon from '../assets/icon-document.svg'
@@ -177,7 +176,7 @@ const DocumentTitle = (props: {checkLayout?: boolean, mockWindowWidth?: number})
   // TODO: Needs tests
   const addExtension = () => {
     if (titleInput.replace(/\s*/, '') === '') {
-      dispatch(updateTitleInput((Constants.manifest?.extra as ManifestExtra)?.NEW_DOCUMENT_TITLE))
+      dispatch(updateTitleInput(env.NEW_DOCUMENT_TITLE))
       return
     }
     if (/\.md\s*$/.test(titleInput)) {

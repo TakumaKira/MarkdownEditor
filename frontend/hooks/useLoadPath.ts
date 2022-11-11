@@ -1,6 +1,5 @@
-import Constants from 'expo-constants'
 import React from 'react'
-import { ManifestExtra } from '../app.config.manifestExtra'
+import env from '../env'
 import { AuthStateTypes } from '../components/AuthModal'
 import { API_PATHS } from '../constants'
 import { useAppDispatch, useAppSelector } from "../store/hooks"
@@ -14,7 +13,7 @@ const useLoadPath = () => {
 
   const tryLoadingInputFromUrlParams = (input: string) => {
     dispatch(deselectDocument())
-    dispatch(updateTitleInput((Constants.manifest?.extra as ManifestExtra)?.NEW_DOCUMENT_TITLE))
+    dispatch(updateTitleInput(env.NEW_DOCUMENT_TITLE))
     dispatch(updateMainInput(decodeURIComponent(input)))
   }
   React.useEffect(() => {

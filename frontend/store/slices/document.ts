@@ -1,8 +1,7 @@
 import { DocumentsUploadResponse } from '@api/document'
 import { AsyncThunk, createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
-import Constants from 'expo-constants'
 import { v4 as uuidv4 } from 'uuid'
-import { ManifestExtra } from '../../app.config.manifestExtra'
+import env from '../../env'
 import { ConfirmationStateTypes } from '../../constants/confirmationMessages'
 import { sortDocumentsFromNewest } from '../../helpers/sortDocuments'
 import { upload } from '../../services/api'
@@ -11,7 +10,7 @@ import { ConfirmationState, ConfirmationStateWithNextId, DocumentOnDevice, Docum
 
 const generateNewDocument = (): DocumentOnDevice => ({
   id: uuidv4(),
-  name: (Constants.manifest?.extra as ManifestExtra)?.NEW_DOCUMENT_TITLE,
+  name: env.NEW_DOCUMENT_TITLE,
   content: '',
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),

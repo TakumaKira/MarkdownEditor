@@ -1,7 +1,7 @@
 // if you use expo remove this line
 import { AppRegistry } from 'react-native'
 
-import Constants from 'expo-constants'
+import env from '../env'
 
 import { getStorybookUI, configure, addDecorator } from '@storybook/react-native'
 import { withKnobs } from '@storybook/addon-knobs'
@@ -18,9 +18,9 @@ configure(() => {
 
 // Refer to https://github.com/storybookjs/react-native/tree/master/app/react-native#getstorybookui-options
 // To find allowed options for getStorybookUI
-const StorybookUIRoot = Constants.manifest?.extra?.LOAD_STORYBOOK
+const StorybookUIRoot = env.LOAD_STORYBOOK
   ? getStorybookUI({
-    host: Constants.manifest?.extra?.DEVELOPMENT_MACHINE_LOCAL_IP,
+    host: env.DEVELOPMENT_MACHINE_LOCAL_IP,
     port: '7007',
     asyncStorage: require('@react-native-async-storage/async-storage').default,
   })

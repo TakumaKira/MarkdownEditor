@@ -1,19 +1,18 @@
 import { DocumentsRequest, DocumentsUploadResponse } from '@api/document';
 import axios, { AxiosError, AxiosResponse } from 'axios';
-import Constants from 'expo-constants';
-import { ManifestExtra } from '../app.config.manifestExtra';
+import env from '../env';
 import { API_PATHS, AUTH_TOKEN_KEY } from '../constants';
 import { DocumentState } from "../store/models/document";
 
-const API_PROTOCOL = (Constants.manifest?.extra as ManifestExtra)?.API_PROTOCOL
+const API_PROTOCOL = env.API_PROTOCOL
 if (!API_PROTOCOL) {
   throw new Error('API_PROTOCOL is not defined.')
 }
-const API_DOMAIN = (Constants.manifest?.extra as ManifestExtra)?.API_DOMAIN
+const API_DOMAIN = env.API_DOMAIN
 if (!API_DOMAIN) {
   throw new Error('API_DOMAIN is not defined.')
 }
-const API_PORT = Number((Constants.manifest?.extra as ManifestExtra)?.API_PORT)
+const API_PORT = Number(env.API_PORT)
 if (!API_PORT) {
   throw new Error('API_PORT is not defined.')
 }

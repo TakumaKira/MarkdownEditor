@@ -1,10 +1,11 @@
 export declare type ManifestExtra = {
+  NODE_ENV: string
   /** Domain for api and websocket. */
   API_DOMAIN: string
   API_PROTOCOL: string
-  API_PORT: string
+  API_PORT: number
   WS_PROTOCOL: string
-  WS_PORT: string
+  WS_PORT: number
   LOAD_STORYBOOK: boolean
   /** IP for Storybook development server. */
   DEVELOPMENT_MACHINE_LOCAL_IP: string

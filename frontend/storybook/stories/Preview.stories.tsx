@@ -1,10 +1,9 @@
 import { boolean } from '@storybook/addon-knobs'
 import { storiesOf } from '@storybook/react-native'
-import Constants from 'expo-constants'
 import React from 'react'
 import { View } from 'react-native'
 import { Provider } from 'react-redux'
-import { ManifestExtra } from '../../app.config.manifestExtra'
+import env from '../../env'
 import Preview from '../../components/Preview'
 import themeColors from '../../theme/themeColors'
 import getMockStore from '../utils/getMockStore'
@@ -36,7 +35,7 @@ storiesOf('Preview', module)
     </Provider>
   )
   .add('Preview', () =>
-    <Preview children={((Constants.manifest?.extra as ManifestExtra)?.INITIAL_DOCUMENTS?.[0]?.content as string)} />
+    <Preview children={(env.INITIAL_DOCUMENTS?.[0]?.content as string)} />
   )
   // This already has some trouble with displaying inline image on iOS and android
   .add('Preview - Inline Image test', () =>
