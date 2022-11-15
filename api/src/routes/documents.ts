@@ -1,10 +1,10 @@
 import { Router } from 'express'
 import { RowDataPacket } from 'mysql2/promise'
 import { v4 as uuidv4 } from 'uuid'
-import { wsServer } from '..'
 import getConnection from '../db/getConnection'
 import { authApiMiddleware } from '../middleware/auth'
 import { Document, DocumentFromDB, DocumentsRequest, DocumentsUploadResponse } from '../models/document'
+import { wsServer } from '../servers/api'
 
 const documentsRouter = Router()
 

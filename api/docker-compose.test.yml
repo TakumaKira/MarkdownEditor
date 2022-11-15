@@ -1,0 +1,25 @@
+version: '3.1'
+
+services:
+  db:
+    image: mysql:8.0.31
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql_root_password
+      MYSQL_DATABASE: markdown_editor_auto_test_db
+      MYSQL_USER: markdown_editor_app_auto_test
+      MYSQL_PASSWORD: password_for_app_auto_test
+    expose:
+      - 3306
+    volumes:
+      - ./tests/integration/init-db:/docker-entrypoint-initdb.d
+
+  api-test:
+    build:
+      context: .
+      target: test
+    image: api:latest
+    command: dockerize
+      -wait tcp://db:3306 -timeout 60s
+      sh -c "yarn test:ci"
+    depends_on:
+      - db
