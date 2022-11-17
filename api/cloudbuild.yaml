@@ -1,7 +1,7 @@
 steps:
 # Test including integration test with database container
-- name: gcr.io/cloud-builders/docker-compose
-  args: ['up', '--build', '--abort-on-container-exit']
+- name: gcr.io/cloud-builders/docker
+  args: ['compose', 'up', '--build', '--abort-on-container-exit']
   dir: api
 # Build image
 - name: gcr.io/cloud-builders/docker
