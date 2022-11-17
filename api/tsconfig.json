@@ -105,6 +105,7 @@
   },
   "include": [
     "./src",
+    "./node_modules/@types",
     "@types",
   ]
 }
