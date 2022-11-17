@@ -1,11 +1,14 @@
 steps:
 # Test including integration test with database container
 - name: gcr.io/cloud-builders/docker
-  args: ['compose', 'up', '--build', '--abort-on-container-exit']
+  args: ['compose', '-f', 'docker-compose.test.yml', 'build']
+  dir: api
+- name: gcr.io/cloud-builders/docker
+  args: ['compose', 'up', '--abort-on-container-exit']
   dir: api
 # Build image
 - name: gcr.io/cloud-builders/docker
   args: ['build', '-t', 'gcr.io/markdown-editor-362715/github.com/takumakira/markdowneditor/api:$COMMIT_SHA', '.']
-  dir: frontend
+  dir: api
 images:
 - gcr.io/markdown-editor-362715/github.com/takumakira/markdowneditor/api:$COMMIT_SHA
