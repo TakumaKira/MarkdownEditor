@@ -1,0 +1,11 @@
+steps:
+# Test including integration test with database container
+- name: gcr.io/cloud-builders/docker-compose
+  args: ['up', '--build', '--abort-on-container-exit']
+  dir: api
+# Build image
+- name: gcr.io/cloud-builders/docker
+  args: ['build', '-t', 'gcr.io/markdown-editor-362715/github.com/takumakira/markdowneditor/api:$COMMIT_SHA', '.']
+  dir: frontend
+images:
+- gcr.io/markdown-editor-362715/github.com/takumakira/markdowneditor/api:$COMMIT_SHA
