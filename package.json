@@ -1,0 +1,14 @@
+{
+  "name": "MarkdownEditor",
+  "version": "1.0.0",
+  "scripts": {
+    "cypress:open": "cypress open"
+  },
+  "main": "index.js",
+  "repository": "https://github.com/TakumaKira/MarkdownEditor.git",
+  "author": "Takuma Kira <takuma@kirakiraworx.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "cypress": "^11.1.0"
+  }
+}

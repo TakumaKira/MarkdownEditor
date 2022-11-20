@@ -1,5 +1,7 @@
 # Frontend Mentor - In-browser markdown editor solution
 
+[![MarkdownEditor](https://img.shields.io/endpoint?url=https://cloud.cypress.io/badge/simple/fidmw8/master&style=flat-square&logo=cypress)](https://cloud.cypress.io/projects/fidmw8/runs)
+
 This is a full-stack solution to the [In-browser markdown editor challenge on Frontend Mentor](https://www.frontendmentor.io/challenges/inbrowser-markdown-editor-r16TrrQX9). Frontend Mentor challenges help you improve your coding skills by building realistic projects.
 
 ## Table of contents
