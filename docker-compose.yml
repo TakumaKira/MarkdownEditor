@@ -2,63 +2,46 @@ version: "3.2"
 
 services:
   frontend:
-    build: ./frontend
-    environment:
-      DATABASE_HOST: db
-      MYSQL_DATABASE: markdown_editor
-      MYSQL_DATABASE_USERNAME_FOR_APP: markdown_editor_app
-      API_PORT: 3000
-      WS_PORT: 3001
-      APP_PORT: 19006
-    env_file:
-      - ./frontend/.env
+    depends_on:
+      - api
+    build:
+      context: ./frontend
+      args:
+        - API_DOMAIN=localhost
+        - API_PORT=3000
+        - WS_PORT=3001
     ports:
-      - target: 7007
-        published: 7007
-      - target: 19000
-        published: 19000
-      - target: 19002
-        published: 19002
-      - target: 19006
-        published: 19006
-    command: yarn start
+      - target: 80
+        published: 80
+
   api:
     depends_on:
-      - "db"
+      - db
     build: ./api
     environment:
+      API_PORT: 3000
+      WS_PORT: 3001
+      FRONTEND_DOMAIN: localhost
       DATABASE_HOST: db
       MYSQL_DATABASE: markdown_editor
       MYSQL_DATABASE_USERNAME_FOR_APP: markdown_editor_app
-      API_PORT: 3000
-      WS_PORT: 3001
-      APP_PORT: 19006
+    env_file:
+      - docker-compose-api-secrets.env
     ports:
       - target: 3000
         published: 3000
       - target: 3001
         published: 3001
-    command: sh -c ./docker-entrypoint.sh
+
   db:
-    image: mysql:8.0.29
+    image: mysql:8.0.31
     environment:
-      DATABASE_HOST: db
       MYSQL_DATABASE: markdown_editor
-      MYSQL_DATABASE_USERNAME_FOR_APP: markdown_editor_app
-      API_PORT: 3000
-      WS_PORT: 3001
-      APP_PORT: 19006
+      MYSQL_USER: markdown_editor_app
     env_file:
-      - ./db/.env
+      - docker-compose-db-secrets.env
     ports:
       - target: 3306
         published: 3306
     volumes:
-      - db:/var/lib/mysql
-      - ./db/init/init-container.sh:/docker-entrypoint-initdb.d/1.sh
-      - ./db/init/init-tables.sql:/docker-entrypoint-initdb.d/2.sql
-      - ./db/init/init-user-procedures.sql:/docker-entrypoint-initdb.d/3.sql
-      - ./db/init/init-document-procedures.sql:/docker-entrypoint-initdb.d/4.sql
-volumes:
-  db:
-    driver: local
+      - ./db/init-docker-container:/docker-entrypoint-initdb.d

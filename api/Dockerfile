@@ -17,7 +17,7 @@ RUN yarn install --frozen-lockfile
 COPY . .
 
 
-FROM builder AS prod
+FROM builder
 RUN yarn install --frozen-lockfile --production
 COPY . .
 CMD yarn start
