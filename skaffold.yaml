@@ -26,4 +26,4 @@ portForward:
 - resourceType: service
   resourceName: frontend
   port: 80
-  localPort: 80
+  localPort: 80 # This doesn't work for now, and being fixed(See https://stackoverflow.com/questions/68668830/how-to-forward-privileged-ports-with-skaffold)
