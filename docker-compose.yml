@@ -44,4 +44,7 @@ services:
       - target: 3306
         published: 3306
     volumes:
+      - db:/var/lib/mysql
       - ./db/init-docker-container:/docker-entrypoint-initdb.d
+volumes:
+  db:

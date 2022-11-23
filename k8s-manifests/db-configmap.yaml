@@ -1,0 +1,10 @@
+apiVersion: v1
+data:
+  MYSQL_DATABASE: markdown_editor
+  MYSQL_USER: markdown_editor_app
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: db-db-configmap
+  name: db-configmap

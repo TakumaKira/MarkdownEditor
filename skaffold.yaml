@@ -1,0 +1,29 @@
+apiVersion: skaffold/v2beta29
+kind: Config
+metadata:
+  name: markdowneditor
+build:
+  artifacts:
+    - image: api
+      context: api
+      docker:
+        dockerfile: Dockerfile
+    - image: frontend
+      context: frontend
+      docker:
+        dockerfile: Dockerfile
+        buildArgs:
+          API_DOMAIN: localhost
+          API_PORT: '3000'
+          WS_PORT: '3001'
+  tagPolicy:
+    sha256: {}
+deploy:
+  kubectl:
+    manifests:
+      - k8s-manifests/*
+portForward:
+- resourceType: service
+  resourceName: frontend
+  port: 80
+  localPort: 80
