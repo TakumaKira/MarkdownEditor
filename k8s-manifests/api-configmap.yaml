@@ -1,9 +1,9 @@
 apiVersion: v1
 data:
   API_PORT: "3000"
-  DATABASE_HOST: localhost
+  DATABASE_HOST: db
   FRONTEND_DOMAIN: localhost
-  FRONTEND_PORT: "4503"
+  FRONTEND_PORT: "4503" # Expecting Kubernetes port forwards frontend to this port
   MYSQL_DATABASE: markdown_editor
   MYSQL_USER: markdown_editor_app
   WS_PORT: "3001"
