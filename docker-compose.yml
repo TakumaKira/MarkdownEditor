@@ -24,7 +24,7 @@ services:
       FRONTEND_DOMAIN: localhost
       DATABASE_HOST: db
       MYSQL_DATABASE: markdown_editor
-      MYSQL_DATABASE_USERNAME_FOR_APP: markdown_editor_app
+      MYSQL_USER: markdown_editor_app
     env_file:
       - docker-compose-api-secrets.env
     ports:
@@ -35,9 +35,6 @@ services:
 
   db:
     image: mysql:8.0.31
-    environment:
-      MYSQL_DATABASE: markdown_editor
-      MYSQL_USER: markdown_editor_app
     env_file:
       - docker-compose-db-secrets.env
     ports:
@@ -45,6 +42,6 @@ services:
         published: 3306
     volumes:
       - db:/var/lib/mysql
-      - ./db/init-docker-container:/docker-entrypoint-initdb.d
+      - ./db/init:/docker-entrypoint-initdb.d
 volumes:
   db:

@@ -1,10 +1,11 @@
 apiVersion: v1
 data:
   API_PORT: "3000"
-  DATABASE_HOST: db
+  DATABASE_HOST: localhost
   FRONTEND_DOMAIN: localhost
+  FRONTEND_PORT: "4503"
   MYSQL_DATABASE: markdown_editor
-  MYSQL_DATABASE_USERNAME_FOR_APP: markdown_editor_app
+  MYSQL_USER: markdown_editor_app
   WS_PORT: "3001"
 kind: ConfigMap
 metadata:

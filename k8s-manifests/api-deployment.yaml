@@ -45,6 +45,11 @@ spec:
                 configMapKeyRef:
                   key: FRONTEND_DOMAIN
                   name: api-configmap
+            - name: FRONTEND_PORT
+              valueFrom:
+                configMapKeyRef:
+                  key: FRONTEND_PORT
+                  name: api-configmap
             - name: JWT_SECRET_KEY
               valueFrom:
                 secretKeyRef:
@@ -55,15 +60,15 @@ spec:
                 configMapKeyRef:
                   key: MYSQL_DATABASE
                   name: api-configmap
-            - name: MYSQL_DATABASE_PASSWORD_FOR_APP
+            - name: MYSQL_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  key: MYSQL_DATABASE_PASSWORD_FOR_APP
+                  key: MYSQL_PASSWORD
                   name: api-secret
-            - name: MYSQL_DATABASE_USERNAME_FOR_APP
+            - name: MYSQL_USER
               valueFrom:
                 configMapKeyRef:
-                  key: MYSQL_DATABASE_USERNAME_FOR_APP
+                  key: MYSQL_USER
                   name: api-configmap
             - name: SENDER_EMAIL
               valueFrom:

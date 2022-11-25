@@ -9,6 +9,7 @@ const wsPort = process.env.WS_PORT
 /** No need to validate. */
 const frontendProtocol = process.env.USE_SECURE_PROTOCOL === 'true' ? 'https' : 'http'
 const frontendDomain = process.env.FRONTEND_DOMAIN
+const frontendPort = process.env.FRONTEND_PORT
 
 // Json Web Token settings
 const jwtSecretKey = process.env.JWT_SECRET_KEY
@@ -16,8 +17,8 @@ const jwtSecretKey = process.env.JWT_SECRET_KEY
 // Database settings
 const databaseHost = process.env.DATABASE_HOST
 const mysqlDatabase = process.env.MYSQL_DATABASE
-const mysqlDatabaseUsernameForApp = process.env.MYSQL_DATABASE_USERNAME_FOR_APP
-const mysqlDatabasePasswordForApp = process.env.MYSQL_DATABASE_PASSWORD_FOR_APP
+const mysqlUser = process.env.MYSQL_USER
+const mysqlPassword = process.env.MYSQL_PASSWORD
 
 // Confirmation email settings
 /** Needed to be set to the address you own. */
@@ -80,8 +81,8 @@ if (process.env.NODE_ENV !== 'test') {
   if (
     !databaseHost
     || !mysqlDatabase
-    || !mysqlDatabaseUsernameForApp
-    || !mysqlDatabasePasswordForApp
+    || !mysqlUser
+    || !mysqlPassword
   ) {
     if (!databaseHost) {
       console.error('DATABASE_HOST is not defined.')
@@ -89,11 +90,11 @@ if (process.env.NODE_ENV !== 'test') {
     if (!mysqlDatabase) {
       console.error('MYSQL_DATABASE is not defined.')
     }
-    if (!mysqlDatabaseUsernameForApp) {
-      console.error('MYSQL_DATABASE_USERNAME_FOR_APP is not defined.')
+    if (!mysqlUser) {
+      console.error('MYSQL_USER is not defined.')
     }
-    if (!mysqlDatabasePasswordForApp) {
-      console.error('MYSQL_DATABASE_PASSWORD_FOR_APP is not defined.')
+    if (!mysqlPassword) {
+      console.error('MYSQL_PASSWORD is not defined.')
     }
 
     isMissing = true
@@ -190,6 +191,7 @@ export const API_PORT = Number(apiPort)
 export const WS_PORT = Number(wsPort)
 export const FRONTEND_PROTOCOL = frontendProtocol
 export const FRONTEND_DOMAIN = frontendDomain!
+export const FRONTEND_PORT = frontendPort
 
 // Json Web Token settings
 export const JWT_SECRET_KEY = jwtSecretKey!
@@ -197,8 +199,8 @@ export const JWT_SECRET_KEY = jwtSecretKey!
 // Database settings
 export const DATABASE_HOST = databaseHost!
 export const MYSQL_DATABASE = mysqlDatabase!
-export const MYSQL_DATABASE_USERNAME_FOR_APP = mysqlDatabaseUsernameForApp!
-export const MYSQL_DATABASE_PASSWORD_FOR_APP = mysqlDatabasePasswordForApp!
+export const MYSQL_USER = mysqlUser!
+export const MYSQL_PASSWORD = mysqlPassword!
 
 // Confirmation email settings
 export const mailServer = _mailServer!

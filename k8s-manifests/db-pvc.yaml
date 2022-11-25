@@ -3,7 +3,7 @@ kind: PersistentVolumeClaim
 metadata:
   creationTimestamp: null
   labels:
-    io.kompose.service: db-pvc
+    io.kompose.service: db
   name: db-pvc
 spec:
   accessModes:

@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   labels:
-    io.kompose.service: db-pv
+    io.kompose.service: db
   name: db-pv
 spec:
   capacity:
