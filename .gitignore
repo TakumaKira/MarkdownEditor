@@ -2,3 +2,4 @@ node_modules/
 cypress/videos
 env-memo.txt
 docker-compose-*-secrets.env
+todo.txt
