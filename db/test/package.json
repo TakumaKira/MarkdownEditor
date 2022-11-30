@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "test": "jest",
-    "migrations:test": "./migrations/migrations.sh"
+    "migrations:test": "./migrations.sh"
   },
   "main": "index.js",
   "author": "Takuma Kira",

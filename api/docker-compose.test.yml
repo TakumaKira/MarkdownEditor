@@ -4,7 +4,7 @@ services:
   db:
     image: mysql:8.0.31
     environment:
-      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_ROOT_PASSWORD: root-password
       MYSQL_PASSWORD: password
     expose:
       - 3306
