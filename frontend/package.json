@@ -6,6 +6,7 @@
     "start": "expo start",
     "storybook": "export $(cat .env | xargs) && start-storybook -p 7007 -h ${DEVELOPMENT_MACHINE_LOCAL_IP-0.0.0.0}",
     "start:storybook": "export $(cat .env | xargs) && LOAD_STORYBOOK=true expo start",
+    "web:storybook": "export $(cat .env | xargs) && LOAD_STORYBOOK=true expo start --web",
     "build-storybook": "build-storybook",
     "web": "expo start --web",
     "build:web": "expo build:web",
