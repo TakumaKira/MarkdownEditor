@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "build": "npx tsc -p tsconfig.build.json",
-    "prestart": "yarn build",
     "start": "node dist/index.js",
-    "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/index.js\"",
+    "prestart": "yarn build",
+    "build": "npx tsc -p tsconfig.build.json",
+    "dev": "npx nodemon ./src/index.ts",
     "test": "jest --watchAll --coverage",
     "test:ci": "jest --detectOpenHandles --forceExit"
   },
@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "concurrently": "^7.2.2",
+    "cross-env": "^7.0.3",
     "jest": "^29.3.1",
     "nodemon": "^2.0.19",
     "supertest": "^6.3.1",
