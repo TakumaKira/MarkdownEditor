@@ -3,3 +3,4 @@ cypress/videos
 env-memo.txt
 docker-compose-*-secrets.env
 todo.txt
+cypress/screenshots/
