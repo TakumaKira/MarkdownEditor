@@ -1,3 +1,5 @@
+-- You must sync scripts here manually with /k8s-manifests/db-init-configmap.yaml
+
 USE markdown_editor;
 
 CREATE TABLE users (
