@@ -10,7 +10,7 @@ export default {
     WS_PORT: process.env.WS_PORT !== '' ? Number(process.env.WS_PORT) : undefined,
     LOAD_STORYBOOK: process.env.LOAD_STORYBOOK === 'true',
     /** IP for Storybook development server. */
-    DEVELOPMENT_MACHINE_LOCAL_IP: process.env.DEVELOPMENT_MACHINE_LOCAL_IP || '0.0.0.0',
+    STORYBOOK_UI_HOST_IP: process.env.STORYBOOK_UI_HOST_IP || '0.0.0.0',
     breakpoints: {
       MOBILE_TABLET: 600,
       TABLET_DESKTOP: 1200,

@@ -30,13 +30,9 @@ This is a full-stack solution to the [In-browser markdown editor challenge on Fr
       - [Prepare env file storing secrets](#prepare-env-file-storing-secrets)
       - [Run everything on docker](#run-everything-on-docker)
     - [Run for development](#run-for-development)
-      - [Run database](#run-database)
-      - [Run API server](#run-api-server)
-      - [Run frontend](#run-frontend)
-        - [With Storybook and Expo dev tools](#with-storybook-and-expo-dev-tools)
-        - [With Storybook and without Expo dev tools](#with-storybook-and-without-expo-dev-tools)
-        - [Without Storybook and with Expo dev tools](#without-storybook-and-with-expo-dev-tools)
-        - [Without Storybook and Expo dev tools](#without-storybook-and-expo-dev-tools)
+      - [Run frontend standalone](#run-frontend-standalone)
+      - [Run API server standalone](#run-api-server-standalone)
+      - [Run database standalone](#run-database-standalone)
     - [Run E2E testing](#run-e2e-testing)
 
 ## Overview
@@ -62,7 +58,7 @@ Users should be able to:
 ### Links
 
 - Solution URL: [Frontend Mentor](https://www.frontendmentor.io/challenges/inbrowser-markdown-editor-r16TrrQX9/hub/inbrowser-markdown-editor-HkEJ07cE9)
-- Live Site URL: [Vercel](https://markdown-editor-git-master-takumakira.vercel.app/)
+- Live Site URL: [Vercel](https://markdown-editor-git-master-takumakira.vercel.app/) *Signup/Login feature does not work here as I don't want to provide any backend services publicly.*
 
 ## My process
 
@@ -173,108 +169,22 @@ When you finished preparing `docker-compose-api-secrets.env` and  `docker-compos
 
 If you want to make a change on this project, running every part in development setting would be fastest to make sure the change will work as a whole. Below are the commands for each part.
 
-#### Run database
+#### Run frontend standalone
 
-You can choose from running docker container from [mysql official docker image](https://hub.docker.com/_/mysql) or standalone [MySQL Community Server](https://dev.mysql.com/downloads/mysql/) inside `/db` directory,
+Please see [README for frontend](/frontend/README.md)
 
-To run it on docker,
+#### Run API server standalone
 
-``docker compose -p markdown-dev-db up``(using docker compose)
+Please see [README for api](/api/README.md).
 
-or
+#### Run database standalone
 
-``MYSQL_CONTAINER_NAME=db-dev MYSQL_ROOT_PASSWORD=root-password MYSQL_PASSWORD=password ./init-docker.sh``(without docker compose)
-
-will start a container with setting up database for this project.
-
-To use MySQL Community Server, start your mysql local server, and to set up database, run:
-
-```sh
-MYSQL_ROOT_PASSWORD=<your-mysql-local-server-root-password> MYSQL_PASSWORD=password ./init.sh
-```
-
-#### Run API server
-
-Run API server with the following command inside `/api` directory.
-*When you run this for the first time, you need to run ``yarn install`` first to install dependencies.*
-
-```sh
-API_PORT=3000 \
-WS_PORT=3001 \
-FRONTEND_DOMAIN=localhost \
-FRONTEND_PORT=19006 \
-JWT_SECRET_KEY=<secret-key-for-api-to-verify-json-web-tokens> \
-DATABASE_HOST=localhost \
-MYSQL_DATABASE=markdown_editor \
-MYSQL_USER=markdown_editor_app \
-MYSQL_PASSWORD=<password-for-app-as-a-database-user> \
-SENDER_EMAIL=<your-email-address-to-send-confirmation-emails@your-email-service-provider.com> \
-CONFIRMATION_EMAIL_SERVER_TYPE=StandardMailServer \
-STANDARD_MAIL_SERVER_HOST=<your-email-service-provider.com> \
-STANDARD_MAIL_SERVER_USER=<your-email-user-name> \
-STANDARD_MAIL_SERVER_PASS=<your-email-user-password> \
-yarn dev
-```
-
-*This command will enable hot reload, so you can try to edit anywhere in the code.*
-*Your email account information will be used to send confirmation email, that is, if you sign up new account on frontend running at `http://localhost:19006`, API server will send email to the new account email address using your email account.*
-
-#### Run frontend
-
-You have several options to run frontend as development mode. You need to move `/frontend` directory to run any of the following commands.
-*When you run this for the first time, you need to run ``yarn install`` first to install dependencies.*
-
-If you want to use [Storybook](https://storybook.js.org/), run ``yarn storybook`` first. Then Storybook UI will showup at `http://0.0.0.0:7007`. *Storybook UI won't show you any stories until you start an app.*
-
-##### With Storybook and Expo dev tools
-
-Run following command:
-
-```sh
-REACT_NATIVE_PACKAGER_HOSTNAME=<your-local-ip-address> \
-EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0 \
-API_DOMAIN=localhost \
-API_PORT=3000 \
-WS_PORT=3001 \
-yarn start:storybook
-```
-
-This will start expo dev tools at `http://<your-local-ip-address>:19002` and you can start app on iOS/Android/Web from expo dev tools UI(You need to setup and get iOS/Android simulator ready to run app on it). After starting app, storybook UI will show you stories.
-
-##### With Storybook and without Expo dev tools
-
-If you don't need to start app on iOS/Android, then expo dev tools might only be too much. If so, you can run only app on web by the following command without touching expo dev tools UI.
-
-```sh
-API_DOMAIN=localhost \
-API_PORT=3000 \
-WS_PORT=3001 \
-yarn web:storybook
-```
-
-##### Without Storybook and with Expo dev tools
-
-```sh
-REACT_NATIVE_PACKAGER_HOSTNAME=<your-local-ip-address> \
-EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0 \
-API_DOMAIN=localhost \
-API_PORT=3000 \
-WS_PORT=3001 \
-yarn start
-```
-
-##### Without Storybook and Expo dev tools
-
-```sh
-API_DOMAIN=localhost \
-API_PORT=3000 \
-WS_PORT=3001 \
-yarn web
-```
+Please see [README for db](./db/README.md).
 
 ### Run E2E testing
 
 When you get frontend/api/database ready, then you can open up E2E testing tool with Cypress by running the following command:
+*When you run this for the first time, you need to run ``yarn install`` first to install dependencies.*
 
 ```sh
 CYPRESS_BASE_URL=<frontend-url> yarn cypress:open

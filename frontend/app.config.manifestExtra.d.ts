@@ -8,7 +8,7 @@ export declare type ManifestExtra = {
   WS_PORT: number
   LOAD_STORYBOOK: boolean
   /** IP for Storybook development server. */
-  DEVELOPMENT_MACHINE_LOCAL_IP: string
+  STORYBOOK_UI_HOST_IP: string
   breakpoints: {
     MOBILE_TABLET: number
     TABLET_DESKTOP: number

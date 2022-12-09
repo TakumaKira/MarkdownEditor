@@ -5,8 +5,8 @@ services:
     image: mysql:8.0.31
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root-password
-      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD:
+      MYSQL_PASSWORD:
     ports:
       - target: 3306
         published: 3306
