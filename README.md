@@ -68,12 +68,20 @@ Users should be able to:
 - [React Native](https://reactnative.dev/) - React framework for building native mobile apps
 - [Expo](https://docs.expo.dev/) - React Native framework
 - [Storybook](https://storybook.js.org/) - For Component Driven Development and visual testing
+- [Express](https://expressjs.com/) - For building API server
 - [Jest](https://jestjs.io/) - For unit testing
+- [MySQL](https://www.mysql.com/) - For building database
+- [Cypress](https://www.cypress.io/) - For E2E testing
+- [Docker](https://www.docker.com/) - Containerized development environment
+- [Kubernetes](https://kubernetes.io/) - Manage deployment of containerized applications
+- [Skaffold](https://skaffold.dev/) - Kubernetes orchestration(only used to run entire app quickly)
+- [Google Cloud](https://cloud.google.com/) - Platform to deploy applications using Docker and Kubernetes
 
 ### What I learned
 
 - I needed to chose frameworks carefully to realize the most suitable development environment for this project.
 - Basically, I wanted to build this as web app, but also as mobile apps. So I saw Flutter, React Native and React Native using Expo. I wanted to experience React Native more for now, and whole setup things of pure React Native was not my current point. Besides, it was plus for this that there were more documents for using Storybook with Expo.
+- This is the first time for me to build and deploy a full stack application, so I needed to (re)learn a lot about backend stacks like Express/MySQL and deployment stacks like Docker/Kubernetes/Google Cloud. Obviously I still need to learn much more about these areas, but this will be a great first step for me.
 
 ### Continued development
 
@@ -82,6 +90,8 @@ Users should be able to:
 ### Useful resources
 
 - [Setting up Storybook for React Native/TypeScript](https://dev.to/risafj/setting-up-storybook-for-react-native-typescript-server-loader-ios-android-3b0i) - Setting up Storybook correctly was the most challenging part of the setup phase of this project. This explains how to see the stories with Expo project which other explanations left off(I needed to conditionally export ``StorybookUIRoot`` as App root).
+- [Courses on Code with Mosh](https://codewithmosh.com/courses) - He always shows us not "how to write working code" but "how to write clean code". As starter of building my first full stack application, courses like [The Complete Node.js Course](https://codewithmosh.com/p/the-complete-node-js-course) / [Complete SQL Mastery](https://codewithmosh.com/p/complete-sql-mastery) / [The Ultimate Docker Course](https://codewithmosh.com/p/the-ultimate-docker-course) helped me to get a right sense of new tools.
+- [A Better Approach to Google Cloud Continuous Deployment](https://www.toptal.com/devops/better-google-cloud-continuous-deployment) - This showed me a beautiful way to setup CI/CD environment on Google Cloud.
 
 ## Author
 
@@ -123,8 +133,6 @@ And below is for api:
 kubectl create secret generic api-secret \
   --from-literal=JWT_SECRET_KEY=<secret-key-for-api-to-verify-json-web-tokens> \
   --from-literal=MYSQL_PASSWORD=<password-for-app-as-a-database-user> \
-  --from-literal=SENDER_EMAIL=<your-email-address-to-send-confirmation-emails@your-email-service-provider.com> \
-  --from-literal=CONFIRMATION_EMAIL_SERVER_TYPE=StandardMailServer \
   --from-literal=STANDARD_MAIL_SERVER_HOST=<your-email-service-provider.com> \
   --from-literal=STANDARD_MAIL_SERVER_USER=<your-email-user-name> \
   --from-literal=STANDARD_MAIL_SERVER_PASS=<your-email-user-password>

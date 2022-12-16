@@ -32,9 +32,9 @@ spec:
                   name: api-configmap
             - name: CONFIRMATION_EMAIL_SERVER_TYPE
               valueFrom:
-                secretKeyRef:
+                configMapKeyRef:
                   key: CONFIRMATION_EMAIL_SERVER_TYPE
-                  name: api-secret
+                  name: api-configmap
             - name: DATABASE_HOST
               valueFrom:
                 configMapKeyRef:
@@ -72,9 +72,9 @@ spec:
                   name: api-configmap
             - name: SENDER_EMAIL
               valueFrom:
-                secretKeyRef:
+                configMapKeyRef:
                   key: SENDER_EMAIL
-                  name: api-secret
+                  name: api-configmap
             - name: STANDARD_MAIL_SERVER_HOST
               valueFrom:
                 secretKeyRef:
