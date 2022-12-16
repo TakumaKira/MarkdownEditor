@@ -1,0 +1,6 @@
+steps:
+- name: gcr.io/cloud-builders/docker
+  args: ['build', '--build-arg', 'USE_SECURE_PROTOCOL=true', '--build-arg', 'API_DOMAIN=${_API_DOMAIN}', '--build-arg', 'API_PORT=443', '--build-arg', 'WS_PORT=443', '--build-arg', 'WEB_VERSION_URL=${_WEB_VERSION_URL}', '-t', 'gcr.io/$PROJECT_ID/${_REPOSITORY_PATH}/frontend:$COMMIT_SHA', '.']
+  dir: frontend
+images:
+- gcr.io/$PROJECT_ID/${_REPOSITORY_PATH}/frontend:$COMMIT_SHA

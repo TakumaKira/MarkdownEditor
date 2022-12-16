@@ -1,0 +1,11 @@
+steps:
+# Test including integration test with database container
+- name: gcr.io/cloud-builders/docker
+  args: ['compose', '-f', 'docker-compose.test.yml', 'up', '--abort-on-container-exit']
+  dir: api
+# Build image
+- name: gcr.io/cloud-builders/docker
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/${_REPOSITORY_PATH}/api:$COMMIT_SHA', '.']
+  dir: api
+images:
+- gcr.io/$PROJECT_ID/${_REPOSITORY_PATH}/api:$COMMIT_SHA

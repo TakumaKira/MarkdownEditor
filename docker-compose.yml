@@ -1,0 +1,47 @@
+version: "3.2"
+
+services:
+  frontend:
+    depends_on:
+      - api
+    build:
+      context: ./frontend
+      args:
+        - API_DOMAIN=localhost
+        - API_PORT=3000
+        - WS_PORT=3001
+    ports:
+      - target: 80
+        published: 80
+
+  api:
+    depends_on:
+      - db
+    build: ./api
+    environment:
+      API_PORT: 3000
+      WS_PORT: 3001
+      FRONTEND_DOMAIN: localhost
+      DATABASE_HOST: db
+      MYSQL_DATABASE: markdown_editor
+      MYSQL_USER: markdown_editor_app
+    env_file:
+      - docker-compose-api-secrets.env
+    ports:
+      - target: 3000
+        published: 3000
+      - target: 3001
+        published: 3001
+
+  db:
+    image: mysql:8.0.31
+    env_file:
+      - docker-compose-db-secrets.env
+    ports:
+      - target: 3306
+        published: 3306
+    volumes:
+      - db:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d
+volumes:
+  db:

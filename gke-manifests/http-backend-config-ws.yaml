@@ -1,0 +1,11 @@
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: http-backend-config-websocket
+spec:
+  securityPolicy:
+    name: ip-access-policy-backend
+  healthCheck:
+    port: 3001
+    type: HTTP
+    requestPath: /socket.io/?EIO=4&transport=polling&t=OGkXEGA&b64=1

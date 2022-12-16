@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.1 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: api
+  name: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: api
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.1 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: api
+    spec:
+      containers:
+        - env:
+            - name: API_PORT
+              valueFrom:
+                configMapKeyRef:
+                  key: API_PORT
+                  name: api-configmap
+            - name: CONFIRMATION_EMAIL_SERVER_TYPE
+              valueFrom:
+                configMapKeyRef:
+                  key: CONFIRMATION_EMAIL_SERVER_TYPE
+                  name: api-configmap
+            - name: DATABASE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  key: DATABASE_HOST
+                  name: api-configmap
+            - name: FRONTEND_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  key: FRONTEND_DOMAIN
+                  name: api-configmap
+            - name: FRONTEND_PORT
+              valueFrom:
+                configMapKeyRef:
+                  key: FRONTEND_PORT
+                  name: api-configmap
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: JWT_SECRET_KEY
+                  name: api-secret
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  key: MYSQL_DATABASE
+                  name: api-configmap
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: MYSQL_PASSWORD
+                  name: api-secret
+            - name: MYSQL_USER
+              valueFrom:
+                configMapKeyRef:
+                  key: MYSQL_USER
+                  name: api-configmap
+            - name: SENDER_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  key: SENDER_EMAIL
+                  name: api-configmap
+            - name: STANDARD_MAIL_SERVER_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: STANDARD_MAIL_SERVER_HOST
+                  name: api-secret
+            - name: STANDARD_MAIL_SERVER_PASS
+              valueFrom:
+                secretKeyRef:
+                  key: STANDARD_MAIL_SERVER_PASS
+                  name: api-secret
+            - name: STANDARD_MAIL_SERVER_USER
+              valueFrom:
+                secretKeyRef:
+                  key: STANDARD_MAIL_SERVER_USER
+                  name: api-secret
+            - name: WS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  key: WS_PORT
+                  name: api-configmap
+          image: api
+          name: api
+          ports:
+            - containerPort: 3000
+            - containerPort: 3001
+          resources: {}
+      restartPolicy: Always
+status: {}
