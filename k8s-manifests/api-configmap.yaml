@@ -1,0 +1,17 @@
+apiVersion: v1
+data:
+  API_PORT: "3000"
+  WS_PORT: "3001"
+  FRONTEND_DOMAIN: localhost
+  FRONTEND_PORT: "4503" # Expecting Kubernetes port forwards frontend to this port
+  DATABASE_HOST: db
+  MYSQL_DATABASE: markdown_editor
+  MYSQL_USER: markdown_editor_app
+  SENDER_EMAIL: confirmation@markdown.com
+  CONFIRMATION_EMAIL_SERVER_TYPE: StandardMailServer # Other options: SendGrid | Gmail
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: api-api-configmap
+  name: api-configmap

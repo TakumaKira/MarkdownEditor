@@ -1,0 +1,234 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-init-config
+data:
+  1-init-database.sql: |
+    CREATE DATABASE markdown_editor;
+
+  2-init-user.sh: |
+    #!/bin/bash
+
+    mysql -u root -p$MYSQL_ROOT_PASSWORD << EOF
+    DROP USER IF EXISTS markdown_editor_app;
+    CREATE USER markdown_editor_app IDENTIFIED BY '$MYSQL_PASSWORD';
+    GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE
+      ON markdown_editor.*
+      TO markdown_editor_app;
+    EOF
+
+  3-init-tables.sql: |
+    USE markdown_editor;
+
+    CREATE TABLE users (
+      id INT NOT NULL auto_increment PRIMARY KEY,
+      email VARCHAR(50) NOT NULL unique,
+      password CHAR(60) BINARY NOT NULL,
+        is_activated BOOL NOT NULL DEFAULT FALSE
+    );
+
+    CREATE TABLE documents (
+      id CHAR(36) CHARACTER SET ascii NOT NULL PRIMARY KEY,
+      user_id INT NOT NULL,
+      name VARCHAR(50),
+      content VARCHAR(20000) CHARACTER SET UTF8MB3,
+      created_at DATETIME,
+      updated_at DATETIME NOT NULL,
+      is_deleted BOOL NOT NULL DEFAULT FALSE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
+    );
+
+  4-init-user-procedures.sql: |
+    USE markdown_editor;
+
+    DROP PROCEDURE IF EXISTS create_user;
+    DELIMITER $$
+    CREATE PROCEDURE create_user (
+      p_email VARCHAR(50),
+      p_password CHAR(60)
+    )
+    BEGIN
+      INSERT INTO users (
+        email,
+        password
+      )
+      VALUES (
+        p_email,
+        p_password
+      )
+        ON DUPLICATE KEY UPDATE password = p_password;
+    END $$
+    DELIMITER ;
+
+    DROP PROCEDURE IF EXISTS activate_user;
+    DELIMITER $$
+    CREATE PROCEDURE activate_user (
+      p_email VARCHAR(50)
+    )
+    BEGIN
+      IF (
+        SELECT id
+            FROM users
+            WHERE email = p_email
+        ) IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User does not exist.";
+      ELSEIF (
+        SELECT is_activated
+            FROM users
+            WHERE email = p_email
+        ) IS TRUE THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User already activated.";
+      ELSE
+        UPDATE users
+        SET is_activated = TRUE
+        WHERE email = p_email;
+        SELECT id, is_activated
+        FROM users
+        WHERE email = p_email;
+      END IF;
+    END $$
+    DELIMITER ;
+
+    DROP PROCEDURE IF EXISTS get_user;
+    DELIMITER $$
+    CREATE PROCEDURE get_user (
+      p_email VARCHAR(50)
+    )
+    BEGIN
+      SELECT *
+      FROM users
+      WHERE email = p_email;
+    END $$
+    DELIMITER ;
+
+    DROP PROCEDURE IF EXISTS update_user;
+    DELIMITER $$
+    CREATE PROCEDURE update_user (
+      p_id INT,
+      p_email VARCHAR(50),
+        p_password CHAR(60)
+    )
+    BEGIN
+      IF p_email IS NOT NULL THEN
+        UPDATE users
+        SET email = p_email
+        WHERE id = p_id;
+      END IF;
+        IF p_password IS NOT NULL THEN
+        UPDATE users
+            SET password = p_password
+            WHERE id = p_id;
+      END IF;
+    END $$
+    DELIMITER ;
+
+    DROP PROCEDURE IF EXISTS delete_user;
+    DELIMITER $$
+    CREATE PROCEDURE delete_user (
+      p_id INT
+    )
+    BEGIN
+      IF (
+        SELECT id
+            FROM users
+            WHERE id = p_id
+        ) IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User does not exist.";
+      ELSE
+        DELETE FROM users
+        WHERE id = p_id;
+      END IF;
+    END $$
+    DELIMITER ;
+
+  5-init-document-procedures.sql: |
+    USE markdown_editor;
+
+    DROP PROCEDURE IF EXISTS get_documents;
+    DELIMITER $$
+    CREATE PROCEDURE get_documents (
+      p_user_id INT,
+      p_after DATETIME
+    )
+    BEGIN
+      IF p_after IS NULL THEN
+        SELECT *
+        FROM documents
+        WHERE user_id = p_user_id;
+      ELSE
+        SELECT *
+        FROM documents
+        WHERE user_id = p_user_id AND updated_at > p_after;
+      END IF;
+    END $$
+    DELIMITER ;
+
+    DROP PROCEDURE IF EXISTS update_document;
+    DELIMITER $$
+    CREATE PROCEDURE update_document (
+      p_id CHAR(36) CHARACTER SET ascii,
+      p_user_id INT,
+      p_name VARCHAR(50),
+      p_content VARCHAR(20000) CHARACTER SET UTF8MB3,
+      p_created_at TIMESTAMP,
+      p_updated_at TIMESTAMP,
+      p_is_deleted BOOL
+    )
+    BEGIN
+      IF (
+        NOT EXISTS (
+          SELECT TRUE
+                FROM users
+                WHERE id = p_user_id
+            )
+        ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User does not exist.";
+      ELSEIF (
+        SELECT user_id
+        FROM documents
+        WHERE id = p_id
+      ) != p_user_id THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "Another user's document is using the same id.";
+          -- TODO: What if this happens?
+      ELSE
+        INSERT INTO documents (
+          id,
+          user_id,
+          name,
+          content,
+          created_at,
+          updated_at,
+          is_deleted
+        )
+        VALUES (
+          p_id,
+          p_user_id,
+          p_name,
+          p_content,
+          p_created_at,
+          p_updated_at,
+          p_is_deleted
+        ) AS new_document
+        ON DUPLICATE KEY UPDATE
+        name = IF(new_document.is_deleted = FALSE, new_document.name, NULL),
+        content = IF(new_document.is_deleted = FALSE, new_document.content, NULL),
+        created_at = IF(new_document.is_deleted = FALSE, new_document.created_at, NULL),
+        updated_at = new_document.updated_at,
+        is_deleted = new_document.is_deleted;
+      END IF;
+    END $$
+    DELIMITER ;
+
+    DROP PROCEDURE IF EXISTS get_latest_update_time;
+    DELIMITER $$
+    CREATE PROCEDURE get_latest_update_time (
+      p_user_id INT
+    )
+    BEGIN
+      SELECT updated_at
+      FROM documents
+      WHERE user_id = p_user_id
+      ORDER BY updated_at DESC
+      LIMIT 1;
+    END $$
+    DELIMITER ;

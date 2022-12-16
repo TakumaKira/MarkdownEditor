@@ -1,0 +1,29 @@
+version: "3.1"
+
+services:
+  db:
+    image: mysql:8.0.31
+    environment:
+      MYSQL_ROOT_PASSWORD: root-password
+      MYSQL_PASSWORD: password
+    expose:
+      - 3306
+    volumes:
+      - ../db/init:/docker-entrypoint-initdb.d
+
+  api-test:
+    build:
+      context: .
+      target: test
+    image: api-test
+    environment:
+      WS_PORT: 3001
+      DATABASE_HOST: db
+      MYSQL_DATABASE: markdown_editor
+      MYSQL_USER: markdown_editor_app
+      MYSQL_PASSWORD: password
+    command: dockerize
+      -wait tcp://db:3306 -timeout 60s
+      sh -c "yarn test:ci"
+    depends_on:
+      - db
