@@ -3,7 +3,6 @@ import { CurriedGetDefaultMiddleware } from '@reduxjs/toolkit/dist/getDefaultMid
 import { apiMiddleware } from './middlewares/api'
 import { asyncStorageMiddleware } from './middlewares/asyncStorage'
 import { authMiddleware } from './middlewares/auth'
-import { prepareDefaultDocumentsMiddleware } from './middlewares/prepareDefaultDocuments'
 import { storeInitializationDoneMiddleware } from './middlewares/storeInitializationDone'
 import { DocumentState, DocumentStateRestore } from './models/document'
 import { ThemeState, ThemeStateRestore } from './models/theme'
@@ -33,7 +32,6 @@ export const reducer = {
 export const middleware = (gDM: CurriedGetDefaultMiddleware<RootState>) =>
   gDM()
     .concat(storeInitializationDoneMiddleware)
-    .concat(prepareDefaultDocumentsMiddleware)
     .concat(asyncStorageMiddleware)
     .concat(authMiddleware)
     .concat(apiMiddleware)

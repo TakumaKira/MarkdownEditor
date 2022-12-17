@@ -6,7 +6,7 @@ import { ConfirmationStateTypes } from '../../constants/confirmationMessages'
 import { sortDocumentsFromNewest } from '../../helpers/sortDocuments'
 import { upload } from '../../services/api'
 import { getData } from '../../services/asyncStorage'
-import { ConfirmationState, ConfirmationStateWithNextId, DocumentOnDevice, DocumentOnEdit, DocumentState } from '../models/document'
+import { DocumentOnDevice, DocumentOnEdit, DocumentState } from '../models/document'
 
 const generateNewDocument = (): DocumentOnDevice => ({
   id: uuidv4(),
@@ -54,12 +54,12 @@ const documentSlice = createSlice({
       state.documentOnEdit.mainInput = action.payload
     },
     addDocuments: (state, action: PayloadAction<{name: string, content: string}[]>) => {
-      action.payload.forEach(({name, content}) => {
+      state.documentList.push(...action.payload.map(({name, content}) => {
         const newDocument = generateNewDocument()
         newDocument.name = name
         newDocument.content = content
-        state.documentList.push(newDocument)
-      })
+        return newDocument
+      }))
     },
     newDocument: state => {
       const newDocument = generateNewDocument()
@@ -183,9 +183,28 @@ const documentSlice = createSlice({
           // TODO: Test automatically check to not miss restoring any property.
           state.documentList = restored.documentList
           state.documentOnEdit.id = restored.documentOnEdit.id
+          const selectedDocumentOnList = selectSelectedDocumentOnList({document: state})
+          if (selectedDocumentOnList) {
+            state.documentOnEdit.titleInput = selectedDocumentOnList.name ?? ''
+            state.documentOnEdit.mainInput = selectedDocumentOnList.content ?? ''
+          }
           state.latestUpdatedDocumentFromDBAt = restored.latestUpdatedDocumentFromDBAt
         } catch (err) {
           console.error(err)
+        }
+      } else {
+        const initialDocuments: {name: string, content: string}[] = env.INITIAL_DOCUMENTS
+        state.documentList.push(...initialDocuments.map(({name, content}) => {
+          const newDocument = generateNewDocument()
+          newDocument.name = name
+          newDocument.content = content
+          return newDocument
+        }))
+        const {id, name, content} = state.documentList[0]
+        state.documentOnEdit = {
+          id,
+          titleInput: name ?? '',
+          mainInput: content ?? '',
         }
       }
       state.restoreIsDone = true
