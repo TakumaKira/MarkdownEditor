@@ -1,6 +1,6 @@
-import createConnectionPool, {sql} from '@databases/mysql';
+import createConnectionPool, {sql, ConnectionPool} from '@databases/mysql';
 
-export {sql};
+export {sql, ConnectionPool};
 
-const db = createConnectionPool('mysql://markdown_editor_app:password@localhost:3306/markdown_editor');
-export default db;
+const getConnectionPool = () => createConnectionPool('mysql://markdown_editor_app:password@localhost:3306/markdown_editor');
+export default getConnectionPool;

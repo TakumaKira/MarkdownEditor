@@ -9,15 +9,23 @@ CREATE PROCEDURE create_user (
 	p_password CHAR(60)
 )
 BEGIN
-	INSERT INTO users (
-		email,
-		password
-	)
-	VALUES (
-		p_email,
-		p_password
-	)
+	IF (
+		SELECT is_activated
+			FROM users
+			WHERE email = p_email
+	) IS TRUE THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "Activated user already exists.";
+	ELSE
+		INSERT INTO users (
+			email,
+			password
+		)
+		VALUES (
+			p_email,
+			p_password
+		)
     ON DUPLICATE KEY UPDATE password = p_password;
+	END IF;
 END $$
 DELIMITER ;
 
@@ -29,23 +37,23 @@ CREATE PROCEDURE activate_user (
 BEGIN
 	IF (
 		SELECT id
-        FROM users
-        WHERE email = p_email
-    ) IS NULL THEN
+			FROM users
+			WHERE email = p_email
+	) IS NULL THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User does not exist.";
 	ELSEIF (
 		SELECT is_activated
-        FROM users
-        WHERE email = p_email
-    ) IS TRUE THEN
+			FROM users
+			WHERE email = p_email
+	) IS TRUE THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User already activated.";
 	ELSE
 		UPDATE users
-		SET is_activated = TRUE
-		WHERE email = p_email;
+			SET is_activated = TRUE
+			WHERE email = p_email;
 		SELECT id, is_activated
-		FROM users
-		WHERE email = p_email;
+			FROM users
+			WHERE email = p_email;
 	END IF;
 END $$
 DELIMITER ;
@@ -57,8 +65,8 @@ CREATE PROCEDURE get_user (
 )
 BEGIN
 	SELECT *
-	FROM users
-	WHERE email = p_email;
+		FROM users
+		WHERE email = p_email;
 END $$
 DELIMITER ;
 
@@ -67,18 +75,18 @@ DELIMITER $$
 CREATE PROCEDURE update_user (
 	p_id INT,
 	p_email VARCHAR(50),
-    p_password CHAR(60)
+	p_password CHAR(60)
 )
 BEGIN
 	IF p_email IS NOT NULL THEN
 		UPDATE users
-		SET email = p_email
-		WHERE id = p_id;
+			SET email = p_email
+			WHERE id = p_id;
 	END IF;
-    IF p_password IS NOT NULL THEN
+	IF p_password IS NOT NULL THEN
 		UPDATE users
-        SET password = p_password
-        WHERE id = p_id;
+			SET password = p_password
+			WHERE id = p_id;
 	END IF;
 END $$
 DELIMITER ;
@@ -91,13 +99,14 @@ CREATE PROCEDURE delete_user (
 BEGIN
 	IF (
 		SELECT id
-        FROM users
-        WHERE id = p_id
-    ) IS NULL THEN
+			FROM users
+			WHERE id = p_id
+	) IS NULL THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User does not exist.";
 	ELSE
-		DELETE FROM users
-		WHERE id = p_id;
+		DELETE
+			FROM users
+			WHERE id = p_id;
 	END IF;
 END $$
 DELIMITER ;
