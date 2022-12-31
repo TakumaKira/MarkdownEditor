@@ -1,5 +1,12 @@
 -- You must sync scripts here manually with /k8s-manifests/db-init-configmap.yaml
 
+-- User errors
+-- SIGNAL SQLSTATE '45011' SET MESSAGE_TEXT = "User does not exist.";
+-- SIGNAL SQLSTATE '45012' SET MESSAGE_TEXT = "Activated user with given email already exists.";
+-- SIGNAL SQLSTATE '45013' SET MESSAGE_TEXT = "User already activated.";
+-- Document errors
+-- SIGNAL SQLSTATE '45021' SET MESSAGE_TEXT = "Another user's document is using the same id.";
+
 USE markdown_editor;
 
 DROP PROCEDURE IF EXISTS get_documents;
@@ -42,13 +49,13 @@ BEGIN
 				WHERE id = p_user_id
 		)
 	) THEN
-		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User does not exist.";
+		SIGNAL SQLSTATE '45011' SET MESSAGE_TEXT = "User does not exist.";
 	ELSEIF (
 		SELECT user_id
 			FROM documents
 			WHERE id = p_id
 	) != p_user_id THEN
-		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "Another user's document is using the same id.";
+		SIGNAL SQLSTATE '45021' SET MESSAGE_TEXT = "Another user's document is using the same id.";
 			-- TODO: What if this happens?
 	ELSE
 		INSERT INTO documents (
@@ -92,7 +99,7 @@ BEGIN
 				WHERE id = p_user_id
 		)
 	) THEN
-		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User does not exist.";
+		SIGNAL SQLSTATE '45011' SET MESSAGE_TEXT = "User does not exist.";
 	ELSE
 		SELECT updated_at
 			FROM documents

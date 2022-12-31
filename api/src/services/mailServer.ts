@@ -28,7 +28,6 @@ export class MailServerSendGrid extends MailServer<AuthSettingSendGrid> {
     const mail = {
       to, from: this.senderEmail, subject, text, html
     }
-    console.log(mail)
     const result = await this.sgMail.send(mail)
     console.log(result)
   }

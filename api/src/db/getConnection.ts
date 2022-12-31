@@ -1,3 +1,5 @@
+// TODO: Delete this after removing reference to this file.
+
 import mysql from 'mysql2/promise'
 import { DATABASE_HOST, MYSQL_DATABASE, MYSQL_PASSWORD, MYSQL_USER } from '../getEnvs'
 

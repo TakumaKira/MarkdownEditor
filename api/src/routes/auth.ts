@@ -29,9 +29,8 @@ authApiRouter.post(API_PATHS.AUTH.SIGNUP.dir, async (req, res, next) => {
       CALL create_user('${email}', '${hashedPassword}')
     `)
   } catch (error: any) {
-    // TODO: What should happen if passed token activated already?
-    if (error?.code === 'ER_DUP_ENTRY') {
-      return res.status(409).send({message: 'Email is already registered.'})
+    if (error?.sqlState === '45012') {
+      return res.status(409).send({message: 'Email is already registered and activated.'})
     }
     console.error(error)
     return res.status(500).send({message: 'Something went wrong.'})

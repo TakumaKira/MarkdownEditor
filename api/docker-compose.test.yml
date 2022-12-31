@@ -9,6 +9,7 @@ services:
     expose:
       - 3306
     volumes:
+      - db:/var/lib/mysql
       - ../db/init:/docker-entrypoint-initdb.d
 
   api-test:
@@ -18,6 +19,7 @@ services:
     image: api-test
     environment:
       WS_PORT: 3001
+      JWT_SECRET_KEY: c93d6f76880039e6fc3c5d973341ace663b53130f3a9068cc313893a002466b25e2d4eed5f9615a0f0ed139e33d4612e95c60dff1e45454c1ad04616976a0081
       DATABASE_HOST: db
       MYSQL_DATABASE: markdown_editor
       MYSQL_USER: markdown_editor_app
@@ -27,3 +29,6 @@ services:
       sh -c "yarn test:ci"
     depends_on:
       - db
+
+volumes:
+  db:

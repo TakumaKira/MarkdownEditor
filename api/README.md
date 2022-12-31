@@ -103,5 +103,7 @@ Some tests use testing database, so running ``yarn test`` will **not** pass.
 To run tests including integration tests with testing database container, run:
 
 ```sh
+docker container prune -f && \
+docker volume prune -f && \
 docker compose -f docker-compose.test.yml -p api-test up --abort-on-container-exit --build
 ```

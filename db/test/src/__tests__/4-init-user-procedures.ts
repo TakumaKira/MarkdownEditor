@@ -8,8 +8,8 @@ afterAll(() => {
   return db.dispose()
 })
 
-beforeEach(async () => {
-  return await db.query(sql`
+beforeEach(() => {
+  return db.query(sql`
     DELETE FROM users;
   `)
 })
@@ -23,20 +23,20 @@ describe('create_user', () => {
       CALL create_user(${email}, ${password});
     `)
     // EXPECTED RESULT
-    const created = await db.query(sql`
+    const result = (await db.query(sql`
       SELECT *
         FROM users
         WHERE email = ${email};
-    `)
-    expect(created).toEqual([{
+    `))[0]
+    expect(result).toEqual({
       "id": expect.any(Number),
       "email": email,
       "is_activated": 0,
       "password": password,
-    }])
+    })
   })
 
-  test('creates overwrites the password if given email of un-activated user', async () => {
+  test('overwrites the password if given email of un-activated user', async () => {
     const email = 'test@email.com'
     const password1 = 'password1'
     const password2 = 'password2'
@@ -49,17 +49,17 @@ describe('create_user', () => {
       CALL create_user(${email}, ${password2});
     `)
     // EXPECTED RESULT
-    const created = await db.query(sql`
+    const result = (await db.query(sql`
       SELECT *
         FROM users
         WHERE email = ${email};
-    `)
-    expect(created).toEqual([{
+    `))[0]
+    expect(result).toEqual({
       "id": expect.any(Number),
       "email": email,
       "is_activated": 0,
       "password": password2,
-    }])
+    })
   })
 
   test('returns error if given email of activated user', async () => {
@@ -93,17 +93,17 @@ describe('activate_user', () => {
       CALL activate_user(${email});
     `)
     // EXPECTED RESULT
-    const created = await db.query(sql`
+    const result = (await db.query(sql`
       SELECT *
         FROM users
         WHERE email = ${email};
-    `)
-    expect(created).toEqual([{
+    `))[0]
+    expect(result).toEqual({
       "id": expect.any(Number),
       "email": email,
       "is_activated": 1, // This is what we expect.
       "password": password,
-    }])
+    })
   })
 
   test('returns error if any user with given email does not exist', async () => {
@@ -141,11 +141,11 @@ describe('get_user', () => {
       CALL create_user(${email}, ${password});
     `)
     // TESTED PROCEDURE
-    const created = (await db.query(sql`
+    const result = (await db.query(sql`
       CALL get_user(${email});
     `))[0]
     // EXPECTED RESULT
-    expect(created).toEqual([{
+    expect(result).toEqual([{
       "id": expect.any(Number),
       "email": email,
       "is_activated": 0,
@@ -156,11 +156,11 @@ describe('get_user', () => {
   test('returns empty array if the user with the given email not exists', async () => {
     const email = 'test@email.com'
     // TESTED PROCEDURE
-    const created = (await db.query(sql`
+    const result = (await db.query(sql`
       CALL get_user(${email});
     `))[0]
     // EXPECTED RESULT
-    expect(created).toEqual([])
+    expect(result).toEqual([])
   })
 })
 

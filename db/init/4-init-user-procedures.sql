@@ -1,5 +1,12 @@
 -- You must sync scripts here manually with /k8s-manifests/db-init-configmap.yaml
 
+-- User errors
+-- SIGNAL SQLSTATE '45011' SET MESSAGE_TEXT = "User does not exist.";
+-- SIGNAL SQLSTATE '45012' SET MESSAGE_TEXT = "Activated user with given email already exists.";
+-- SIGNAL SQLSTATE '45013' SET MESSAGE_TEXT = "User already activated.";
+-- Document errors
+-- SIGNAL SQLSTATE '45021' SET MESSAGE_TEXT = "Another user's document is using the same id.";
+
 USE markdown_editor;
 
 DROP PROCEDURE IF EXISTS create_user;
@@ -14,7 +21,7 @@ BEGIN
 			FROM users
 			WHERE email = p_email
 	) IS TRUE THEN
-		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "Activated user already exists.";
+		SIGNAL SQLSTATE '45012' SET MESSAGE_TEXT = "Activated user with given email already exists.";
 	ELSE
 		INSERT INTO users (
 			email,
@@ -40,13 +47,13 @@ BEGIN
 			FROM users
 			WHERE email = p_email
 	) IS NULL THEN
-		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User does not exist.";
+		SIGNAL SQLSTATE '45011' SET MESSAGE_TEXT = "User does not exist.";
 	ELSEIF (
 		SELECT is_activated
 			FROM users
 			WHERE email = p_email
 	) IS TRUE THEN
-		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User already activated.";
+		SIGNAL SQLSTATE '45013' SET MESSAGE_TEXT = "User already activated.";
 	ELSE
 		UPDATE users
 			SET is_activated = TRUE
@@ -102,7 +109,7 @@ BEGIN
 			FROM users
 			WHERE id = p_id
 	) IS NULL THEN
-		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User does not exist.";
+		SIGNAL SQLSTATE '45011' SET MESSAGE_TEXT = "User does not exist.";
 	ELSE
 		DELETE
 			FROM users
