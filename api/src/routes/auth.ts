@@ -50,7 +50,7 @@ authApiRouter.post(API_PATHS.AUTH.SIGNUP.dir, async (req, res, next) => {
 })
 
 authApiRouter.post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir, async (req, res, next) => {
-  const {token} = req.body as {token?: string}
+  const token = (req.body as {token?: string} | undefined)?.token
   if (!token) {
     return res.status(400).send({message: 'Missing token.'})
   }
@@ -60,8 +60,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir, async (req, res, nex
     if (!email) {
       throw new Error('email is not defined in the token.')
     }
-  } catch (e) {
-    console.error(e)
+  } catch {
     return res.status(400).send({message: 'Invalid token.'})
   }
 
@@ -71,14 +70,19 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir, async (req, res, nex
       CALL activate_user('${email}');
     `)
     const {id, is_activated} = rows[0][0] as unknown as {id: number, is_activated: boolean}
-    const token = generateAuthToken(id, email, is_activated)
-    return res.send({message: 'Confirmation successful.', token})
-  } catch (e: any) {
-    if (e.sqlMessage === 'User already activated.') {
-      return res.status(500).send({message: e.sqlMessage})
+    if (!is_activated) {
+      throw new Error(`User with email ${email} is not activated successfully. Please try again.`)
     }
-    console.error(e)
-    // TODO: Return appropriate error message for its reasons like already-activated/id-not-exists.
+    const token = generateAuthToken(id, email)
+    return res.send({message: 'Confirmation successful.', token})
+  } catch (error: any) {
+    if (error?.sqlState === '45011') {
+      return res.status(409).send({message: 'The email you are trying to confirm does not exist on database.'})
+    }
+    if (error?.sqlState === '45013') {
+      return res.status(409).send({message: 'User already activated.'})
+    }
+    console.error(error)
     return res.status(500).send({message: 'Something went wrong.'})
   }
 })
@@ -104,7 +108,7 @@ authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
     // TODO: Test incorrect password.
     if (!isValidPassword) return res.status(400).send({message: 'Email/Password is incorrect.'})
 
-    const token = generateAuthToken(user.id, user.email, user.is_activated)
+    const token = generateAuthToken(user.id, user.email)
     res.send({message: 'Login successful.', token})
   } catch (error) {
     console.error(error)
@@ -176,6 +180,9 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
 
     var user = rows[0][0] as unknown as UserInfoOnDB
     if (!user) return res.status(400).send({message: `User with email: ${oldEmail} does not exist.`})
+    if (!user.is_activated) {
+      return res.status(400).send({message: `User with email ${oldEmail} is not activated yet. Please activate then retry.`})
+    }
 
     const isValidPassword = await bcrypt.compare(password, user.password)
     // TODO: Test incorrect password.
@@ -194,7 +201,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
         NULL
       );
     `)
-    const token = generateAuthToken(user.id, newEmail, user.is_activated)
+    const token = generateAuthToken(user.id, newEmail)
     return res.send({message: 'Email change successful.', token})
   } catch (e) {
     console.error(e)
@@ -255,6 +262,9 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, n
 
     var user = rows[0][0] as unknown as UserInfoOnDB
     if (!user) return res.status(400).send({message: `User with email: ${email} does not exist.`})
+    if (!user.is_activated) {
+      return res.status(400).send({message: `User with email ${email} is not activated yet. Please activate then retry.`})
+    }
   } catch (error) {
     console.error(error)
     return res.status(500).send({message: 'Something went wrong.'})
@@ -272,7 +282,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, n
         '${hashedPassword}'
       );
     `)
-    const token = generateAuthToken(user.id, email, user.is_activated)
+    const token = generateAuthToken(user.id, email)
     return res.send({message: 'Password reset successful.', token})
   } catch (e) {
     console.error(e)
@@ -312,22 +322,22 @@ export default authApiRouter
 function generateEmailConfirmationToken(email: string, options?: jwt.SignOptions): string {
   return jwt.sign(
     {email},
-    JWT_SECRET_KEY!,
+    JWT_SECRET_KEY,
     options
   )
 }
 
-function generateAuthToken(id: number, email: string, isActivated: boolean): string {
+function generateAuthToken(id: number, email: string): string {
   return jwt.sign(
-    {id, email, isValidAuthToken: isActivated},
-    JWT_SECRET_KEY!
+    {id, email, isValidAuthToken: true},
+    JWT_SECRET_KEY
   )
 }
 
 function generateEmailChangeToken(oldEmail: string, newEmail: string, options?: jwt.SignOptions): string {
   return jwt.sign(
     {oldEmail, newEmail},
-    JWT_SECRET_KEY!,
+    JWT_SECRET_KEY,
     options
   )
 }

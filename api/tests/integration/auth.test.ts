@@ -2,8 +2,11 @@ import request from 'supertest'
 import { API_PATHS } from '../../src/constants'
 import getConnectionPool, { ConnectionPool, sql } from '../../src/db/database'
 import apiApp, { wsServer } from '../../src/servers/api'
-import { mailServer } from '../../src/getEnvs'
+import { JWT_SECRET_KEY, mailServer } from '../../src/getEnvs'
 import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
+import decode from '../../src/helper/decode'
+import { UserInfoOnToken } from '../../src/models/user'
 
 jest.mock('../../src/getEnvs', () => ({
   ...jest.requireActual('../../src/getEnvs'),
@@ -39,6 +42,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({})
     expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Missing email or password.')
   })
 
   test('should return 400 if email is not provided on request body', async () => {
@@ -47,15 +51,17 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({password: 'password'})
     expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Missing email or password.')
   })
 
-  test('should return 400 if password is not provided on request body', async () => {
+  test('should return 400 if password is not provided on request body and new user should not be created', async () => {
     const email = 'test@email.com'
     // Post and check response.
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({email})
     expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Missing email or password.')
     // Make sure the user is not created.
     const result = await db.query(sql`
       SELECT *
@@ -87,6 +93,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
       .send({email, password})
     // Make sure the user is not updated.
     expect(res.status).toBe(409)
+    expect(res.body.message).toBe('Email is already registered and activated.')
   })
 
   test('should create un-activated user and send signup confirmation email if email is not registered yet', async () => {
@@ -153,12 +160,112 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
 })
 
 describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
-  test('', async () => {
+  test('returns 400 if request does not have token', async () => {
+    const resForUndefined = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
+      .send()
+    expect(resForUndefined.status).toBe(400)
+    expect(resForUndefined.body.message).toBe('Missing token.')
 
+    const resForEmptyObject = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
+      .send({})
+    expect(resForEmptyObject.status).toBe(400)
+    expect(resForEmptyObject.body.message).toBe('Missing token.')
   })
 
-  test('', async () => {
+  test('returns 400 if token did not encoded with correct secret', async () => {
+    const token = jwt.sign(
+      {email: 'test@email.com'},
+      `${JWT_SECRET_KEY}1`
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
+      .send({token})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Invalid token.')
+  })
 
+  test('returns 400 if token does not have email', async () => {
+    const token = jwt.sign(
+      {someProp: 'someValue'},
+      JWT_SECRET_KEY
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
+      .send({token})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Invalid token.')
+  })
+
+  test('returns 409 if the email does not exist', async () => {
+    const token = jwt.sign(
+      {email: 'test@email.com'},
+      JWT_SECRET_KEY
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
+      .send({token})
+    expect(res.status).toBe(409)
+    expect(res.body.message).toBe('The email you are trying to confirm does not exist on database.')
+  })
+
+  test('returns 409 if the email is already activated', async () => {
+    const email = 'test@email.com'
+    // Create activated user.
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        'password',
+        true
+      );
+    `)
+    // Try to activate again and check the response.
+    const token = jwt.sign(
+      {email},
+      JWT_SECRET_KEY
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
+      .send({token})
+    expect(res.status).toBe(409)
+    expect(res.body.message).toBe('User already activated.')
+  })
+
+  test('returns valid login token if activation was succeeded', async () => {
+    const email = 'test@email.com'
+    // Create un-activated user.
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        'password',
+        false
+      );
+    `)
+    // Try to activate and check the response.
+    const token = jwt.sign(
+      {email},
+      JWT_SECRET_KEY
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
+      .send({token})
+    expect(res.status).toBe(200)
+    const authToken = res.body?.token
+    expect(typeof authToken).toBe('string')
+    const decodedAuthToken = decode<UserInfoOnToken>(authToken, JWT_SECRET_KEY)
+    expect(decodedAuthToken.isValidAuthToken).toBe(true)
+    expect(decodedAuthToken.email).toBe(email)
   })
 })
 
