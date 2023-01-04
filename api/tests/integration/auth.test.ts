@@ -36,7 +36,7 @@ afterEach(() => {
 })
 
 describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
-  test('should return 400 if email and password is not provided on request body', async () => {
+  test('returns 400 if email and password are not provided on request body', async () => {
     // Post and check response.
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.SIGNUP.path)
@@ -45,7 +45,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
     expect(res.body.message).toBe('Missing email or password.')
   })
 
-  test('should return 400 if email is not provided on request body', async () => {
+  test('returns 400 if email is not provided on request body', async () => {
     // Post and check response.
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.SIGNUP.path)
@@ -54,7 +54,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
     expect(res.body.message).toBe('Missing email or password.')
   })
 
-  test('should return 400 if password is not provided on request body and new user should not be created', async () => {
+  test('returns 400 if password is not provided on request body and new user does not be created', async () => {
     const email = 'test@email.com'
     // Post and check response.
     const res = await request(apiApp)
@@ -71,9 +71,11 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
     expect(result).toEqual([])
   })
 
-  test('should return 409 if email is already registered and activated', async () => {
+  test('returns 409 if email is already registered and activated', async () => {
     const email = 'test@email.com'
     const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
     // Create activated user.
     await db.query(sql`
       INSERT INTO users (
@@ -83,7 +85,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
       )
       VALUES (
         ${email},
-        ${password},
+        ${hashedPassword},
         true
       );
     `)
@@ -96,7 +98,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
     expect(res.body.message).toBe('Email is already registered and activated.')
   })
 
-  test('should create un-activated user and send signup confirmation email if email is not registered yet', async () => {
+  test('creates un-activated user and send signup confirmation email if email is not registered yet', async () => {
     const mockMailServerSend = mailServer.send
     const email = 'test@email.com'
     const password = 'password'
@@ -122,10 +124,12 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
     expect(mockMailServerSend).toBeCalledWith(email, expect.any(String), expect.any(String), expect.any(String))
   })
 
-  test('should overwrite password and send signup confirmation email if email is already registered but not activated', async () => {
+  test('overwrites password and send signup confirmation email if email is already registered but not activated', async () => {
     const mockMailServerSend = mailServer.send
     const email = 'test@email.com'
     const password1 = 'password1'
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword1 = await bcrypt.hash(password1, salt)
     const password2 = 'password2'
     // Create un-activated user.
     await db.query(sql`
@@ -136,7 +140,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
       )
       VALUES (
         ${email},
-        ${password1},
+        ${hashedPassword1},
         false
       );
     `)
@@ -212,6 +216,9 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
 
   test('returns 409 if the email is already activated', async () => {
     const email = 'test@email.com'
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
     // Create activated user.
     await db.query(sql`
       INSERT INTO users (
@@ -221,7 +228,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
       )
       VALUES (
         ${email},
-        'password',
+        ${hashedPassword},
         true
       );
     `)
@@ -239,6 +246,9 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
 
   test('returns valid login token if activation was succeeded', async () => {
     const email = 'test@email.com'
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
     // Create un-activated user.
     await db.query(sql`
       INSERT INTO users (
@@ -248,7 +258,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
       )
       VALUES (
         ${email},
-        'password',
+        ${hashedPassword},
         false
       );
     `)
@@ -270,11 +280,124 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
 })
 
 describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
-  test('should return 400 if email does not exist', async () => {
+  test('returns 400 if email and password are not provided on request body', async () => {
+    const resForUndefined = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGIN.path)
+      .send()
+    expect(resForUndefined.status).toBe(400)
+    expect(resForUndefined.body.message).toBe('Missing email or password.')
+
+    const resForEmptyObject = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGIN.path)
+      .send({})
+    expect(resForEmptyObject.status).toBe(400)
+    expect(resForEmptyObject.body.message).toBe('Missing email or password.')
+  })
+
+  test('returns 400 if email is not provided on request body', async () => {
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
-      .send({ email: 'test', password: 'test' })
+      .send({password: 'password'})
     expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Missing email or password.')
+  })
+
+  test('returns 400 if password is not provided on request body', async () => {
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGIN.path)
+      .send({email: 'test@email.com'})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Missing email or password.')
+  })
+
+  test('returns 400 if user with given email does not exist', async () => {
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGIN.path)
+      .send({ email: 'test@email.com', password: 'password' })
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Email/Password is incorrect.')
+  })
+
+  test('returns 400 if user with given email is not activated', async () => {
+    const email = 'test@email.com'
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    // Create un-activated user.
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedPassword},
+        false
+      );
+    `)
+    // Try to login and check the response.
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGIN.path)
+      .send({ email, password })
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('This user is not activated.')
+  })
+
+  test('returns 400 if password is not correct', async () => {
+    const email = 'test@email.com'
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    // Create activated user.
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedPassword},
+        true
+      );
+    `)
+    // Try to login and check the response.
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGIN.path)
+      .send({ email, password: `${password}1` })
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Email/Password is incorrect.')
+  })
+
+  test('returns auth token if email and password are correct and user is activated', async () => {
+    const email = 'test@email.com'
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    // Create activated user.
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedPassword},
+        true
+      );
+    `)
+    // Try to login and check the response.
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGIN.path)
+      .send({ email, password })
+    expect(res.status).toBe(200)
+    const authToken = res.body?.token
+    expect(typeof authToken).toBe('string')
+    const decodedAuthToken = decode<UserInfoOnToken>(authToken, JWT_SECRET_KEY)
+    expect(decodedAuthToken.isValidAuthToken).toBe(true)
+    expect(decodedAuthToken.email).toBe(email)
   })
 })
 

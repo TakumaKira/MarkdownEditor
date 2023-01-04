@@ -102,7 +102,7 @@ authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
     const user = rows[0][0] as unknown as UserInfoOnDB
     if (!user) return res.status(400).send({message: 'Email/Password is incorrect.'})
 
-    if (!user.is_activated) return res.status(401).send({message: 'This user is not activated.'})
+    if (!user.is_activated) return res.status(400).send({message: 'This user is not activated.'})
 
     const isValidPassword = await bcrypt.compare(password, user.password)
     // TODO: Test incorrect password.
