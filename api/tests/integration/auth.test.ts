@@ -150,12 +150,12 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
       .send({email, password: password2})
     // Make sure the password is updated.
     const result = await db.query(sql`
-      SELECT *
+      SELECT password
         FROM users
         WHERE email = ${email};
     `)
-    const isNotOriginalPassword = await bcrypt.compare(password1, result[0].password)
-    expect(isNotOriginalPassword).toBe(false)
+    const isOriginalPassword = await bcrypt.compare(password1, result[0].password)
+    expect(isOriginalPassword).toBe(false)
     const isUpdatedPassword = await bcrypt.compare(password2, result[0].password)
     expect(isUpdatedPassword).toBe(true)
     // Make sure a signup confirmation email is sent.
@@ -402,14 +402,208 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
 })
 
 describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
-  // TODO: Test if authApiMiddleware is working.
+  // Test if authApiMiddleware is working.
+  test('returns 401 if no auth token provided', async () => {
+    const email = 'test@email.com'
+    const password = 'password'
 
-  test('', async () => {
+    const resForNoSet = await request(apiApp)
+      .post(API_PATHS.AUTH.EDIT.path)
+      .send({ email, password })
+    expect(resForNoSet.status).toBe(401)
+    expect(resForNoSet.body.message).toBe('Access denied. Request does not have valid token.')
 
+    const resForUndefined = await request(apiApp)
+      .post(API_PATHS.AUTH.EDIT.path)
+      .send({ email, password })
+    expect(resForUndefined.status).toBe(401)
+    expect(resForUndefined.body.message).toBe('Access denied. Request does not have valid token.')
+
+    const resForEmptyString = await request(apiApp)
+      .post(API_PATHS.AUTH.EDIT.path)
+      .set({'x-auth-token': ''})
+      .send({ email, password })
+    expect(resForEmptyString.status).toBe(401)
+    expect(resForEmptyString.body.message).toBe('Access denied. Request does not have valid token.')
   })
 
-  test('', async () => {
+  test('returns 401 if auth token is not valid', async () => {
+    const oldEmail = 'old@email.com'
+    const newEmail = 'new@email.com'
+    const newPassword = 'newPassword'
+    const validAuthToken = jwt.sign(
+      {id: 1, email: oldEmail, isValidAuthToken: true},
+      JWT_SECRET_KEY
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.EDIT.path)
+      .set({'x-auth-token': `${validAuthToken}1`})
+      .send({ email: newEmail, password: newPassword })
+    expect(res.status).toBe(401)
+    expect(res.body.message).toBe('Access denied. Request does not have valid token.')
+  })
 
+  test('returns 401 if given token is not encoded with right secret', async () => {
+    const oldEmail = 'old@email.com'
+    const newEmail = 'new@email.com'
+    const newPassword = 'newPassword'
+    const invalidAuthToken = jwt.sign(
+      {id: 1, email: oldEmail, isValidAuthToken: true},
+      `${JWT_SECRET_KEY}1`
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.EDIT.path)
+      .set({'x-auth-token': invalidAuthToken})
+      .send({ email: newEmail, password: newPassword })
+    expect(res.status).toBe(401)
+    expect(res.body.message).toBe('Access denied. Request does not have valid token.')
+  })
+
+  test('returns 401 if given token is email confirmation token', async () => {
+    const oldEmail = 'old@email.com'
+    const newEmail = 'new@email.com'
+    const newPassword = 'newPassword'
+    const nonAuthToken = jwt.sign(
+      {email: oldEmail},
+      JWT_SECRET_KEY
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.EDIT.path)
+      .set({'x-auth-token': nonAuthToken})
+      .send({ email: newEmail, password: newPassword })
+    expect(res.status).toBe(401)
+    expect(res.body.message).toBe('Access denied. Request does not have valid token.')
+  })
+
+  test('returns 400 if both email and password is missing', async () => {
+    const email = 'test@email.com'
+    const validAuthToken = jwt.sign(
+      {id: 1, email, isValidAuthToken: true},
+      JWT_SECRET_KEY
+    )
+
+    const resForUndefined = await request(apiApp)
+      .post(API_PATHS.AUTH.EDIT.path)
+      .set({'x-auth-token': validAuthToken})
+      .send()
+    expect(resForUndefined.status).toBe(400)
+    expect(resForUndefined.body.message).toBe('Missing both email and password.')
+
+    const resForEmptyObject = await request(apiApp)
+      .post(API_PATHS.AUTH.EDIT.path)
+      .set({'x-auth-token': validAuthToken})
+      .send({})
+    expect(resForEmptyObject.status).toBe(400)
+    expect(resForEmptyObject.body.message).toBe('Missing both email and password.')
+  })
+
+  test('sends confirmation mail if only new email is provided and returns message', async () => {
+    const mockMailServerSend = mailServer.send
+    const oldEmail = 'old@email.com'
+    const newEmail = 'new@email.com'
+    const validAuthToken = jwt.sign(
+      {id: 1, email: oldEmail, isValidAuthToken: true},
+      JWT_SECRET_KEY
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.EDIT.path)
+      .set({'x-auth-token': validAuthToken})
+      .send({email: newEmail})
+    expect(mockMailServerSend).toBeCalledWith(newEmail, expect.any(String), expect.any(String), expect.any(String))
+    expect(res.status).toBe(200)
+    expect(res.body.message).toBe('Confirmation email sent.')
+  })
+
+  test('updates password and returns password update success message if only new password is provided', async () => {
+    const email = 'test@email.com'
+    const oldPassword = 'oldPassword'
+    const salt = await bcrypt.genSalt(10)
+    const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedOldPassword},
+        true
+      );
+    `)
+    const id = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${email}
+    `))[0].id as number
+    const validAuthToken = jwt.sign(
+      {id, email, isValidAuthToken: true},
+      JWT_SECRET_KEY
+    )
+    const newPassword = 'newPassword'
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.EDIT.path)
+      .set({'x-auth-token': validAuthToken})
+      .send({password: newPassword})
+    expect(res.status).toBe(200)
+    expect(res.body.message).toBe('Password update successful.')
+    const result = await db.query(sql`
+      SELECT password
+        FROM users
+        WHERE id = ${id};
+    `)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    expect(isOriginalPassword).toBe(false)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    expect(isUpdatedPassword).toBe(true)
+  })
+
+  test('updates only password and sends confirmation mail if both new email and new password is provided', async () => {
+    const mockMailServerSend = mailServer.send
+    const oldEmail = 'old@email.com'
+    const oldPassword = 'oldPassword'
+    const salt = await bcrypt.genSalt(10)
+    const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${oldEmail},
+        ${hashedOldPassword},
+        true
+      );
+    `)
+    const id = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${oldEmail}
+    `))[0].id as number
+    const validAuthToken = jwt.sign(
+      {id, email: oldEmail, isValidAuthToken: true},
+      JWT_SECRET_KEY
+    )
+    const newEmail = 'new@email.com'
+    const newPassword = 'newPassword'
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.EDIT.path)
+      .set({'x-auth-token': validAuthToken})
+      .send({email: newEmail, password: newPassword})
+    expect(mockMailServerSend).toBeCalledWith(newEmail, expect.any(String), expect.any(String), expect.any(String))
+    expect(res.status).toBe(200)
+    expect(res.body.message).toBe('Confirmation email sent.')
+    const result = await db.query(sql`
+      SELECT email, password
+        FROM users
+        WHERE id = ${id};
+    `)
+    expect(result[0].email).toBe(oldEmail)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    expect(isOriginalPassword).toBe(false)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    expect(isUpdatedPassword).toBe(true)
   })
 })
 
@@ -453,4 +647,8 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
   test('', async () => {
 
   })
+})
+
+describe('WebSocket', () => {
+  // TODO: Test if authWsMiddleware is working.
 })

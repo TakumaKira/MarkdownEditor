@@ -8,31 +8,34 @@ import decode from '../helper/decode';
 const authApiMiddleware: RequestHandler = (req, res, next) => {
   const token = req.header(AUTH_TOKEN_KEY)
   if (!token) {
-    return res.status(401).send({message: 'Access denied. No token provided.'})
+    return res.status(401).send({message: 'Access denied. Request does not have valid token.'})
   }
 
   try {
     req.user = decode(token, JWT_SECRET_KEY)
-    if (!req.user.isValidAuthToken) return res.status(401).send({message: 'This user is not activated.'})
+    if (!req.user.isValidAuthToken) {
+      throw new Error('Token is not valid as an auth token.')
+    }
     next()
-  } catch (ex) {
-    console.error(ex)
-    res.status(400).send({message: 'Invalid token.'})
+  } catch {
+    res.status(401).send({message: 'Access denied. Request does not have valid token.'})
   }
 }
 const authWsMiddleware = (socket: Socket, next: (err?: ExtendedError) => void): void => {
   const token = socket.handshake.auth.token
   if (!token) {
-    return next(new Error('Access denied. No token provided.'))
+    return next(new Error('Access denied. Request does not have valid token.'))
   }
 
   try {
     socket.user = decode(token, JWT_SECRET_KEY)
+    if (!socket.user.isValidAuthToken) {
+      throw new Error('Token is not valid as an auth token.')
+    }
     socket.join(socket.user.id.toString())
     next()
-  } catch (ex) {
-    console.error(ex)
-    next(new Error('Invalid token.'))
+  } catch {
+    next(new Error('Access denied. Request does not have valid token.'))
   }
 }
 export { authApiMiddleware, authWsMiddleware };

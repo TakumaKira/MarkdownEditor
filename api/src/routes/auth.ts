@@ -120,7 +120,7 @@ authApiRouter.post(API_PATHS.AUTH.EDIT.dir, authApiMiddleware, async (req, res, 
   const {email: newEmail, password: newPassword} = req.body as {email?: string, password?: string}
   const {user: {id, email: oldEmail}} = req
   if (!newEmail && !newPassword) {
-    return res.status(400).send({message: 'Missing email and password.'})
+    return res.status(400).send({message: 'Missing both email and password.'})
   }
 
   try {
@@ -143,7 +143,7 @@ authApiRouter.post(API_PATHS.AUTH.EDIT.dir, authApiMiddleware, async (req, res, 
       await mailServer.send(newEmail, subject, text, html)
       res.send({message: 'Confirmation email sent.'})
     } else {
-      return res.send({message: 'Password update successful.'})
+      res.send({message: 'Password update successful.'})
     }
   } catch (e) {
     console.error(e)
