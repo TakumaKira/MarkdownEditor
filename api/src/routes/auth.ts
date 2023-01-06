@@ -220,12 +220,12 @@ authApiRouter.post(API_PATHS.AUTH.RESET_PASSWORD.dir, async (req, res, next) => 
     const user = rows[0][0] as unknown as UserInfoOnDB
     if (!user) return res.status(400).send({message: `There is no user with email: ${email}`})
 
-    if (!user.is_activated) return res.status(401).send({message: 'This user is not activated.'})
+    if (!user.is_activated) return res.status(400).send({message: 'This user is not activated.'})
 
-    const token = generateEmailConfirmationToken(user.email, {expiresIn: '30m'})
+    const token = generateEmailConfirmationToken(email, {expiresIn: '30m'})
     const {subject, text, html} = getConfirmationEmail('resetPassword', token)
-    await mailServer.send(user.email, subject, text, html)
-    res.send({message: 'Confirmation email sent.'})
+    await mailServer.send(email, subject, text, html)
+    res.send({message: `Confirmation email sent to ${email}. Please check the inbox and confirm.`})
   } catch (error) {
     console.error(error)
     res.status(500).send({message: 'Something went wrong.'})

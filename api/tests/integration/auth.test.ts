@@ -863,12 +863,77 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
 })
 
 describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
-  test('', async () => {
+  test('returns 400 if request does not have email', async () => {
+    const resForUndefined = await request(apiApp)
+      .post(API_PATHS.AUTH.RESET_PASSWORD.path)
+      .send()
+    expect(resForUndefined.status).toBe(400)
+    expect(resForUndefined.body.message).toBe('Missing email.')
 
+    const resForEmptyObject = await request(apiApp)
+      .post(API_PATHS.AUTH.RESET_PASSWORD.path)
+      .send({})
+    expect(resForEmptyObject.status).toBe(400)
+    expect(resForEmptyObject.body.message).toBe('Missing email.')
   })
 
-  test('', async () => {
+  test('returns 400 if user with given email does not exist', async () => {
+    const email = 'test@email.com'
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.RESET_PASSWORD.path)
+      .send({email})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe(`There is no user with email: ${email}`)
+  })
 
+  test('returns 400 if user with given email is not activated', async () => {
+    const email = 'test@email.com'
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedPassword},
+        false
+      );
+    `)
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.RESET_PASSWORD.path)
+      .send({email})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('This user is not activated.')
+  })
+
+  test('sends confirmation mail if there is no problem', async () => {
+    const mockMailServerSend = mailServer.send
+    const email = 'test@email.com'
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedPassword},
+        true
+      );
+    `)
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.RESET_PASSWORD.path)
+      .send({email})
+    expect(res.status).toBe(200)
+    expect(res.body.message).toBe(`Confirmation email sent to ${email}. Please check the inbox and confirm.`)
+    expect(mockMailServerSend).toBeCalledWith(email, expect.any(String), expect.any(String), expect.any(String))
   })
 })
 
