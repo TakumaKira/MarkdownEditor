@@ -191,13 +191,13 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
   })
 
   test('returns 400 if token does not have email', async () => {
-    const token = jwt.sign(
-      {someProp: 'someValue'},
+    const tokenWithoutEmail = jwt.sign(
+      {},
       JWT_SECRET_KEY
     )
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
-      .send({token})
+      .send({token: tokenWithoutEmail})
     expect(res.status).toBe(400)
     expect(res.body.message).toBe('Invalid token.')
   })
@@ -511,7 +511,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
       .send({email: newEmail})
     expect(mockMailServerSend).toBeCalledWith(newEmail, expect.any(String), expect.any(String), expect.any(String))
     expect(res.status).toBe(200)
-    expect(res.body.message).toBe('Confirmation email sent.')
+    expect(res.body.message).toBe(`Confirmation email sent to ${newEmail}. Please check the inbox and confirm.`)
   })
 
   test('updates password and returns password update success message if only new password is provided', async () => {
@@ -593,7 +593,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
       .send({email: newEmail, password: newPassword})
     expect(mockMailServerSend).toBeCalledWith(newEmail, expect.any(String), expect.any(String), expect.any(String))
     expect(res.status).toBe(200)
-    expect(res.body.message).toBe('Confirmation email sent.')
+    expect(res.body.message).toBe(`Confirmation email sent to ${newEmail}. Please check the inbox and confirm.`)
     const result = await db.query(sql`
       SELECT email, password
         FROM users
@@ -608,12 +608,257 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
 })
 
 describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
-  test('', async () => {
+  test('returns 400 if token and password are missing on request body', async () => {
+    const resForUndefined = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
+      .send()
+    expect(resForUndefined.status).toBe(400)
+    expect(resForUndefined.body.message).toBe('Missing token or password.')
 
+    const resForEmptyObject = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
+      .send({})
+    expect(resForEmptyObject.status).toBe(400)
+    expect(resForEmptyObject.body.message).toBe('Missing token or password.')
   })
 
-  test('', async () => {
+  test('returns 400 if token is missing on request body', async () => {
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
+      .send({password: 'password'})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Missing token or password.')
+  })
 
+  test('returns 400 if password is missing on request body', async () => {
+    const token = jwt.sign(
+      {oldEmail: 'old@email.com', newEmail: 'new@email.com'},
+      JWT_SECRET_KEY,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
+      .send({token})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Missing token or password.')
+  })
+
+  test('returns 400 if token is expired', async () => {
+    const expiredToken = jwt.sign(
+      {oldEmail: 'old@email.com', newEmail: 'new@email.com'},
+      JWT_SECRET_KEY,
+      {expiresIn: '0ms'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
+      .send({token: expiredToken, password: 'password'})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Token expired. Please try again.')
+  })
+
+  test('returns 400 if token is invalid', async () => {
+    const token = jwt.sign(
+      {oldEmail: 'old@email.com', newEmail: 'new@email.com'},
+      JWT_SECRET_KEY,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
+      .send({token: `${token}1`, password: 'password'})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Invalid token.')
+  })
+
+  test('returns 400 if token is not encoded with correct secret', async () => {
+    const tokenWithIncorrectSecret = jwt.sign(
+      {oldEmail: 'old@email.com', newEmail: 'new@email.com'},
+      `${JWT_SECRET_KEY}1`,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
+      .send({token: tokenWithIncorrectSecret, password: 'password'})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Invalid token.')
+  })
+
+  test('returns 400 if token does not have old email', async () => {
+    const tokenWithoutOldEmail = jwt.sign(
+      {newEmail: 'new@email.com'},
+      JWT_SECRET_KEY,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
+      .send({token: tokenWithoutOldEmail, password: 'password'})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Invalid token.')
+  })
+
+  test('returns 400 if token does not have new email', async () => {
+    const tokenWithoutNewEmail = jwt.sign(
+      {oldEmail: 'old@email.com'},
+      JWT_SECRET_KEY,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
+      .send({token: tokenWithoutNewEmail, password: 'password'})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Invalid token.')
+  })
+
+  test('returns 400 if token does not have old email and new email', async () => {
+    const tokenWithoutOldEmailAndNewEmail = jwt.sign(
+      {},
+      JWT_SECRET_KEY,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
+      .send({token: tokenWithoutOldEmailAndNewEmail, password: 'password'})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Invalid token.')
+  })
+
+  test('returns 400 if user with oldEmail does not exist', async () => {
+    const oldEmail = 'old@email.com'
+    const token = jwt.sign(
+      {oldEmail, newEmail: 'new@email.com'},
+      JWT_SECRET_KEY,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
+      .send({token, password: 'password'})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe(`User with email: ${oldEmail} does not exist.`)
+  })
+
+  test('returns 400 if user with oldEmail is not activated and does not update email', async () => {
+    const oldEmail = 'old@email.com'
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedOldPassword = await bcrypt.hash(password, salt)
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${oldEmail},
+        ${hashedOldPassword},
+        false
+      );
+    `)
+    const id = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${oldEmail}
+    `))[0].id
+    const token = jwt.sign(
+      {oldEmail, newEmail: 'new@email.com'},
+      JWT_SECRET_KEY,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
+      .send({token, password})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe(`User with email ${oldEmail} is not activated yet. Please activate then retry.`)
+    const result = await db.query(sql`
+      SELECT email
+        FROM users
+        WHERE id = ${id};
+    `)
+    expect(result[0].email).toBe(oldEmail)
+  })
+
+  test('returns 400 if password is incorrect and does not update email', async () => {
+    const oldEmail = 'old@email.com'
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedOldPassword = await bcrypt.hash(password, salt)
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${oldEmail},
+        ${hashedOldPassword},
+        true
+      );
+    `)
+    const id = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${oldEmail}
+    `))[0].id
+    const token = jwt.sign(
+      {oldEmail, newEmail: 'new@email.com'},
+      JWT_SECRET_KEY,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
+      .send({token, password: `${password}1`})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Password is incorrect.')
+    const result = await db.query(sql`
+      SELECT email
+        FROM users
+        WHERE id = ${id};
+    `)
+    expect(result[0].email).toBe(oldEmail)
+  })
+
+  test('updates email and returns auth token if there is no problem on entire process', async () => {
+    const oldEmail = 'old@email.com'
+    const newEmail = 'new@email.com'
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedOldPassword = await bcrypt.hash(password, salt)
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${oldEmail},
+        ${hashedOldPassword},
+        true
+      );
+    `)
+    const id = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${oldEmail}
+    `))[0].id
+    const token = jwt.sign(
+      {oldEmail, newEmail},
+      JWT_SECRET_KEY,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
+      .send({token, password})
+    expect(res.status).toBe(200)
+    expect(res.body.message).toBe('Email change successful.')
+    const authToken = res.body?.token
+    expect(typeof authToken).toBe('string')
+    const decodedAuthToken = decode<UserInfoOnToken>(authToken, JWT_SECRET_KEY)
+    expect(decodedAuthToken.isValidAuthToken).toBe(true)
+    expect(decodedAuthToken.email).toBe(newEmail)
+    const result = await db.query(sql`
+      SELECT email
+        FROM users
+        WHERE id = ${id};
+    `)
+    expect(result[0].email).toBe(newEmail)
   })
 })
 

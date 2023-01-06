@@ -141,13 +141,12 @@ authApiRouter.post(API_PATHS.AUTH.EDIT.dir, authApiMiddleware, async (req, res, 
       const token = generateEmailChangeToken(oldEmail, newEmail, {expiresIn: '30m'})
       const {subject, text, html} = getConfirmationEmail('changeEmail', token)
       await mailServer.send(newEmail, subject, text, html)
-      res.send({message: 'Confirmation email sent.'})
+      res.send({message: `Confirmation email sent to ${newEmail}. Please check the inbox and confirm.`})
     } else {
       res.send({message: 'Password update successful.'})
     }
   } catch (e) {
     console.error(e)
-    // TODO: Return appropriate error message for its reasons like already-activated/id-not-exists.
     return res.status(500).send({message: 'Something went wrong.'})
   }
 })
@@ -161,14 +160,12 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
   try {
     var {oldEmail, newEmail} = decode<{oldEmail?: string, newEmail?: string}>(token, JWT_SECRET_KEY)
     if (!oldEmail || !newEmail) {
-      console.error('oldEmail or newEmail is not defined on the token.', token)
       throw new Error('oldEmail or newEmail is not defined on the token.')
     }
   } catch (e) {
     if (e instanceof TokenExpiredError) {
       return res.status(400).send({message: 'Token expired. Please try again.'})
     }
-    console.error(e)
     return res.status(400).send({message: 'Invalid token.'})
   }
 
@@ -185,7 +182,6 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password)
-    // TODO: Test incorrect password.
     if (!isValidPassword) return res.status(400).send({message: 'Password is incorrect.'})
   } catch (error) {
     console.error(error)
@@ -205,7 +201,6 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
     return res.send({message: 'Email change successful.', token})
   } catch (e) {
     console.error(e)
-    // TODO: Return appropriate error message for its reasons like already-activated/id-not-exists.
     return res.status(500).send({message: 'Something went wrong.'})
   }
 })
