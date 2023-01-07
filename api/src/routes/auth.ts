@@ -36,7 +36,7 @@ authApiRouter.post(API_PATHS.AUTH.SIGNUP.dir, async (req, res, next) => {
     return res.status(500).send({message: 'Something went wrong.'})
   }
 
-  const token = generateEmailConfirmationToken(email)
+  const token = generateEmailConfirmationToken('SignupToken', email)
   const {subject, text, html} = getConfirmationEmail('signup', token)
 
   try {
@@ -56,7 +56,10 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir, async (req, res, nex
   }
 
   try {
-    var {email} = decode<{email?: string}>(token, JWT_SECRET_KEY)
+    var {is, email} = decode<{is?: string, email?: string}>(token, JWT_SECRET_KEY)
+    if (is !== 'SignupToken') {
+      throw new Error('token is not SignupToken.')
+    }
     if (!email) {
       throw new Error('email is not defined in the token.')
     }
@@ -105,7 +108,6 @@ authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
     if (!user.is_activated) return res.status(400).send({message: 'This user is not activated.'})
 
     const isValidPassword = await bcrypt.compare(password, user.password)
-    // TODO: Test incorrect password.
     if (!isValidPassword) return res.status(400).send({message: 'Email/Password is incorrect.'})
 
     const token = generateAuthToken(user.id, user.email)
@@ -158,7 +160,10 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
   }
 
   try {
-    var {oldEmail, newEmail} = decode<{oldEmail?: string, newEmail?: string}>(token, JWT_SECRET_KEY)
+    var {is ,oldEmail, newEmail} = decode<{is?: string, oldEmail?: string, newEmail?: string}>(token, JWT_SECRET_KEY)
+    if (is !== 'EmailChangeToken') {
+      throw new Error('token is not EmailChangeToken.')
+    }
     if (!oldEmail || !newEmail) {
       throw new Error('oldEmail or newEmail is not defined on the token.')
     }
@@ -222,7 +227,7 @@ authApiRouter.post(API_PATHS.AUTH.RESET_PASSWORD.dir, async (req, res, next) => 
 
     if (!user.is_activated) return res.status(400).send({message: 'This user is not activated.'})
 
-    const token = generateEmailConfirmationToken(email, {expiresIn: '30m'})
+    const token = generateEmailConfirmationToken('ResetPasswordToken', email, {expiresIn: '30m'})
     const {subject, text, html} = getConfirmationEmail('resetPassword', token)
     await mailServer.send(email, subject, text, html)
     res.send({message: `Confirmation email sent to ${email}. Please check the inbox and confirm.`})
@@ -239,13 +244,14 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, n
   }
 
   try {
-    var {email} = decode<{email?: string}>(token, JWT_SECRET_KEY)
+    var {is, email} = decode<{is?: string, email?: string}>(token, JWT_SECRET_KEY)
+    if (is !== 'ResetPasswordToken') {
+      throw new Error('token is not ResetPasswordToken.')
+    }
     if (!email) {
-      console.error('email is not defined on the token.', token)
       throw new Error('email is not defined on the token.')
     }
-  } catch (e) {
-    console.error(e)
+  } catch {
     return res.status(400).send({message: 'Invalid token.'})
   }
 
@@ -281,7 +287,6 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, n
     return res.send({message: 'Password reset successful.', token})
   } catch (e) {
     console.error(e)
-    // TODO: Return appropriate error message for its reasons like already-activated/id-not-exists.
     return res.status(500).send({message: 'Something went wrong.'})
   }
 })
@@ -314,9 +319,9 @@ export default authApiRouter
 
 // If stored token is invalid, just ask login again.
 
-function generateEmailConfirmationToken(email: string, options?: jwt.SignOptions): string {
+function generateEmailConfirmationToken(is: 'SignupToken' | 'ResetPasswordToken', email: string, options?: jwt.SignOptions): string {
   return jwt.sign(
-    {email},
+    {is, email},
     JWT_SECRET_KEY,
     options
   )
@@ -324,14 +329,14 @@ function generateEmailConfirmationToken(email: string, options?: jwt.SignOptions
 
 function generateAuthToken(id: number, email: string): string {
   return jwt.sign(
-    {id, email, isValidAuthToken: true},
+    {is: 'AuthToken', id, email},
     JWT_SECRET_KEY
   )
 }
 
 function generateEmailChangeToken(oldEmail: string, newEmail: string, options?: jwt.SignOptions): string {
   return jwt.sign(
-    {oldEmail, newEmail},
+    {is: 'EmailChangeToken', oldEmail, newEmail},
     JWT_SECRET_KEY,
     options
   )

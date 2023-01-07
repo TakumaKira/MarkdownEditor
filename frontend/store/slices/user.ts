@@ -1,4 +1,4 @@
-import { UserInfoOnToken } from "@api/user";
+import { UserInfoOnAuthToken } from "@api/user";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import jwt from 'jsonwebtoken';
 import { AuthStateTypes } from "../../components/AuthModal";
@@ -266,7 +266,7 @@ const userSlice = createSlice({
     builder.addCase(askServerConfirmSignupEmail.fulfilled, (state, action) => {
       const token = action.payload.token as string
       try {
-        const {email} = jwt.decode(token) as UserInfoOnToken
+        const {email} = jwt.decode(token) as UserInfoOnAuthToken
         state.token = token
         state.email = email
         if (state.authState) {
@@ -293,7 +293,7 @@ const userSlice = createSlice({
     builder.addCase(askServerLogin.fulfilled, (state, action) => {
       const token = action.payload.token as string
       try {
-        const {email} = jwt.decode(token) as UserInfoOnToken
+        const {email} = jwt.decode(token) as UserInfoOnAuthToken
         state.token = token
         state.email = email
         if (state.authState) {
@@ -337,7 +337,7 @@ const userSlice = createSlice({
     builder.addCase(askServerConfirmChangeEmail.fulfilled, (state, action) => {
       const token = action.payload.token as string
       try {
-        const {email} = jwt.decode(token) as UserInfoOnToken
+        const {email} = jwt.decode(token) as UserInfoOnAuthToken
         state.token = token
         state.email = email
         if (state.authState) {
@@ -382,7 +382,7 @@ const userSlice = createSlice({
     builder.addCase(askServerConfirmResetPassword.fulfilled, (state, action) => {
       const token = action.payload.token as string
       try {
-        const {email} = jwt.decode(token) as UserInfoOnToken
+        const {email} = jwt.decode(token) as UserInfoOnAuthToken
         state.token = token
         state.email = email
         if (state.authState) {

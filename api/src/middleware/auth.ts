@@ -13,7 +13,7 @@ const authApiMiddleware: RequestHandler = (req, res, next) => {
 
   try {
     req.user = decode(token, JWT_SECRET_KEY)
-    if (!req.user.isValidAuthToken) {
+    if (req.user.is !== 'AuthToken') {
       throw new Error('Token is not valid as an auth token.')
     }
     next()
@@ -29,7 +29,7 @@ const authWsMiddleware = (socket: Socket, next: (err?: ExtendedError) => void): 
 
   try {
     socket.user = decode(token, JWT_SECRET_KEY)
-    if (!socket.user.isValidAuthToken) {
+    if (socket.user.is !== 'AuthToken') {
       throw new Error('Token is not valid as an auth token.')
     }
     socket.join(socket.user.id.toString())
