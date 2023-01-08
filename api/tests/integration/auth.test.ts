@@ -7,6 +7,8 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import decode from '../../src/helper/decode'
 import { UserInfoOnAuthToken } from '../../src/models/user'
+import { v4 as uuidv4 } from 'uuid'
+import { ResultSetHeader } from 'mysql2'
 
 jest.mock('../../src/getEnvs', () => ({
   ...jest.requireActual('../../src/getEnvs'),
@@ -179,13 +181,13 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
   })
 
   test('returns 400 if token did not encoded with correct secret', async () => {
-    const token = jwt.sign(
+    const tokenWithIncorrectSecret = jwt.sign(
       {is: 'SignupToken', email: 'test@email.com'},
       `${JWT_SECRET_KEY}1`
     )
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
-      .send({token})
+      .send({token: tokenWithIncorrectSecret})
     expect(res.status).toBe(400)
     expect(res.body.message).toBe('Invalid token.')
   })
@@ -446,12 +448,6 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(resForNoSet.status).toBe(401)
     expect(resForNoSet.body.message).toBe('Access denied. Request does not have valid token.')
 
-    const resForUndefined = await request(apiApp)
-      .post(API_PATHS.AUTH.EDIT.path)
-      .send({ email: newEmail, password: newPassword })
-    expect(resForUndefined.status).toBe(401)
-    expect(resForUndefined.body.message).toBe('Access denied. Request does not have valid token.')
-
     const resForEmptyString = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
       .set({'x-auth-token': ''})
@@ -546,13 +542,13 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
         WHERE email = ${oldEmail};
     `))[0].id
 
-    const invalidAuthToken = jwt.sign(
+    const tokenWithIncorrectSecret = jwt.sign(
       {is: 'AuthToken', id: 1, email: oldEmail},
       `${JWT_SECRET_KEY}1`
     )
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({'x-auth-token': invalidAuthToken})
+      .set({'x-auth-token': tokenWithIncorrectSecret})
       .send({ email: newEmail, password: newPassword })
     expect(res.status).toBe(401)
     expect(res.body.message).toBe('Access denied. Request does not have valid token.')
@@ -569,7 +565,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(isUpdatedPassword).toBe(false)
   })
 
-  test('returns 401 without updating email nor password if given token is email confirmation token', async () => {
+  test('returns 401 without updating email nor password if given token is not authToken', async () => {
     const oldEmail = 'old@email.com'
     const newEmail = 'new@email.com'
     const oldPassword = 'oldPassword'
@@ -596,7 +592,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     `))[0].id
 
     const nonAuthToken = jwt.sign(
-      {email: oldEmail},
+      {is: 'SignupToken', email: oldEmail},
       JWT_SECRET_KEY
     )
     const res = await request(apiApp)
@@ -1491,14 +1487,14 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
         WHERE email = ${email}
     `))[0].id
 
-    const token = jwt.sign(
+    const tokenWithIncorrectSecret = jwt.sign(
       {is: 'ResetPasswordToken', email},
       `${JWT_SECRET_KEY}1`,
       {expiresIn: '30m'}
     )
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
-      .send({token, password: newPassword})
+      .send({token: tokenWithIncorrectSecret, password: newPassword})
     expect(res.status).toBe(400)
     expect(res.body.message).toBe('Invalid token.')
     // Make sure password is not updated.
@@ -1683,14 +1679,274 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
 })
 
 describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
-  // TODO: Test if authApiMiddleware is working.
+  test('returns 401 without deleting user if no auth token provided', async () => {
+    const email = 'test@email.com'
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    // Create activated user.
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedPassword},
+        true
+      );
+    `)
+    const id = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${email};
+    `))[0].id
 
-  test('', async () => {
+    const resForNoSet = await request(apiApp)
+      .post(API_PATHS.AUTH.DELETE.path)
+      .send()
+    expect(resForNoSet.status).toBe(401)
+    expect(resForNoSet.body.message).toBe('Access denied. Request does not have valid token.')
 
+    const resForEmptyString = await request(apiApp)
+      .post(API_PATHS.AUTH.DELETE.path)
+      .set({'x-auth-token': ''})
+      .send()
+    expect(resForEmptyString.status).toBe(401)
+    expect(resForEmptyString.body.message).toBe('Access denied. Request does not have valid token.')
+    // Make sure email and password is not updated.
+    const result = await db.query(sql`
+      SELECT email, password
+        FROM users
+        WHERE id = ${id};
+    `)
+    expect(result[0].email).toBe(email)
+    const isOriginalPassword = await bcrypt.compare(password, result[0].password)
+    expect(isOriginalPassword).toBe(true)
   })
 
-  test('', async () => {
+  test('returns 401 without deleting user if auth token is not valid', async () => {
+    const email = 'test@email.com'
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    // Create activated user.
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedPassword},
+        true
+      );
+    `)
+    const id = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${email};
+    `))[0].id
 
+    const validAuthToken = jwt.sign(
+      {is: 'AuthToken', id: 1, email},
+      JWT_SECRET_KEY
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.DELETE.path)
+      .set({'x-auth-token': `${validAuthToken}1`})
+      .send()
+    expect(res.status).toBe(401)
+    expect(res.body.message).toBe('Access denied. Request does not have valid token.')
+    // Make sure email and password is not updated.
+    const result = await db.query(sql`
+      SELECT email, password
+        FROM users
+        WHERE id = ${id};
+    `)
+    expect(result[0].email).toBe(email)
+    const isOriginalPassword = await bcrypt.compare(password, result[0].password)
+    expect(isOriginalPassword).toBe(true)
+  })
+
+  test('returns 401 without deleting user if given token is not encoded with right secret', async () => {
+    const email = 'test@email.com'
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    // Create activated user.
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedPassword},
+        true
+      );
+    `)
+    const id = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${email};
+    `))[0].id
+
+    const tokenWithIncorrectSecret = jwt.sign(
+      {is: 'AuthToken', id: 1, email},
+      `${JWT_SECRET_KEY}1`
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.DELETE.path)
+      .set({'x-auth-token': tokenWithIncorrectSecret})
+      .send()
+    expect(res.status).toBe(401)
+    expect(res.body.message).toBe('Access denied. Request does not have valid token.')
+    // Make sure email and password is not updated.
+    const result = await db.query(sql`
+      SELECT email, password
+        FROM users
+        WHERE id = ${id};
+    `)
+    expect(result[0].email).toBe(email)
+    const isOriginalPassword = await bcrypt.compare(password, result[0].password)
+    expect(isOriginalPassword).toBe(true)
+  })
+
+  test('returns 401 without deleting user if given token is not authToken', async () => {
+    const email = 'test@email.com'
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    // Create activated user.
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedPassword},
+        true
+      );
+    `)
+    const id = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${email};
+    `))[0].id
+
+    const notAuthToken = jwt.sign(
+      {is: 'SignupToken', id: 1, email},
+      JWT_SECRET_KEY
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.DELETE.path)
+      .set({'x-auth-token': notAuthToken})
+      .send()
+    expect(res.status).toBe(401)
+    expect(res.body.message).toBe('Access denied. Request does not have valid token.')
+    // Make sure email and password is not updated.
+    const result = await db.query(sql`
+      SELECT email, password
+        FROM users
+        WHERE id = ${id};
+    `)
+    expect(result[0].email).toBe(email)
+    const isOriginalPassword = await bcrypt.compare(password, result[0].password)
+    expect(isOriginalPassword).toBe(true)
+  })
+
+  test('returns 400 if user does not exist', async () => {
+    const email = 'test@email.com'
+
+    const validAuthToken = jwt.sign(
+      {is: 'AuthToken', id: 1, email},
+      JWT_SECRET_KEY
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.DELETE.path)
+      .set({'x-auth-token': validAuthToken})
+      .send()
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('The email you are trying to delete does not exist on database.')
+  })
+
+  test('deletes user and its documents if exists', async () => {
+    const email = 'test@email.com'
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    // Create activated user.
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedPassword},
+        true
+      );
+    `)
+    const userId = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${email};
+    `))[0].id
+    // Create document of the user.
+    const documentId = uuidv4()
+    const documentInsertResult = await db.query(sql`
+      INSERT INTO documents (
+        id,
+        user_id,
+        name,
+        content,
+        created_at,
+        updated_at,
+        is_deleted
+      )
+      VALUES (
+        ${documentId},
+        ${userId},
+        "Name",
+        "Content",
+        "2000-01-01 00:00:00",
+        "2000-01-01 00:00:00",
+        false
+      );
+    `)
+    expect(documentInsertResult).toHaveProperty('affectedRows', 1)
+
+    const validAuthToken = jwt.sign(
+      {is: 'AuthToken', id: userId, email},
+      JWT_SECRET_KEY
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.DELETE.path)
+      .set({'x-auth-token': validAuthToken})
+      .send()
+    expect(res.status).toBe(200)
+    expect(res.body.message).toBe('User deleted successfully.')
+    // Make sure user is deleted.
+    const resultForUserSelectQuery = await db.query(sql`
+      SELECT email
+        FROM users
+        WHERE id = ${userId};
+    `)
+    expect(resultForUserSelectQuery).toEqual([])
+    // Make sure user's document is deleted.
+    const resultForDocumentSelectQuery = await db.query(sql`
+      SELECT *
+        FROM documents
+        WHERE id = ${documentId};
+    `)
+    expect(resultForDocumentSelectQuery).toEqual([])
   })
 })
 

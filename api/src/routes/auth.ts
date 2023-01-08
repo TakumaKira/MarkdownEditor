@@ -299,10 +299,12 @@ authApiRouter.post(API_PATHS.AUTH.DELETE.dir, authApiMiddleware, async (req, res
         ${req.user.id}
       );
     `)
-    return res.send({message: 'Delete successful.'})
-  } catch (e) {
-    console.error(e)
-    // TODO: Return appropriate error message for its reasons like already-activated/id-not-exists.
+    return res.send({message: 'User deleted successfully.'})
+  } catch (error: any) {
+    if (error?.sqlState === '45011') {
+      return res.status(400).send({message: 'The email you are trying to delete does not exist on database.'})
+    }
+    console.error(error)
     return res.status(500).send({message: 'Something went wrong.'})
   }
 })
