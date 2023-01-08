@@ -80,7 +80,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir, async (req, res, nex
     return res.send({message: 'Confirmation successful.', token})
   } catch (error: any) {
     if (error?.sqlState === '45011') {
-      return res.status(409).send({message: 'The email you are trying to confirm does not exist on database.'})
+      return res.status(400).send({message: 'The email you are trying to confirm does not exist on database.'})
     }
     if (error?.sqlState === '45013') {
       return res.status(409).send({message: 'User already activated.'})

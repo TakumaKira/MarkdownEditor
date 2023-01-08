@@ -214,7 +214,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
     expect(res.body.message).toBe('Invalid token.')
   })
 
-  test('returns 409 if the email does not exist', async () => {
+  test('returns 400 if the email does not exist', async () => {
     const token = jwt.sign(
       {is: 'SignupToken', email: 'test@email.com'},
       JWT_SECRET_KEY
@@ -222,7 +222,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
       .send({token})
-    expect(res.status).toBe(409)
+    expect(res.status).toBe(400)
     expect(res.body.message).toBe('The email you are trying to confirm does not exist on database.')
   })
 
@@ -1152,7 +1152,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     const oldEmail = 'old@email.com'
     const password = 'password'
     const salt = await bcrypt.genSalt(10)
-    const hashedOldPassword = await bcrypt.hash(password, salt)
+    const hashedPassword = await bcrypt.hash(password, salt)
     await db.query(sql`
       INSERT INTO users (
         email,
@@ -1161,7 +1161,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       )
       VALUES (
         ${oldEmail},
-        ${hashedOldPassword},
+        ${hashedPassword},
         false
       );
     `)
@@ -1180,6 +1180,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       .send({token, password})
     expect(res.status).toBe(400)
     expect(res.body.message).toBe(`User with email ${oldEmail} is not activated yet. Please activate then retry.`)
+    // Make sure email is not updated.
     const result = await db.query(sql`
       SELECT email
         FROM users
@@ -1192,7 +1193,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     const oldEmail = 'old@email.com'
     const password = 'password'
     const salt = await bcrypt.genSalt(10)
-    const hashedOldPassword = await bcrypt.hash(password, salt)
+    const hashedPassword = await bcrypt.hash(password, salt)
     await db.query(sql`
       INSERT INTO users (
         email,
@@ -1201,7 +1202,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       )
       VALUES (
         ${oldEmail},
-        ${hashedOldPassword},
+        ${hashedPassword},
         true
       );
     `)
@@ -1220,6 +1221,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       .send({token, password: `${password}1`})
     expect(res.status).toBe(400)
     expect(res.body.message).toBe('Password is incorrect.')
+    // Make sure email is not updated.
     const result = await db.query(sql`
       SELECT email
         FROM users
@@ -1233,7 +1235,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     const newEmail = 'new@email.com'
     const password = 'password'
     const salt = await bcrypt.genSalt(10)
-    const hashedOldPassword = await bcrypt.hash(password, salt)
+    const hashedPassword = await bcrypt.hash(password, salt)
     await db.query(sql`
       INSERT INTO users (
         email,
@@ -1242,7 +1244,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       )
       VALUES (
         ${oldEmail},
-        ${hashedOldPassword},
+        ${hashedPassword},
         true
       );
     `)
@@ -1251,6 +1253,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
         FROM users
         WHERE email = ${oldEmail}
     `))[0].id
+
     const token = jwt.sign(
       {is: 'EmailChangeToken', oldEmail, newEmail},
       JWT_SECRET_KEY,
@@ -1266,6 +1269,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     const decodedAuthToken = decode<UserInfoOnAuthToken>(authToken, JWT_SECRET_KEY)
     expect(decodedAuthToken.is).toBe('AuthToken')
     expect(decodedAuthToken.email).toBe(newEmail)
+    // Make sure email is updated.
     const result = await db.query(sql`
       SELECT email
         FROM users
@@ -1352,43 +1356,329 @@ describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
 
 describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
   test('returns 400 if request does not have token and password', async () => {
+    const resForUndefined = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
+      .send()
+    expect(resForUndefined.status).toBe(400)
+    expect(resForUndefined.body.message).toBe('Missing token or password.')
 
+    const resForEmptyObject = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
+      .send({})
+    expect(resForEmptyObject.status).toBe(400)
+    expect(resForEmptyObject.body.message).toBe('Missing token or password.')
   })
 
   test('returns 400 if request does not have token', async () => {
-
+    const password = 'password'
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
+      .send({password})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Missing token or password.')
   })
 
-  test('returns 400 if request does not have password', async () => {
+  test('returns 400 without updating password if request does not have password', async () => {
+    const email = 'test@email.com'
+    const oldPassword = 'oldPassword'
+    const salt = await bcrypt.genSalt(10)
+    const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedOldPassword},
+        true
+      );
+    `)
+    const id = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${email}
+    `))[0].id
 
+    const token = jwt.sign(
+      {is: 'ResetPasswordToken', email},
+      JWT_SECRET_KEY,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
+      .send({token})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Missing token or password.')
+    // Make sure password is not updated.
+    const result = await db.query(sql`
+      SELECT password
+        FROM users
+        WHERE id = ${id};
+    `)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    expect(isOriginalPassword).toBe(true)
   })
 
-  test('returns 400 if token is invalid', async () => {
+  test('returns 400 without updating password if token is invalid', async () => {
+    const email = 'test@email.com'
+    const oldPassword = 'oldPassword'
+    const newPassword = 'newPassword'
+    const salt = await bcrypt.genSalt(10)
+    const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedOldPassword},
+        true
+      );
+    `)
+    const id = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${email}
+    `))[0].id
 
+    const token = jwt.sign(
+      {is: 'ResetPasswordToken', email},
+      JWT_SECRET_KEY,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
+      .send({token: `${token}1`, password: newPassword})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Invalid token.')
+    // Make sure password is not updated.
+    const result = await db.query(sql`
+      SELECT password
+        FROM users
+        WHERE id = ${id};
+    `)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    expect(isOriginalPassword).toBe(true)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    expect(isUpdatedPassword).toBe(false)
   })
 
-  test('returns 400 if token is encoded with incorrect secret', async () => {
+  test('returns 400 without updating password if token is encoded with incorrect secret', async () => {
+    const email = 'test@email.com'
+    const oldPassword = 'oldPassword'
+    const newPassword = 'newPassword'
+    const salt = await bcrypt.genSalt(10)
+    const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedOldPassword},
+        true
+      );
+    `)
+    const id = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${email}
+    `))[0].id
 
+    const token = jwt.sign(
+      {is: 'ResetPasswordToken', email},
+      `${JWT_SECRET_KEY}1`,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
+      .send({token, password: newPassword})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Invalid token.')
+    // Make sure password is not updated.
+    const result = await db.query(sql`
+      SELECT password
+        FROM users
+        WHERE id = ${id};
+    `)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    expect(isOriginalPassword).toBe(true)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    expect(isUpdatedPassword).toBe(false)
   })
 
-  test('returns 400 if token is not ResetPasswordToken', async () => {
+  test('returns 400 without updating password if token is not ResetPasswordToken', async () => {
+    const email = 'test@email.com'
+    const oldPassword = 'oldPassword'
+    const newPassword = 'newPassword'
+    const salt = await bcrypt.genSalt(10)
+    const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedOldPassword},
+        true
+      );
+    `)
+    const id = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${email}
+    `))[0].id
 
+    const token = jwt.sign(
+      {is: 'SignupToken', email},
+      JWT_SECRET_KEY,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
+      .send({token, password: newPassword})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Invalid token.')
+    // Make sure password is not updated.
+    const result = await db.query(sql`
+      SELECT password
+        FROM users
+        WHERE id = ${id};
+    `)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    expect(isOriginalPassword).toBe(true)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    expect(isUpdatedPassword).toBe(false)
   })
 
   test('returns 400 if token does not have email', async () => {
-
+    const newPassword = 'newPassword'
+    const token = jwt.sign(
+      {is: 'SignupToken'},
+      JWT_SECRET_KEY,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
+      .send({token, password: newPassword})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Invalid token.')
   })
 
   test('returns 400 if user with email on token does not exist', async () => {
+    const email = 'test@email.com'
+    const newPassword = 'newPassword'
 
+    const token = jwt.sign(
+      {is: 'ResetPasswordToken', email},
+      JWT_SECRET_KEY,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
+      .send({token, password: newPassword})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe(`User with email: ${email} does not exist.`)
   })
 
-  test('returns 400 if user with email on token is not activated', async () => {
+  test('returns 400 without updating password if user with email on token is not activated', async () => {
+    const email = 'test@email.com'
+    const oldPassword = 'oldPassword'
+    const newPassword = 'newPassword'
+    const salt = await bcrypt.genSalt(10)
+    const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedOldPassword},
+        false
+      );
+    `)
+    const id = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${email}
+    `))[0].id
 
+    const token = jwt.sign(
+      {is: 'ResetPasswordToken', email},
+      JWT_SECRET_KEY,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
+      .send({token, password: newPassword})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe(`User with email ${email} is not activated yet. Please activate then retry.`)
+    // Make sure password is not updated.
+    const result = await db.query(sql`
+      SELECT password
+        FROM users
+        WHERE id = ${id};
+    `)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    expect(isOriginalPassword).toBe(true)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    expect(isUpdatedPassword).toBe(false)
   })
 
   test('updates password and returns valid token if there is no problem', async () => {
+    const email = 'test@email.com'
+    const oldPassword = 'oldPassword'
+    const newPassword = 'newPassword'
+    const salt = await bcrypt.genSalt(10)
+    const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedOldPassword},
+        true
+      );
+    `)
+    const id = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${email}
+    `))[0].id
 
+    const token = jwt.sign(
+      {is: 'ResetPasswordToken', email},
+      JWT_SECRET_KEY,
+      {expiresIn: '30m'}
+    )
+    const res = await request(apiApp)
+      .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
+      .send({token, password: newPassword})
+    expect(res.status).toBe(200)
+    expect(res.body.message).toBe('Password reset successful.')
+    // Make sure password is updated.
+    const result = await db.query(sql`
+      SELECT password
+        FROM users
+        WHERE id = ${id};
+    `)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    expect(isOriginalPassword).toBe(false)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    expect(isUpdatedPassword).toBe(true)
   })
 })
 
