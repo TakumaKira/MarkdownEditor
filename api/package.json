@@ -39,6 +39,7 @@
     "nodemon": "^2.0.19",
     "supertest": "^6.3.1",
     "ts-jest": "^29.0.3",
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.1",
+    "socket.io-client": "^4.5.1"
   }
 }

@@ -2,13 +2,13 @@ import request from 'supertest'
 import { API_PATHS } from '../../src/constants'
 import getConnectionPool, { ConnectionPool, sql } from '../../src/db/database'
 import apiApp, { wsServer } from '../../src/servers/api'
-import { JWT_SECRET_KEY, mailServer } from '../../src/getEnvs'
+import { JWT_SECRET_KEY, mailServer, WS_PORT } from '../../src/getEnvs'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import decode from '../../src/helper/decode'
 import { UserInfoOnAuthToken } from '../../src/models/user'
 import { v4 as uuidv4 } from 'uuid'
-import { ResultSetHeader } from 'mysql2'
+import { io } from 'socket.io-client'
 
 jest.mock('../../src/getEnvs', () => ({
   ...jest.requireActual('../../src/getEnvs'),
@@ -24,6 +24,7 @@ beforeAll(() => {
   db = getConnectionPool()
 })
 afterAll(() => {
+  wsServer.close()
   return db.dispose()
 })
 
@@ -34,7 +35,6 @@ beforeEach(() => {
   `)
 })
 afterEach(() => {
-  wsServer.close()
 })
 
 describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
@@ -1951,5 +1951,123 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
 })
 
 describe('WebSocket', () => {
-  // TODO: Test if authWsMiddleware is working.
+  test('emits connect_error when no AuthToken is provided', done => {
+    const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false})
+    clientSocket.on('connect_error', err => {
+      expect(err instanceof Error).toBe(true)
+      expect(err.message).toBe('Access denied. Request does not have valid token.')
+      clientSocket.close()
+      done()
+    })
+    clientSocket.connect()
+  })
+
+  test('emits connect_error when invalid AuthToken is provided', done => {
+    const validAuthToken = jwt.sign(
+      {is: 'AuthToken', id: 1, email: 'test@email.com'},
+      JWT_SECRET_KEY
+    )
+    const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: `${validAuthToken}1`}})
+    clientSocket.on('connect_error', err => {
+      expect(err instanceof Error).toBe(true)
+      expect(err.message).toBe('Access denied. Request does not have valid token.')
+      clientSocket.close()
+      done()
+    })
+    clientSocket.connect()
+  })
+
+  test('emits connect_error when AuthToken is provided with incorrect secret', done => {
+    const invalidAuthToken = jwt.sign(
+      {is: 'AuthToken', id: 1, email: 'test@email.com'},
+      `${JWT_SECRET_KEY}1`
+    )
+    const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: invalidAuthToken}})
+    clientSocket.on('connect_error', err => {
+      expect(err instanceof Error).toBe(true)
+      expect(err.message).toBe('Access denied. Request does not have valid token.')
+      clientSocket.close()
+      done()
+    })
+    clientSocket.connect()
+  })
+
+  test('emits connect_error when provided token is not AuthToken', done => {
+    const notAuthToken = jwt.sign(
+      {is: 'SignupToken', id: 1, email: 'test@email.com'},
+      JWT_SECRET_KEY
+    )
+    const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: notAuthToken}})
+    clientSocket.on('connect_error', err => {
+      expect(err instanceof Error).toBe(true)
+      expect(err.message).toBe('Access denied. Request does not have valid token.')
+      clientSocket.close()
+      done()
+    })
+    clientSocket.connect()
+  })
+
+  test('cannot get message if client did not provide valid AuthToken', done => {
+    const testFn = jest.fn()
+    const userId = 1
+    const invalidAuthToken = jwt.sign(
+      {is: 'AuthToken', id: userId, email: 'test@email.com'},
+      `${JWT_SECRET_KEY}1`
+    )
+    const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: invalidAuthToken}})
+    const message = 'test message'
+    clientSocket.on('test', arg => testFn(arg))
+    clientSocket.connect()
+    setTimeout(() => {
+      wsServer.to(userId.toString()).emit('test', message)
+      setTimeout(() => {
+        expect(testFn).not.toBeCalled()
+        clientSocket.close()
+        done()
+      }, 100)
+    }, 100)
+  })
+
+  test('cannot get message if the message emitted to another user', done => {
+    const testFn = jest.fn()
+    const userId = 1
+    const anotherUserId = 2
+    const validAuthToken = jwt.sign(
+      {is: 'AuthToken', id: userId, email: 'test@email.com'},
+      JWT_SECRET_KEY
+    )
+    const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: validAuthToken}})
+    const message = 'test message'
+    clientSocket.on('test', arg => testFn(arg))
+    clientSocket.connect()
+    setTimeout(() => {
+      wsServer.to(anotherUserId.toString()).emit('test', message)
+      setTimeout(() => {
+        expect(testFn).not.toBeCalled()
+        clientSocket.close()
+        done()
+      }, 100)
+    }, 100)
+  })
+
+  test('gets message if the message emitted to the user', done => {
+    const testFn = jest.fn()
+    const userId = 1
+    const validAuthToken = jwt.sign(
+      {is: 'AuthToken', id: userId, email: 'test@email.com'},
+      JWT_SECRET_KEY
+    )
+    const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: validAuthToken}})
+    const message = 'test message'
+    clientSocket.on('test', arg => testFn(arg))
+    clientSocket.connect()
+    setTimeout(() => {
+      wsServer.to(userId.toString()).emit('test', message)
+      setTimeout(() => {
+        expect(testFn).toBeCalledWith(message)
+        clientSocket.close()
+        done()
+      }, 100)
+    }, 100)
+  })
 })

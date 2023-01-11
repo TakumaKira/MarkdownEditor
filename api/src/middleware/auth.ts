@@ -39,4 +39,3 @@ const authWsMiddleware = (socket: Socket, next: (err?: ExtendedError) => void): 
   }
 }
 export { authApiMiddleware, authWsMiddleware };
-
