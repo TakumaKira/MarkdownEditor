@@ -7,7 +7,7 @@ import getConnection from '../db/getConnection'
 import getConfirmationEmail from '../emailTemplates'
 import { JWT_SECRET_KEY, mailServer } from '../getEnvs'
 import decode from '../helper/decode'
-import { authApiMiddleware } from '../middleware/auth'
+import { authApiMiddleware } from '../middlewares/auth'
 import { UserInfoOnDB } from '../models/user'
 
 const authApiRouter = Router()

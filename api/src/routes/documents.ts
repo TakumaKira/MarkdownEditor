@@ -2,20 +2,21 @@ import { Router } from 'express'
 import { RowDataPacket } from 'mysql2/promise'
 import { v4 as uuidv4 } from 'uuid'
 import getConnection from '../db/getConnection'
-import { authApiMiddleware } from '../middleware/auth'
-import { Document, DocumentFromDB, DocumentsRequest, DocumentsUploadResponse } from '../models/document'
+import { authApiMiddleware } from '../middlewares/auth'
+import { documentsRequestValidatorMiddleware } from '../middlewares/validator'
+import { Document, DocumentFromDB, DocumentsUploadResponse } from '../models/document'
 import { wsServer } from '../servers/api'
 
 const documentsRouter = Router()
 
-documentsRouter.post('/', authApiMiddleware, async (req, res) => {
+documentsRouter.post('/', authApiMiddleware, documentsRequestValidatorMiddleware, async (req, res) => {
   try {
-    const requestBody: DocumentsRequest = req.body
-    // TODO: Validate request data do not have extra property, especially "isUploaded".
-    const updateFromDevice = requestBody.updated
+    const { documentsRequest } = req
+
+    const updateFromDevice = documentsRequest.updated
 
     const connection = await getConnection()
-    let after: string | null = requestBody.latestUpdatedDocumentFromDBAt ? fromISOStringToTimeStamp(requestBody.latestUpdatedDocumentFromDBAt) : null
+    let after: string | null = documentsRequest.latestUpdatedDocumentFromDBAt ? fromISOStringToTimeStamp(documentsRequest.latestUpdatedDocumentFromDBAt) : null
     after = after ? `"${after}"` : null
     const [rows, fields] = await connection.execute<RowDataPacket[][]>(`
       CALL get_documents('${req.user.id}', ${after ?? 'NULL'});
