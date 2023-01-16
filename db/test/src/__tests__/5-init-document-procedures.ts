@@ -364,6 +364,224 @@ describe('update_document', () => {
       is_deleted: 1
     })
   })
+
+  test('inserts a new document if the name is not too long', async () => {
+    const newDocumentId = uuidv4()
+    const lessThanTooLongName = "a".repeat(50)
+    // TESTED PROCEDURE/EXPECTED RESULT
+    await expect(async () => await expect(db.query(sql`
+      CALL update_document(
+        ${newDocumentId},
+        ${user1Id},
+        ${lessThanTooLongName},
+        "This is a new document.",
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+        false
+      );
+    `))).not.toThrow()
+    const result = (await db.query(sql`
+      SELECT name
+        FROM documents
+        WHERE id = ${newDocumentId};
+    `))
+    expect(result).toEqual([{name: lessThanTooLongName}])
+  })
+
+  test('returns error and does not insert new document if the name is too long', async () => {
+    const newDocumentId = uuidv4()
+    const tooLongName = "a".repeat(51)
+    // TESTED PROCEDURE
+    try {
+      await db.query(sql`
+        CALL update_document(
+          ${newDocumentId},
+          ${user1Id},
+          ${tooLongName},
+          "This is a new document.",
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+          false
+        );
+      `)
+    } catch (e) {
+      // EXPECTED RESULT
+      expect(e.code).toBe('ER_DATA_TOO_LONG')
+      expect(e.errno).toBe(1406)
+      expect(e.sqlState).toBe('22001')
+      expect(e.sqlMessage).toBe("Data too long for column 'p_name' at row 1")
+      expect(e.message).toBe("Data too long for column 'p_name' at row 1")
+    }
+    const result = (await db.query(sql`
+      SELECT name
+        FROM documents
+        WHERE id = ${newDocumentId};
+    `))
+    expect(result).toEqual([])
+  })
+
+  test('inserts a new document if the content is not too long', async () => {
+    const newDocumentId = uuidv4()
+    const lessThanTooLongContent = "a".repeat(20000)
+    // TESTED PROCEDURE/EXPECTED RESULT
+    await expect(async () => await expect(db.query(sql`
+      CALL update_document(
+        ${newDocumentId},
+        ${user1Id},
+        "New document",
+        ${lessThanTooLongContent},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+        false
+      );
+    `))).not.toThrow()
+    await new Promise(resolve => setTimeout(resolve, 100))
+    const result = (await db.query(sql`
+      SELECT content
+        FROM documents
+        WHERE id = ${newDocumentId};
+    `))
+    expect(result).toEqual([{content: lessThanTooLongContent}])
+  })
+
+  test('returns error and does not insert new document if the content is too long', async () => {
+    const newDocumentId = uuidv4()
+    const tooLongContent = "a".repeat(20001)
+    // TESTED PROCEDURE
+    try {
+      await db.query(sql`
+        CALL update_document(
+          ${newDocumentId},
+          ${user1Id},
+          "New document",
+          ${tooLongContent},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+          false
+        );
+      `)
+    } catch (e) {
+      // EXPECTED RESULT
+      expect(e.code).toBe('ER_DATA_TOO_LONG')
+      expect(e.errno).toBe(1406)
+      expect(e.sqlState).toBe('22001')
+      expect(e.sqlMessage).toBe("Data too long for column 'p_content' at row 1")
+      expect(e.message).toBe("Data too long for column 'p_content' at row 1")
+    }
+    const result = (await db.query(sql`
+      SELECT content
+        FROM documents
+        WHERE id = ${newDocumentId};
+    `))
+    expect(result).toEqual([])
+  })
+
+  test('updates document if the name is not too long', async () => {
+    const lessThanTooLongName = "a".repeat(50)
+    // TESTED PROCEDURE/EXPECTED RESULT
+    await expect(async () => await expect(db.query(sql`
+      CALL update_document(
+        ${user1Document1.id},
+        ${user1Id},
+        ${lessThanTooLongName},
+        "This is a new document.",
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+        false
+      );
+    `))).not.toThrow()
+    const result = (await db.query(sql`
+      SELECT name
+        FROM documents
+        WHERE id = ${user1Document1.id};
+    `))
+    expect(result).toEqual([{name: lessThanTooLongName}])
+  })
+
+  test('returns error and does not update document if the name is too long', async () => {
+    const tooLongName = "a".repeat(51)
+    // TESTED PROCEDURE
+    try {
+      await db.query(sql`
+        CALL update_document(
+          ${user1Document1.id},
+          ${user1Id},
+          ${tooLongName},
+          "This is a new document.",
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+          false
+        );
+      `)
+    } catch (e) {
+      // EXPECTED RESULT
+      expect(e.code).toBe('ER_DATA_TOO_LONG')
+      expect(e.errno).toBe(1406)
+      expect(e.sqlState).toBe('22001')
+      expect(e.sqlMessage).toBe("Data too long for column 'p_name' at row 1")
+      expect(e.message).toBe("Data too long for column 'p_name' at row 1")
+    }
+    const result = (await db.query(sql`
+      SELECT name
+        FROM documents
+        WHERE id = ${user1Document1.id};
+    `))
+    expect(result).toEqual([{name: user1Document1.name}])
+  })
+
+  test('updates document if the content is not too long', async () => {
+    const lessThanTooLongContent = "a".repeat(20000)
+    // TESTED PROCEDURE/EXPECTED RESULT
+    await expect(async () => await expect(db.query(sql`
+      CALL update_document(
+        ${user1Document1.id},
+        ${user1Id},
+        "New document",
+        ${lessThanTooLongContent},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+        false
+      );
+    `))).not.toThrow()
+    await new Promise(resolve => setTimeout(resolve, 100))
+    const result = (await db.query(sql`
+      SELECT content
+        FROM documents
+        WHERE id = ${user1Document1.id};
+    `))
+    expect(result).toEqual([{content: lessThanTooLongContent}])
+  })
+
+  test('returns error and does not update document if the content is too long', async () => {
+    const tooLongContent = "a".repeat(20001)
+    // TESTED PROCEDURE
+    try {
+      await db.query(sql`
+        CALL update_document(
+          ${user1Document1.id},
+          ${user1Id},
+          "New document",
+          ${tooLongContent},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+          false
+        );
+      `)
+    } catch (e) {
+      // EXPECTED RESULT
+      expect(e.code).toBe('ER_DATA_TOO_LONG')
+      expect(e.errno).toBe(1406)
+      expect(e.sqlState).toBe('22001')
+      expect(e.sqlMessage).toBe("Data too long for column 'p_content' at row 1")
+      expect(e.message).toBe("Data too long for column 'p_content' at row 1")
+    }
+    const result = (await db.query(sql`
+      SELECT content
+        FROM documents
+        WHERE id = ${user1Document1.id};
+    `))
+    expect(result).toEqual([{content: user1Document1.content}])
+  })
 })
 
 describe('get_latest_update_time', () => {

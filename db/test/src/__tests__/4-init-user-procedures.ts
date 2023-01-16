@@ -76,7 +76,7 @@ describe('create_user', () => {
     // TESTED PROCEDURE/EXPECTED RESULT
     await expect(db.query(sql`
       CALL create_user(${email}, ${password});
-    `)).rejects.toEqual(new Error('Activated user already exists.'))
+    `)).rejects.toEqual(new Error('Activated user with given email already exists.'))
   })
 })
 
