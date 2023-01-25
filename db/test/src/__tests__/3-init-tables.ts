@@ -92,7 +92,7 @@ test('documents table has expected columns', async () => {
       "Extra": "",
       "Field": "created_at",
       "Key": "",
-      "Null": "YES",
+      "Null": "NO",
       "Type": "datetime",
     },
     {

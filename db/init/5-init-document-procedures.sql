@@ -6,6 +6,7 @@
 -- SIGNAL SQLSTATE '45013' SET MESSAGE_TEXT = "User already activated.";
 -- Document errors
 -- SIGNAL SQLSTATE '45021' SET MESSAGE_TEXT = "Another user's document is using the same id.";
+-- SIGNAL SQLSTATE '45022' SET MESSAGE_TEXT = "Another document of this user is using the same id.";
 
 USE markdown_editor;
 
@@ -56,7 +57,12 @@ BEGIN
 			WHERE id = p_id
 	) != p_user_id THEN
 		SIGNAL SQLSTATE '45021' SET MESSAGE_TEXT = "Another user's document is using the same id.";
-			-- TODO: What if this happens?
+	ELSEIF (
+		SELECT created_at
+			FROM documents
+			WHERE id = p_id
+	) != p_created_at THEN
+		SIGNAL SQLSTATE '45022' SET MESSAGE_TEXT = "Another document of this user is using the same id.";
 	ELSE
 		INSERT INTO documents (
 			id,
@@ -79,7 +85,6 @@ BEGIN
 		ON DUPLICATE KEY UPDATE
 			name = IF(new_document.is_deleted = FALSE, new_document.name, NULL),
 			content = IF(new_document.is_deleted = FALSE, new_document.content, NULL),
-			created_at = IF(new_document.is_deleted = FALSE, new_document.created_at, NULL),
 			updated_at = new_document.updated_at,
 			is_deleted = new_document.is_deleted;
 	END IF;

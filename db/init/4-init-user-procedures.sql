@@ -6,6 +6,7 @@
 -- SIGNAL SQLSTATE '45013' SET MESSAGE_TEXT = "User already activated.";
 -- Document errors
 -- SIGNAL SQLSTATE '45021' SET MESSAGE_TEXT = "Another user's document is using the same id.";
+-- SIGNAL SQLSTATE '45022' SET MESSAGE_TEXT = "Another document of this user is using the same id.";
 
 USE markdown_editor;
 

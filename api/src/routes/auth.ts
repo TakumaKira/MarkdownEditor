@@ -1,25 +1,33 @@
 import bcrypt from 'bcrypt'
 import { Router } from 'express'
-import jwt, { TokenExpiredError } from 'jsonwebtoken'
+import { TokenExpiredError } from 'jsonwebtoken'
 import { RowDataPacket } from 'mysql2/promise'
-import { API_PATHS } from '../constants'
+import { API_PATHS, EMAIL_LENGTH_MAX, MIN_PASSWORD_LENGTH } from '../constants'
 import getConnection from '../db/getConnection'
 import getConfirmationEmail from '../emailTemplates'
 import { JWT_SECRET_KEY, mailServer } from '../getEnvs'
 import decode from '../helper/decode'
-import { authApiMiddleware } from '../middlewares/auth'
+import { generateEmailConfirmationToken, generateAuthToken, generateEmailChangeToken } from '../helper/encode'
+import { apiAuthMiddleware } from '../middlewares/auth'
 import { UserInfoOnDB } from '../models/user'
+import Joi from 'joi'
 
 const authApiRouter = Router()
 
 // TODO: If something went wrong on the process, operation should be reverted.
 
+const emailSchema = Joi.string().email().max(EMAIL_LENGTH_MAX)
+const passwordSchema = Joi.string().min(MIN_PASSWORD_LENGTH)
+const signupRequestSchema = Joi.object<{email: string, password: string}>({
+  email: emailSchema.required(),
+  password: passwordSchema.required(),
+})
 authApiRouter.post(API_PATHS.AUTH.SIGNUP.dir, async (req, res, next) => {
-  const {email, password} = req.body as {email?: string, password?: string}
-  if (!email || !password) {
-    // TODO: Define res type.
-    return res.status(400).send({message: 'Missing email or password.'})
+  const result = signupRequestSchema.validate(req.body)
+  if (result.error) {
+    return res.status(400).send({message: result.error.message})
   }
+  const {email, password} = result.value
 
   const salt = await bcrypt.genSalt(10)
   const hashedPassword = await bcrypt.hash(password, salt)
@@ -49,11 +57,15 @@ authApiRouter.post(API_PATHS.AUTH.SIGNUP.dir, async (req, res, next) => {
   }
 })
 
+const confirmSignupEmailRequestSchema = Joi.object<{token: string}>({
+  token: Joi.string().required(),
+})
 authApiRouter.post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir, async (req, res, next) => {
-  const token = (req.body as {token?: string} | undefined)?.token
-  if (!token) {
-    return res.status(400).send({message: 'Missing token.'})
+  const result = confirmSignupEmailRequestSchema.validate(req.body)
+  if (result.error) {
+    return res.status(400).send({message: result.error.message})
   }
+  const {token} = result.value
 
   try {
     var {is, email} = decode<{is?: string, email?: string}>(token, JWT_SECRET_KEY)
@@ -76,7 +88,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir, async (req, res, nex
     if (!is_activated) {
       throw new Error(`User with email ${email} is not activated successfully. Please try again.`)
     }
-    const token = generateAuthToken(id, email)
+    const token = await generateAuthToken(id, email)
     return res.send({message: 'Confirmation successful.', token})
   } catch (error: any) {
     if (error?.sqlState === '45011') {
@@ -90,11 +102,16 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir, async (req, res, nex
   }
 })
 
+const loginRequestSchema = Joi.object<{email: string, password: string}>({
+  email: emailSchema.required(),
+  password: passwordSchema.required(),
+})
 authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
-  const {email, password} = req.body as {email?: string, password?: string}
-  if (!email || !password) {
-    return res.status(400).send({message: 'Missing email or password.'})
+  const result = loginRequestSchema.validate(req.body)
+  if (result.error) {
+    return res.status(400).send({message: result.error.message})
   }
+  const {email, password} = result.value
 
   try {
     const connection = await getConnection()
@@ -102,7 +119,7 @@ authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
       CALL get_user('${email}');
     `)
 
-    const user = rows[0][0] as unknown as UserInfoOnDB
+    const user = rows[0][0] as unknown as (UserInfoOnDB | undefined)
     if (!user) return res.status(400).send({message: 'Email/Password is incorrect.'})
 
     if (!user.is_activated) return res.status(400).send({message: 'This user is not activated.'})
@@ -110,7 +127,7 @@ authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
     const isValidPassword = await bcrypt.compare(password, user.password)
     if (!isValidPassword) return res.status(400).send({message: 'Email/Password is incorrect.'})
 
-    const token = generateAuthToken(user.id, user.email)
+    const token = await generateAuthToken(user.id, user.email)
     res.send({message: 'Login successful.', token})
   } catch (error) {
     console.error(error)
@@ -118,12 +135,17 @@ authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
   }
 })
 
-authApiRouter.post(API_PATHS.AUTH.EDIT.dir, authApiMiddleware, async (req, res, next) => {
-  const {email: newEmail, password: newPassword} = req.body as {email?: string, password?: string}
-  const {user: {id, email: oldEmail}} = req
-  if (!newEmail && !newPassword) {
-    return res.status(400).send({message: 'Missing both email and password.'})
+const editRequestSchema = Joi.object<{email?: string, password?: string}>({
+  email: emailSchema,
+  password: passwordSchema,
+}).min(1)
+authApiRouter.post(API_PATHS.AUTH.EDIT.dir, apiAuthMiddleware, async (req, res, next) => {
+  const result = editRequestSchema.validate(req.body)
+  if (result.error) {
+    return res.status(400).send({message: result.error.message})
   }
+  const {email: newEmail, password: newPassword} = result.value
+  const {user: {id, email: oldEmail}} = req
 
   try {
     if (newPassword) {
@@ -153,11 +175,16 @@ authApiRouter.post(API_PATHS.AUTH.EDIT.dir, authApiMiddleware, async (req, res, 
   }
 })
 
+const confirmChangeEmailRequestSchema = Joi.object<{token: string, password: string}>({
+  token: Joi.string().required(),
+  password: passwordSchema.required(),
+})
 authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, next) => {
-  const {token, password} = req.body as {token?: string, password?: string}
-  if (!token || !password) {
-    return res.status(400).send({message: 'Missing token or password.'})
+  const result = confirmChangeEmailRequestSchema.validate(req.body)
+  if (result.error) {
+    return res.status(400).send({message: result.error.message})
   }
+  const {token, password} = result.value
 
   try {
     var {is ,oldEmail, newEmail} = decode<{is?: string, oldEmail?: string, newEmail?: string}>(token, JWT_SECRET_KEY)
@@ -202,7 +229,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
         NULL
       );
     `)
-    const token = generateAuthToken(user.id, newEmail)
+    const token = await generateAuthToken(user.id, newEmail)
     return res.send({message: 'Email change successful.', token})
   } catch (e) {
     console.error(e)
@@ -210,11 +237,15 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
   }
 })
 
+const resetPasswordRequestSchema = Joi.object<{email: string}>({
+  email: emailSchema.required(),
+})
 authApiRouter.post(API_PATHS.AUTH.RESET_PASSWORD.dir, async (req, res, next) => {
-  const {email} = req.body as {email?: string}
-  if (!email) {
-    return res.status(400).send({message: 'Missing email.'})
+  const result = resetPasswordRequestSchema.validate(req.body)
+  if (result.error) {
+    return res.status(400).send({message: result.error.message})
   }
+  const {email} = result.value
 
   try {
     const connection = await getConnection()
@@ -237,11 +268,16 @@ authApiRouter.post(API_PATHS.AUTH.RESET_PASSWORD.dir, async (req, res, next) => 
   }
 })
 
+const confirmResetPasswordRequestSchema = Joi.object<{token: string, password: string}>({
+  token: Joi.string().required(),
+  password: passwordSchema.required(),
+})
 authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, next) => {
-  const {token, password} = req.body as {token?: string, password?: string}
-  if (!token || !password) {
-    return res.status(400).send({message: 'Missing token or password.'})
+  const result = confirmResetPasswordRequestSchema.validate(req.body)
+  if (result.error) {
+    return res.status(400).send({message: result.error.message})
   }
+  const {token, password} = result.value
 
   try {
     var {is, email} = decode<{is?: string, email?: string}>(token, JWT_SECRET_KEY)
@@ -283,7 +319,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, n
         '${hashedPassword}'
       );
     `)
-    const token = generateAuthToken(user.id, email)
+    const token = await generateAuthToken(user.id, email)
     return res.send({message: 'Password reset successful.', token})
   } catch (e) {
     console.error(e)
@@ -291,7 +327,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, n
   }
 })
 
-authApiRouter.post(API_PATHS.AUTH.DELETE.dir, authApiMiddleware, async (req, res, next) => {
+authApiRouter.post(API_PATHS.AUTH.DELETE.dir, apiAuthMiddleware, async (req, res, next) => {
   try {
     const connection = await getConnection()
     await connection.execute<RowDataPacket[][]>(`
@@ -320,26 +356,3 @@ export default authApiRouter
 // Token should be updated when payload changed.
 
 // If stored token is invalid, just ask login again.
-
-function generateEmailConfirmationToken(is: 'SignupToken' | 'ResetPasswordToken', email: string, options?: jwt.SignOptions): string {
-  return jwt.sign(
-    {is, email},
-    JWT_SECRET_KEY,
-    options
-  )
-}
-
-function generateAuthToken(id: number, email: string): string {
-  return jwt.sign(
-    {is: 'AuthToken', id, email},
-    JWT_SECRET_KEY
-  )
-}
-
-function generateEmailChangeToken(oldEmail: string, newEmail: string, options?: jwt.SignOptions): string {
-  return jwt.sign(
-    {is: 'EmailChangeToken', oldEmail, newEmail},
-    JWT_SECRET_KEY,
-    options
-  )
-}

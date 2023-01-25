@@ -2,6 +2,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { ThunkMiddleware } from 'redux-thunk';
 import { RootState } from "..";
 import { AuthStateTypes } from '../../components/AuthModal';
+import { MIN_PASSWORD_LENGTH } from '../../constants';
 import { AuthStateConfirmChangeEmail, AuthStateConfirmResetPassword } from '../models/user';
 import { askServerConfirmChangeEmail, askServerConfirmResetPassword, askServerConfirmSignupEmail, askServerEdit, askServerLogin, askServerResetPassword, askServerSignup, callAuthModal, submitConfirmNewEmail, submitEdit, submitLogin, submitNewPassword, submitResetPassword, submitSignup, validationError } from '../slices/user';
 
@@ -107,6 +108,7 @@ export const authMiddleware: ThunkMiddleware<RootState, AnyAction> = store => ne
     }
   }
 }
+// TODO: Add email length max.
 function validate(args: {type: SubmitTypes.SIGNUP, params: Parameters<typeof validateSignup>[0]}): ReturnType<typeof validateSignup>
 function validate(args: {type: SubmitTypes.LOGIN, params: Parameters<typeof validateLogin>[0]}): ReturnType<typeof validateLogin>
 function validate(args: {type: SubmitTypes.EDIT, params: Parameters<typeof validateEdit>[0]}): ReturnType<typeof validateEdit>
@@ -141,7 +143,6 @@ function validate(args:
       return validateConfirmResetPassword(args.params)
   }
 }
-const MIN_PASSWORD_LENGTH = 8
 function validateSignup(params: {email: string, password: string, passwordConfirm: string}): {emailValidationErrorMessage: string | null, passwordValidationErrorMessage: string | null, passwordConfirmValidationErrorMessage: string | null} {
   const {email, password, passwordConfirm} = params
   const emailValidationErrorMessage = _validate('Email', email, {required: true, isEmail: true})

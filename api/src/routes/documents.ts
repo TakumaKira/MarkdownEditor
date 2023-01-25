@@ -1,15 +1,16 @@
 import { Router } from 'express'
 import { RowDataPacket } from 'mysql2/promise'
 import { v4 as uuidv4 } from 'uuid'
+import { DOCUMENT_UPDATED_WS_EVENT } from '../constants'
 import getConnection from '../db/getConnection'
-import { authApiMiddleware } from '../middlewares/auth'
+import { apiAuthMiddleware } from '../middlewares/auth'
 import { documentsRequestValidatorMiddleware } from '../middlewares/validator'
 import { Document, DocumentFromDB, DocumentsUploadResponse } from '../models/document'
 import { wsServer } from '../servers/api'
 
 const documentsRouter = Router()
 
-documentsRouter.post('/', authApiMiddleware, documentsRequestValidatorMiddleware, async (req, res) => {
+documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware, async (req, res) => {
   try {
     const { documentsRequest } = req
 
@@ -48,11 +49,13 @@ documentsRouter.post('/', authApiMiddleware, documentsRequestValidatorMiddleware
     const uploadedDocumentsIdWithoutConflict: string[] = []
 
     // Push to server.
+    let databaseIsUpdated = false
     for (const toDatabase of updateToDatabase) {
       const query = buildUpdateDocumentQuery(toDatabase, req.user.id)
       // TODO: Test that every document except the one causing an error will be updated.
       try {
         await connection.execute<RowDataPacket[][]>(query)
+        databaseIsUpdated = true
         if (!conflictedDocumentsId.includes(toDatabase.id)) {
           uploadedDocumentsIdWithoutConflict.push(toDatabase.id)
         }
@@ -69,16 +72,15 @@ documentsRouter.post('/', authApiMiddleware, documentsRequestValidatorMiddleware
 
     // If any error occurs, update time would not be updated, so it will be updated next time.
 
-    // If there's no update, do not send update notification.
-    if (updateToDevice.length === 0 && uploadedDocumentsIdWithoutConflict.length === 0) {
-      return
+    // If there's update to database, send update notification.
+    if (databaseIsUpdated) {
+      // Get user's latest update time from DB.
+      const [rows2, fields2] = await connection.execute<RowDataPacket[][]>(`
+        CALL get_latest_update_time('${req.user.id}');
+      `)
+      const latestUpdatedAt = (rows2[0][0].updated_at as Date).toISOString()
+      wsServer.to(req.user.id.toString()).emit(DOCUMENT_UPDATED_WS_EVENT, latestUpdatedAt)
     }
-    // Get user's latest update time from DB.
-    const [rows2, fields2] = await connection.execute<RowDataPacket[][]>(`
-      CALL get_latest_update_time('${req.user.id}');
-    `)
-    const latestUpdatedAt = (rows2[0][0].updated_at as Date).toISOString()
-    wsServer.to(req.user.id.toString()).emit('documents_updated', latestUpdatedAt)
   } catch (error) {
     console.error(error)
     res.status(500).send('Something went wrong.')
@@ -87,7 +89,7 @@ documentsRouter.post('/', authApiMiddleware, documentsRequestValidatorMiddleware
 
 export default documentsRouter
 
-function fromISOStringToTimeStamp(isoString: string): string {
+export function fromISOStringToTimeStamp(isoString: string): string {
   return isoString.slice(0, -5).replace('T', ' ')
 }
 
@@ -96,14 +98,14 @@ function escapeSingleQuote(string: string): string {
   return string.replace(/\'/g, '\'\'')
 }
 
-function normalize(document: DocumentFromDB): Document {
+export function normalize(document: DocumentFromDB): Document {
   return {
     id: document.id,
     name: document.name,
     content: document.content,
-    createdAt: document.created_at?.toISOString() ?? null,
+    createdAt: document.created_at.toISOString(),
     updatedAt: document.updated_at.toISOString(),
-    isDeleted: !!document.is_deleted
+    isDeleted: document.is_deleted === 1
   }
 }
 
@@ -115,7 +117,7 @@ function buildUpdateDocumentQuery(document: Document, userId: number) {
       ${userId},
       ${document.name !== null ? `'${document.name}'` : `NULL`},
       ${document.content !== null ? `'${escapeSingleQuote(document.content)}'` : `NULL`},
-      ${document.createdAt !== null ? `'${fromISOStringToTimeStamp(document.createdAt)}'` : `NULL`},
+      '${fromISOStringToTimeStamp(document.createdAt)}',
       '${fromISOStringToTimeStamp(document.updatedAt)}',
       ${document.isDeleted}
     );

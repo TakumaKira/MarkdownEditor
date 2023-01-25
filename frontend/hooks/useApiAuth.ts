@@ -1,5 +1,6 @@
 import React from "react"
 import { io, Socket } from 'socket.io-client'
+import { DOCUMENT_UPDATED_WS_EVENT } from "../constants"
 import env from '../env'
 import { setTokenToRequestHeader } from '../services/api'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
@@ -38,8 +39,8 @@ const useApiAuth = (): void => {
   }, [documentState, isLoggedIn])
 
   React.useEffect(() => {
-    socket?.on('documents_updated', documentsUpdated)
-    return () => {socket?.off('documents_updated', documentsUpdated)}
+    socket?.on(DOCUMENT_UPDATED_WS_EVENT, documentsUpdated)
+    return () => {socket?.off(DOCUMENT_UPDATED_WS_EVENT, documentsUpdated)}
   }, [socket, documentsUpdated])
 }
 export default useApiAuth

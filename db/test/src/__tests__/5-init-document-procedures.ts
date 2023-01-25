@@ -1,5 +1,6 @@
-import getConnectionPool, {sql, ConnectionPool} from '../database';
 import { v4 as uuidv4 } from 'uuid'
+import getConnectionPool, {sql, ConnectionPool} from '../database'
+import { DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT } from '../constants'
 
 let db: ConnectionPool
 
@@ -319,7 +320,7 @@ describe('update_document', () => {
     `)).rejects.toEqual(new Error('User does not exist.'))
   })
 
-  test('returns error if a document with given id exists but it has a user_id other than the given one', async () => {
+  test('returns error if a document with given id exists but it has user_id different from the given one', async () => {
     // TESTED PROCEDURE/EXPECTED RESULT
     await expect(db.query(sql`
       CALL update_document(
@@ -327,14 +328,31 @@ describe('update_document', () => {
         ${user2Document1.user_id},
         "New document",
         "This is a new document.",
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+        ${user1Document1.created_at},
         ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
         false
       );
     `)).rejects.toEqual(new Error("Another user's document is using the same id."))
   })
 
-  test('sets null to every column other than updated_at if given is_deleted is true', async () => {
+  test('returns error if a document with given id exists but it has created_at different from the given one', async () => {
+    const newCreatedAt = buildDatetimeStrForTest(new Date("2001-01-03T01:00:00.000Z"))
+    expect(newCreatedAt).not.toBe(user1Document1.created_at)
+    // TESTED PROCEDURE/EXPECTED RESULT
+    await expect(db.query(sql`
+      CALL update_document(
+        ${user1Document1.id},
+        ${user1Document1.user_id},
+        "New document",
+        "This is a new document.",
+        ${newCreatedAt},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+        false
+      );
+    `)).rejects.toEqual(new Error("Another document of this user is using the same id."))
+  })
+
+  test('sets null to every column other than created_at and updated_at if given is_deleted is true', async () => {
     const updatedAt = new Date("2000-01-03T01:00:00.000Z")
     // TESTED PROCEDURE
     await db.query(sql`
@@ -359,7 +377,7 @@ describe('update_document', () => {
       user_id: user1Document1.user_id,
       name: null,
       content: null,
-      created_at: null,
+      created_at: user1Document1.created_at,
       updated_at: updatedAt,
       is_deleted: 1
     })
@@ -477,7 +495,7 @@ describe('update_document', () => {
   })
 
   test('updates document if the name is not too long', async () => {
-    const lessThanTooLongName = "a".repeat(50)
+    const lessThanTooLongName = "a".repeat(DOCUMENT_NAME_LENGTH_LIMIT)
     // TESTED PROCEDURE/EXPECTED RESULT
     await expect(async () => await expect(db.query(sql`
       CALL update_document(
@@ -485,7 +503,7 @@ describe('update_document', () => {
         ${user1Id},
         ${lessThanTooLongName},
         "This is a new document.",
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+        ${user1Document1.created_at},
         ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
         false
       );
@@ -499,7 +517,7 @@ describe('update_document', () => {
   })
 
   test('returns error and does not update document if the name is too long', async () => {
-    const tooLongName = "a".repeat(51)
+    const tooLongName = "a".repeat(DOCUMENT_NAME_LENGTH_LIMIT + 1)
     // TESTED PROCEDURE
     try {
       await db.query(sql`
@@ -530,7 +548,7 @@ describe('update_document', () => {
   })
 
   test('updates document if the content is not too long', async () => {
-    const lessThanTooLongContent = "a".repeat(20000)
+    const lessThanTooLongContent = "a".repeat(DOCUMENT_CONTENT_LENGTH_LIMIT)
     // TESTED PROCEDURE/EXPECTED RESULT
     await expect(async () => await expect(db.query(sql`
       CALL update_document(
@@ -538,7 +556,7 @@ describe('update_document', () => {
         ${user1Id},
         "New document",
         ${lessThanTooLongContent},
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
+        ${user1Document1.created_at},
         ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
         false
       );
@@ -553,7 +571,7 @@ describe('update_document', () => {
   })
 
   test('returns error and does not update document if the content is too long', async () => {
-    const tooLongContent = "a".repeat(20001)
+    const tooLongContent = "a".repeat(DOCUMENT_CONTENT_LENGTH_LIMIT + 1)
     // TESTED PROCEDURE
     try {
       await db.query(sql`

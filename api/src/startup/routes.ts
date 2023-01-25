@@ -3,7 +3,7 @@ import express, { Express } from 'express'
 import { Server } from 'socket.io'
 import { API_PATHS } from '../constants'
 import { FRONTEND_PORT, FRONTEND_PROTOCOL } from '../getEnvs'
-import { authWsMiddleware } from '../middlewares/auth'
+import { wsAuthMiddleware } from '../middlewares/auth'
 import error from '../middlewares/error'
 import authApiRouter from '../routes/auth'
 import documentsRouter from '../routes/documents'
@@ -18,6 +18,6 @@ const apiRoutes = (expressApp: Express, frontendDomain: string) => {
   expressApp.use(error)
 }
 const wsRoutes = (wsServer: Server) => {
-  wsServer.use(authWsMiddleware)
+  wsServer.use(wsAuthMiddleware)
 }
 export { apiRoutes, wsRoutes }

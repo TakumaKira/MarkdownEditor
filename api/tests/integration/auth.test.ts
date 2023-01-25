@@ -1,5 +1,5 @@
 import request from 'supertest'
-import { API_PATHS } from '../../src/constants'
+import { API_PATHS, AUTH_TOKEN_KEY } from '../../src/constants'
 import getConnectionPool, { ConnectionPool, sql } from '../../src/db/database'
 import apiApp, { wsServer } from '../../src/servers/api'
 import { JWT_SECRET_KEY, mailServer, WS_PORT } from '../../src/getEnvs'
@@ -16,8 +16,6 @@ jest.mock('../../src/getEnvs', () => ({
     send: jest.fn()
   }
 }))
-
-// TODO: Update main script to use @database/mysql?
 
 let db: ConnectionPool
 beforeAll(() => {
@@ -37,6 +35,8 @@ beforeEach(() => {
 afterEach(() => {
 })
 
+// TODO: Update main script to use @database/mysql?
+
 describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
   test('returns 400 if email and password are not provided on request body', async () => {
     // Post and check response.
@@ -44,7 +44,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({})
     expect(res.status).toBe(400)
-    expect(res.body.message).toBe('Missing email or password.')
+    expect(res.body.message).toBe("\"email\" is required")
   })
 
   test('returns 400 if email is not provided on request body', async () => {
@@ -53,7 +53,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({password: 'password'})
     expect(res.status).toBe(400)
-    expect(res.body.message).toBe('Missing email or password.')
+    expect(res.body.message).toBe("\"email\" is required")
   })
 
   test('returns 400 if password is not provided on request body and new user does not be created', async () => {
@@ -63,7 +63,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({email})
     expect(res.status).toBe(400)
-    expect(res.body.message).toBe('Missing email or password.')
+    expect(res.body.message).toBe("\"password\" is required")
     // Make sure the user is not created.
     const result = await db.query(sql`
       SELECT *
@@ -171,13 +171,13 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
       .send()
     expect(resForUndefined.status).toBe(400)
-    expect(resForUndefined.body.message).toBe('Missing token.')
+    expect(resForUndefined.body.message).toBe("\"token\" is required")
 
     const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
       .send({})
     expect(resForEmptyObject.status).toBe(400)
-    expect(resForEmptyObject.body.message).toBe('Missing token.')
+    expect(resForEmptyObject.body.message).toBe("\"token\" is required")
   })
 
   test('returns 400 if token did not encoded with correct secret', async () => {
@@ -299,13 +299,13 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
       .post(API_PATHS.AUTH.LOGIN.path)
       .send()
     expect(resForUndefined.status).toBe(400)
-    expect(resForUndefined.body.message).toBe('Missing email or password.')
+    expect(resForUndefined.body.message).toBe("\"email\" is required")
 
     const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({})
     expect(resForEmptyObject.status).toBe(400)
-    expect(resForEmptyObject.body.message).toBe('Missing email or password.')
+    expect(resForEmptyObject.body.message).toBe("\"email\" is required")
   })
 
   test('returns 400 if email is not provided on request body', async () => {
@@ -313,7 +313,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({password: 'password'})
     expect(res.status).toBe(400)
-    expect(res.body.message).toBe('Missing email or password.')
+    expect(res.body.message).toBe("\"email\" is required")
   })
 
   test('returns 400 if password is not provided on request body', async () => {
@@ -321,7 +321,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({email: 'test@email.com'})
     expect(res.status).toBe(400)
-    expect(res.body.message).toBe('Missing email or password.')
+    expect(res.body.message).toBe("\"password\" is required")
   })
 
   test('returns 400 if user with given email does not exist', async () => {
@@ -416,6 +416,57 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
 })
 
 describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
+  test('returns 401 without updating email nor password if apiAuthMiddleware deny access', async () => {
+    const oldEmail = 'old@email.com'
+    const newEmail = 'new@email.com'
+    const oldPassword = 'oldPassword'
+    const newPassword = 'newPassword'
+    const salt = await bcrypt.genSalt(10)
+    const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
+    // Create activated user.
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${oldEmail},
+        ${hashedOldPassword},
+        true
+      );
+    `)
+    const id = (await db.query(sql`
+      SELECT id
+        FROM users
+        WHERE email = ${oldEmail};
+    `))[0].id
+
+    const resForNoSet = await request(apiApp)
+      .post(API_PATHS.AUTH.EDIT.path)
+      .send({ email: newEmail, password: newPassword })
+    expect(resForNoSet.status).toBe(401)
+    expect(resForNoSet.body.message).toBe('Access denied. Request does not have valid token.')
+
+    const resForEmptyString = await request(apiApp)
+      .post(API_PATHS.AUTH.EDIT.path)
+      .set({[AUTH_TOKEN_KEY]: ''})
+      .send({ email: newEmail, password: newPassword })
+    expect(resForEmptyString.status).toBe(401)
+    expect(resForEmptyString.body.message).toBe('Access denied. Request does not have valid token.')
+    // Make sure email and password is not updated.
+    const result = await db.query(sql`
+      SELECT email, password
+        FROM users
+        WHERE id = ${id};
+    `)
+    expect(result[0].email).toBe(oldEmail)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    expect(isOriginalPassword).toBe(true)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    expect(isUpdatedPassword).toBe(false)
+  })
+
   test('returns 401 without updating email nor password if no auth token provided', async () => {
     const oldEmail = 'old@email.com'
     const newEmail = 'new@email.com'
@@ -450,7 +501,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
 
     const resForEmptyString = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({'x-auth-token': ''})
+      .set({[AUTH_TOKEN_KEY]: ''})
       .send({ email: newEmail, password: newPassword })
     expect(resForEmptyString.status).toBe(401)
     expect(resForEmptyString.body.message).toBe('Access denied. Request does not have valid token.')
@@ -499,7 +550,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     )
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({'x-auth-token': `${validAuthToken}1`})
+      .set({[AUTH_TOKEN_KEY]: `${validAuthToken}1`})
       .send({ email: newEmail, password: newPassword })
     expect(res.status).toBe(401)
     expect(res.body.message).toBe('Access denied. Request does not have valid token.')
@@ -548,7 +599,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     )
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({'x-auth-token': tokenWithIncorrectSecret})
+      .set({[AUTH_TOKEN_KEY]: tokenWithIncorrectSecret})
       .send({ email: newEmail, password: newPassword })
     expect(res.status).toBe(401)
     expect(res.body.message).toBe('Access denied. Request does not have valid token.')
@@ -597,7 +648,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     )
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({'x-auth-token': nonAuthToken})
+      .set({[AUTH_TOKEN_KEY]: nonAuthToken})
       .send({ email: newEmail, password: newPassword })
     expect(res.status).toBe(401)
     expect(res.body.message).toBe('Access denied. Request does not have valid token.')
@@ -646,17 +697,17 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
 
     const resForUndefined = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({'x-auth-token': validAuthToken})
+      .set({[AUTH_TOKEN_KEY]: validAuthToken})
       .send()
     expect(resForUndefined.status).toBe(400)
-    expect(resForUndefined.body.message).toBe('Missing both email and password.')
+    expect(resForUndefined.body.message).toBe("\"value\" must have at least 1 key")
 
     const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({'x-auth-token': validAuthToken})
+      .set({[AUTH_TOKEN_KEY]: validAuthToken})
       .send({})
     expect(resForEmptyObject.status).toBe(400)
-    expect(resForEmptyObject.body.message).toBe('Missing both email and password.')
+    expect(resForEmptyObject.body.message).toBe("\"value\" must have at least 1 key")
     // Make sure email and password is not updated.
     const result = await db.query(sql`
       SELECT email, password
@@ -703,7 +754,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     )
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({'x-auth-token': validAuthToken})
+      .set({[AUTH_TOKEN_KEY]: validAuthToken})
       .send({email: newEmail})
     expect(mockMailServerSend).toBeCalledWith(newEmail, expect.any(String), expect.any(String), expect.any(String))
     expect(res.status).toBe(200)
@@ -751,7 +802,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     const newPassword = 'newPassword'
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({'x-auth-token': validAuthToken})
+      .set({[AUTH_TOKEN_KEY]: validAuthToken})
       .send({password: newPassword})
     expect(res.status).toBe(200)
     expect(res.body.message).toBe('Password update successful.')
@@ -800,7 +851,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     const newPassword = 'newPassword'
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({'x-auth-token': validAuthToken})
+      .set({[AUTH_TOKEN_KEY]: validAuthToken})
       .send({email: newEmail, password: newPassword})
     expect(mockMailServerSend).toBeCalledWith(newEmail, expect.any(String), expect.any(String), expect.any(String))
     expect(res.status).toBe(200)
@@ -824,13 +875,13 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send()
     expect(resForUndefined.status).toBe(400)
-    expect(resForUndefined.body.message).toBe('Missing token or password.')
+    expect(resForUndefined.body.message).toBe("\"token\" is required")
 
     const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({})
     expect(resForEmptyObject.status).toBe(400)
-    expect(resForEmptyObject.body.message).toBe('Missing token or password.')
+    expect(resForEmptyObject.body.message).toBe("\"token\" is required")
   })
 
   test('returns 400 if token is missing on request body', async () => {
@@ -838,7 +889,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({password: 'password'})
     expect(res.status).toBe(400)
-    expect(res.body.message).toBe('Missing token or password.')
+    expect(res.body.message).toBe("\"token\" is required")
   })
 
   test('returns 400 without updating email if password is missing on request body', async () => {
@@ -875,7 +926,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({token})
     expect(res.status).toBe(400)
-    expect(res.body.message).toBe('Missing token or password.')
+    expect(res.body.message).toBe("\"password\" is required")
     // Make sure email is not updated.
     const result = await db.query(sql`
       SELECT email
@@ -1281,13 +1332,13 @@ describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
       .post(API_PATHS.AUTH.RESET_PASSWORD.path)
       .send()
     expect(resForUndefined.status).toBe(400)
-    expect(resForUndefined.body.message).toBe('Missing email.')
+    expect(resForUndefined.body.message).toBe("\"email\" is required")
 
     const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.RESET_PASSWORD.path)
       .send({})
     expect(resForEmptyObject.status).toBe(400)
-    expect(resForEmptyObject.body.message).toBe('Missing email.')
+    expect(resForEmptyObject.body.message).toBe("\"email\" is required")
   })
 
   test('returns 400 if user with given email does not exist', async () => {
@@ -1356,13 +1407,13 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send()
     expect(resForUndefined.status).toBe(400)
-    expect(resForUndefined.body.message).toBe('Missing token or password.')
+    expect(resForUndefined.body.message).toBe("\"token\" is required")
 
     const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send({})
     expect(resForEmptyObject.status).toBe(400)
-    expect(resForEmptyObject.body.message).toBe('Missing token or password.')
+    expect(resForEmptyObject.body.message).toBe("\"token\" is required")
   })
 
   test('returns 400 if request does not have token', async () => {
@@ -1371,7 +1422,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send({password})
     expect(res.status).toBe(400)
-    expect(res.body.message).toBe('Missing token or password.')
+    expect(res.body.message).toBe("\"token\" is required")
   })
 
   test('returns 400 without updating password if request does not have password', async () => {
@@ -1406,7 +1457,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send({token})
     expect(res.status).toBe(400)
-    expect(res.body.message).toBe('Missing token or password.')
+    expect(res.body.message).toBe("\"password\" is required")
     // Make sure password is not updated.
     const result = await db.query(sql`
       SELECT password
@@ -1711,7 +1762,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
 
     const resForEmptyString = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
-      .set({'x-auth-token': ''})
+      .set({[AUTH_TOKEN_KEY]: ''})
       .send()
     expect(resForEmptyString.status).toBe(401)
     expect(resForEmptyString.body.message).toBe('Access denied. Request does not have valid token.')
@@ -1756,7 +1807,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     )
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
-      .set({'x-auth-token': `${validAuthToken}1`})
+      .set({[AUTH_TOKEN_KEY]: `${validAuthToken}1`})
       .send()
     expect(res.status).toBe(401)
     expect(res.body.message).toBe('Access denied. Request does not have valid token.')
@@ -1801,7 +1852,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     )
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
-      .set({'x-auth-token': tokenWithIncorrectSecret})
+      .set({[AUTH_TOKEN_KEY]: tokenWithIncorrectSecret})
       .send()
     expect(res.status).toBe(401)
     expect(res.body.message).toBe('Access denied. Request does not have valid token.')
@@ -1846,7 +1897,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     )
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
-      .set({'x-auth-token': notAuthToken})
+      .set({[AUTH_TOKEN_KEY]: notAuthToken})
       .send()
     expect(res.status).toBe(401)
     expect(res.body.message).toBe('Access denied. Request does not have valid token.')
@@ -1870,7 +1921,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     )
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
-      .set({'x-auth-token': validAuthToken})
+      .set({[AUTH_TOKEN_KEY]: validAuthToken})
       .send()
     expect(res.status).toBe(400)
     expect(res.body.message).toBe('The email you are trying to delete does not exist on database.')
@@ -1929,7 +1980,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     )
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
-      .set({'x-auth-token': validAuthToken})
+      .set({[AUTH_TOKEN_KEY]: validAuthToken})
       .send()
     expect(res.status).toBe(200)
     expect(res.body.message).toBe('User deleted successfully.')
@@ -2015,11 +2066,12 @@ describe('WebSocket', () => {
       `${JWT_SECRET_KEY}1`
     )
     const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: invalidAuthToken}})
+    const eventName = 'test'
     const message = 'test message'
-    clientSocket.on('test', arg => testFn(arg))
+    clientSocket.on(eventName, arg => testFn(arg))
     clientSocket.connect()
     setTimeout(() => {
-      wsServer.to(userId.toString()).emit('test', message)
+      wsServer.to(userId.toString()).emit(eventName, message)
       setTimeout(() => {
         expect(testFn).not.toBeCalled()
         clientSocket.close()
@@ -2037,11 +2089,12 @@ describe('WebSocket', () => {
       JWT_SECRET_KEY
     )
     const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: validAuthToken}})
+    const eventName = 'test'
     const message = 'test message'
-    clientSocket.on('test', arg => testFn(arg))
+    clientSocket.on(eventName, arg => testFn(arg))
     clientSocket.connect()
     setTimeout(() => {
-      wsServer.to(anotherUserId.toString()).emit('test', message)
+      wsServer.to(anotherUserId.toString()).emit(eventName, message)
       setTimeout(() => {
         expect(testFn).not.toBeCalled()
         clientSocket.close()
@@ -2058,11 +2111,12 @@ describe('WebSocket', () => {
       JWT_SECRET_KEY
     )
     const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: validAuthToken}})
+    const eventName = 'test'
     const message = 'test message'
-    clientSocket.on('test', arg => testFn(arg))
+    clientSocket.on(eventName, arg => testFn(arg))
     clientSocket.connect()
     setTimeout(() => {
-      wsServer.to(userId.toString()).emit('test', message)
+      wsServer.to(userId.toString()).emit(eventName, message)
       setTimeout(() => {
         expect(testFn).toBeCalledWith(message)
         clientSocket.close()
