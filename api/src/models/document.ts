@@ -12,6 +12,8 @@ export type DocumentFromDB = {
   created_at: Date
   /** 2000-01-01T00:00:00.000Z */
   updated_at: Date
+  /** 2000-01-01T00:00:00.000Z */
+  saved_on_db_at: Date
   is_deleted: 0 | 1
 }
 export type Document = {
@@ -24,14 +26,13 @@ export type Document = {
   createdAt: string
   /** 2000-01-01T00:00:00.000Z */
   updatedAt: string
+  /** 2000-01-01T00:00:00.000Z */
+  savedOnDBAt: string | null
   isDeleted: boolean
 }
-export type DocumentsRequest = {
-  updated: Document[]
-  /** 2000-01-01T00:00:00.000Z / Need to ask server for documents updated after this time to download, and device should store the newest time of successfully downloaded documents as this property. */
-  latestUpdatedDocumentFromDBAt: string | null
+export type DocumentsUpdateRequest = {
+  updates: Document[]
 }
-export type DocumentsUploadResponse = {
-  fromDB: Document[]
-  uploadedDocumentsId: string[]
+export type DocumentsUpdateResponse = {
+  allDocuments: Document[]
 }

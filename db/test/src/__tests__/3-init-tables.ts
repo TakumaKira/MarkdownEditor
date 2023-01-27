@@ -104,6 +104,14 @@ test('documents table has expected columns', async () => {
       "Type": "datetime",
     },
     {
+      "Default": null,
+      "Extra": "",
+      "Field": "saved_on_db_at",
+      "Key": "",
+      "Null": "YES",
+      "Type": "datetime",
+    },
+    {
       "Default": "0",
       "Extra": "",
       "Field": "is_deleted",

@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import apiApp, { wsServer } from '../../src/servers/api'
 import getConnectionPool, { ConnectionPool, sql } from '../../src/db/database'
 import { API_PATHS, AUTH_TOKEN_KEY, DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT, DOCUMENT_UPDATED_WS_EVENT } from "../../src/constants"
-import { Document, DocumentFromDB, DocumentsRequest, DocumentsUploadResponse } from '../../src/models/document'
+import { Document, DocumentFromDB, DocumentsUpdateRequest, DocumentsUpdateResponse } from '../../src/models/document'
 import { JWT_SECRET_KEY, WS_PORT } from '../../src/getEnvs'
 import { fromISOStringToTimeStamp, normalize } from '../../src/routes/documents'
 import { io } from 'socket.io-client'
@@ -74,9 +74,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
   // apiAuthMiddleware tests(check if it guards invalid requests)
 
   test('returns 401 if no auth token provided', async () => {
-    const documentsRequest: DocumentsRequest = {
-      updated: [],
-      latestUpdatedDocumentFromDBAt: null
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [],
+      requestUpdatesOnDBAfter: null
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -111,11 +111,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       updatedAt: '2000-01-01T00:00:00.000Z',
       isDeleted: false,
     }
-    const documentsRequest: DocumentsRequest = {
-      updated: [
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [
         newDocumentFromDevice,
       ],
-      latestUpdatedDocumentFromDBAt: null
+      requestUpdatesOnDBAfter: null
     }
     // Add new document from other device beforehand.
     await db.query(sql`
@@ -188,11 +188,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       updatedAt: '2000-01-01T00:00:00.000Z',
       isDeleted: false,
     }
-    const documentsRequest: DocumentsRequest = {
-      updated: [
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [
         newDocumentFromDevice,
       ],
-      latestUpdatedDocumentFromDBAt: null
+      requestUpdatesOnDBAfter: null
     }
     // Add new document from other device beforehand.
     await db.query(sql`
@@ -269,11 +269,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       updatedAt: '2000-01-01T00:00:00.000Z',
       isDeleted: false,
     }
-    const documentsRequest: DocumentsRequest = {
-      updated: [
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [
         newDocumentFromDevice,
       ],
-      latestUpdatedDocumentFromDBAt: null
+      requestUpdatesOnDBAfter: null
     }
     // Add new document from other device beforehand.
     await db.query(sql`
@@ -353,11 +353,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       updatedAt: '2000-01-01T00:00:00.000Z',
       isDeleted: false,
     }
-    const documentsRequest: DocumentsRequest = {
-      updated: [
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [
         invalidNewDocumentFromDevice,
       ],
-      latestUpdatedDocumentFromDBAt: null
+      requestUpdatesOnDBAfter: null
     }
     // Add new document from other device beforehand.
     await db.query(sql`
@@ -422,11 +422,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       updatedAt: '2000-01-01T00:00:00.000Z',
       isDeleted: false,
     }
-    const documentsRequest: DocumentsRequest = {
-      updated: [
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [
         newDocumentWithTooLongNameFromDevice,
       ],
-      latestUpdatedDocumentFromDBAt: null
+      requestUpdatesOnDBAfter: null
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -468,15 +468,15 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       updatedAt: '2000-01-01T00:00:00.000Z',
       isDeleted: false,
     }
-    const documentsRequest: DocumentsRequest = {
-      updated: [
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [
         newDocumentWithNotTooLongNameFromDevice,
       ],
-      latestUpdatedDocumentFromDBAt: null
+      requestUpdatesOnDBAfter: null
     }
-    const documentsUploadResponse: DocumentsUploadResponse = {
-      fromDB: [],
-      uploadedDocumentsId: [
+    const documentsUploadResponse: DocumentsUpdateResponse = {
+      updatesFromDB: [],
+      updateSuccessIds: [
         newDocumentWithNotTooLongNameFromDevice.id,
       ]
     }
@@ -522,11 +522,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       updatedAt: '2000-01-01T00:00:00.000Z',
       isDeleted: false,
     }
-    const documentsRequest: DocumentsRequest = {
-      updated: [
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [
         newDocumentWithTooLongContentFromDevice,
       ],
-      latestUpdatedDocumentFromDBAt: null
+      requestUpdatesOnDBAfter: null
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -568,15 +568,15 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       updatedAt: '2000-01-01T00:00:00.000Z',
       isDeleted: false,
     }
-    const documentsRequest: DocumentsRequest = {
-      updated: [
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [
         newDocumentWithNotTooLongContentFromDevice,
       ],
-      latestUpdatedDocumentFromDBAt: null
+      requestUpdatesOnDBAfter: null
     }
-    const documentsUploadResponse: DocumentsUploadResponse = {
-      fromDB: [],
-      uploadedDocumentsId: [
+    const documentsUploadResponse: DocumentsUpdateResponse = {
+      updatesFromDB: [],
+      updateSuccessIds: [
         newDocumentWithNotTooLongContentFromDevice.id,
       ]
     }
@@ -633,15 +633,15 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       updatedAt: '2000-01-02T00:00:00.000Z',
       isDeleted: false,
     }
-    const documentsRequest: DocumentsRequest = {
-      updated: [
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [
         newDocumentFromDevice,
       ],
-      latestUpdatedDocumentFromDBAt: null
+      requestUpdatesOnDBAfter: null
     }
-    const documentsUploadResponse: DocumentsUploadResponse = {
-      fromDB: [],
-      uploadedDocumentsId: [
+    const documentsUploadResponse: DocumentsUpdateResponse = {
+      updatesFromDB: [],
+      updateSuccessIds: [
         newDocumentFromDevice.id,
       ]
     }
@@ -736,16 +736,16 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
-    const documentsRequest: DocumentsRequest = {
-      updated: [],
-      latestUpdatedDocumentFromDBAt: null
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [],
+      requestUpdatesOnDBAfter: null
     }
-    const documentsUploadResponse: DocumentsUploadResponse = {
-      fromDB: [
+    const documentsUploadResponse: DocumentsUpdateResponse = {
+      updatesFromDB: [
         newDocumentFromDatabase,
         oldDocumentFromDatabase,
       ],
-      uploadedDocumentsId: []
+      updateSuccessIds: []
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -829,15 +829,15 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
-    const documentsRequest: DocumentsRequest = {
-      updated: [],
-      latestUpdatedDocumentFromDBAt: oldDocumentFromDatabase.updatedAt
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [],
+      requestUpdatesOnDBAfter: oldDocumentFromDatabase.updatedAt
     }
-    const documentsUploadResponse: DocumentsUploadResponse = {
-      fromDB: [
+    const documentsUploadResponse: DocumentsUpdateResponse = {
+      updatesFromDB: [
         newDocumentFromDatabase,
       ],
-      uploadedDocumentsId: []
+      updateSuccessIds: []
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -901,15 +901,15 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${oldDocumentFromDatabase.isDeleted}
       );
     `)
-    const documentsRequest: DocumentsRequest = {
-      updated: [
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [
         newDocumentFromDevice,
       ],
-      latestUpdatedDocumentFromDBAt: oldDocumentFromDatabase.updatedAt
+      requestUpdatesOnDBAfter: oldDocumentFromDatabase.updatedAt
     }
-    const documentsUploadResponse: DocumentsUploadResponse = {
-      fromDB: [],
-      uploadedDocumentsId: [
+    const documentsUploadResponse: DocumentsUpdateResponse = {
+      updatesFromDB: [],
+      updateSuccessIds: [
         newDocumentFromDevice.id,
       ]
     }
@@ -975,11 +975,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${updatedOnDatabase.isDeleted}
       );
     `)
-    const documentsRequest: DocumentsRequest = {
-      updated: [
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [
         updatedOnDevice,
       ],
-      latestUpdatedDocumentFromDBAt: originalDocument.updatedAt
+      requestUpdatesOnDBAfter: originalDocument.updatedAt
     }
     const copiedOnConflictDuplication: Document = {
       ...updatedOnDevice,
@@ -987,12 +987,12 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       name: `[Conflicted]: ${updatedOnDevice.name}`,
       updatedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/),
     }
-    const documentsUploadResponse: DocumentsUploadResponse = {
-      fromDB: [
+    const documentsUploadResponse: DocumentsUpdateResponse = {
+      updatesFromDB: [
         copiedOnConflictDuplication,
         updatedOnDatabase,
       ],
-      uploadedDocumentsId: []
+      updateSuccessIds: []
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -1201,13 +1201,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         false
       );
     `)
-    const documentsRequest: DocumentsRequest = {
-      updated: [
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [
         addedOnDevice,
         deletedOnDevice,
         conflictedAsBeingModifiedOnDevice,
       ],
-      latestUpdatedDocumentFromDBAt: toBeConflicted.updatedAt
+      requestUpdatesOnDBAfter: toBeConflicted.updatedAt
     }
     const copiedOnConflictDuplication: Document = {
       ...conflictedAsBeingModifiedOnDevice,
@@ -1215,14 +1215,14 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       name: `[Conflicted]: ${conflictedAsBeingModifiedOnDevice.name}`,
       updatedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/),
     }
-    const documentsUploadResponse: DocumentsUploadResponse = {
-      fromDB: [
+    const documentsUploadResponse: DocumentsUpdateResponse = {
+      updatesFromDB: [
         copiedOnConflictDuplication,
         addedOnDatabase,
         conflictedAsBeingModifiedOnDatabase,
         deletedOnDatabase,
       ],
-      uploadedDocumentsId: [
+      updateSuccessIds: [
         addedOnDevice.id,
         deletedOnDevice.id,
       ]
