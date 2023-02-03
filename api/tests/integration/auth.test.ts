@@ -1960,6 +1960,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
         content,
         created_at,
         updated_at,
+        saved_on_db_at,
         is_deleted
       )
       VALUES (
@@ -1969,6 +1970,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
         "Content",
         "2000-01-01 00:00:00",
         "2000-01-01 00:00:00",
+        "2000-01-01 00:00:01",
         false
       );
     `)

@@ -7,8 +7,9 @@ import getConnectionPool, { ConnectionPool, sql } from '../../src/db/database'
 import { API_PATHS, AUTH_TOKEN_KEY, DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT, DOCUMENT_UPDATED_WS_EVENT } from "../../src/constants"
 import { Document, DocumentFromDB, DocumentsUpdateRequest, DocumentsUpdateResponse } from '../../src/models/document'
 import { JWT_SECRET_KEY, WS_PORT } from '../../src/getEnvs'
-import { fromISOStringToTimeStamp, normalize } from '../../src/routes/documents'
+import { buildGetDocumentsQuery, fromISOStringToTimeStamp, normalize } from '../../src/routes/documents'
 import { io } from 'socket.io-client'
+import { regIsISODateString } from '../../src/middlewares/validator'
 
 let db: ConnectionPool
 beforeAll(() => {
@@ -75,8 +76,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   test('returns 401 if no auth token provided', async () => {
     const documentsRequest: DocumentsUpdateRequest = {
-      updates: [],
-      requestUpdatesOnDBAfter: null
+      updates: []
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -101,6 +101,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is a new document from the device.',
       createdAt: '2000-01-02T00:00:00.000Z',
       updatedAt: '2000-01-02T00:00:00.000Z',
+      savedOnDBAt: null,
       isDeleted: false,
     }
     const newDocumentFromDatabase: Document = {
@@ -109,13 +110,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is a new document from the database.',
       createdAt: '2000-01-01T00:00:00.000Z',
       updatedAt: '2000-01-01T00:00:00.000Z',
+      savedOnDBAt: '2000-01-01T00:00:01.000Z',
       isDeleted: false,
     }
     const documentsRequest: DocumentsUpdateRequest = {
       updates: [
         newDocumentFromDevice,
-      ],
-      requestUpdatesOnDBAfter: null
+      ]
     }
     // Add new document from other device beforehand.
     await db.query(sql`
@@ -126,6 +127,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         content,
         created_at,
         updated_at,
+        saved_on_db_at,
         is_deleted
       )
       VALUES (
@@ -135,6 +137,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${newDocumentFromDatabase.content},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
+        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt!)},
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
@@ -178,6 +181,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is a new document from the device.',
       createdAt: '2000-01-02T00:00:00.000Z',
       updatedAt: '2000-01-02T00:00:00.000Z',
+      savedOnDBAt: null,
       isDeleted: false,
     }
     const newDocumentFromDatabase: Document = {
@@ -186,13 +190,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is a new document from the database.',
       createdAt: '2000-01-01T00:00:00.000Z',
       updatedAt: '2000-01-01T00:00:00.000Z',
+      savedOnDBAt: '2000-01-01T00:00:01.000Z',
       isDeleted: false,
     }
     const documentsRequest: DocumentsUpdateRequest = {
       updates: [
         newDocumentFromDevice,
-      ],
-      requestUpdatesOnDBAfter: null
+      ]
     }
     // Add new document from other device beforehand.
     await db.query(sql`
@@ -203,6 +207,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         content,
         created_at,
         updated_at,
+        saved_on_db_at,
         is_deleted
       )
       VALUES (
@@ -212,6 +217,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${newDocumentFromDatabase.content},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
+        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt!)},
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
@@ -259,6 +265,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is a new document from the device.',
       createdAt: '2000-01-02T00:00:00.000Z',
       updatedAt: '2000-01-02T00:00:00.000Z',
+      savedOnDBAt: null,
       isDeleted: false,
     }
     const newDocumentFromDatabase: Document = {
@@ -267,13 +274,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is a new document from the database.',
       createdAt: '2000-01-01T00:00:00.000Z',
       updatedAt: '2000-01-01T00:00:00.000Z',
+      savedOnDBAt: '2000-01-01T00:00:01.000Z',
       isDeleted: false,
     }
     const documentsRequest: DocumentsUpdateRequest = {
       updates: [
         newDocumentFromDevice,
-      ],
-      requestUpdatesOnDBAfter: null
+      ]
     }
     // Add new document from other device beforehand.
     await db.query(sql`
@@ -284,6 +291,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         content,
         created_at,
         updated_at,
+        saved_on_db_at,
         is_deleted
       )
       VALUES (
@@ -293,6 +301,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${newDocumentFromDatabase.content},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
+        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt!)},
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
@@ -343,6 +352,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is a new document from the device.',
       createdAt: '2000-01-02T00:00:00.000Z',
       updatedAt: '2000-01-02T00:00:00.000',
+      savedOnDBAt: null,
       isDeleted: false,
     }
     const newDocumentFromDatabase: Document = {
@@ -351,13 +361,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is a new document from the database.',
       createdAt: '2000-01-01T00:00:00.000Z',
       updatedAt: '2000-01-01T00:00:00.000Z',
+      savedOnDBAt: '2000-01-01T00:00:01.000Z',
       isDeleted: false,
     }
     const documentsRequest: DocumentsUpdateRequest = {
       updates: [
         invalidNewDocumentFromDevice,
-      ],
-      requestUpdatesOnDBAfter: null
+      ]
     }
     // Add new document from other device beforehand.
     await db.query(sql`
@@ -368,6 +378,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         content,
         created_at,
         updated_at,
+        saved_on_db_at,
         is_deleted
       )
       VALUES (
@@ -377,6 +388,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${newDocumentFromDatabase.content},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
+        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt!)},
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
@@ -387,7 +399,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       .send(documentsRequest)
     // EXPECTED RESPONSE
     expect(res.status).toBe(400)
-    expect(res.body.message).toBe("\"updated[0].updatedAt\" with value \"2000-01-02T00:00:00.000\" fails to match the required pattern: /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/")
+    expect(res.body.message).toBe("\"updates[0].updatedAt\" with value \"2000-01-02T00:00:00.000\" fails to match the required pattern: /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/")
     // Check database.
     const result = await db.query(sql`
       SELECT id
@@ -420,13 +432,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is a new document from the device.',
       createdAt: '2000-01-01T00:00:00.000Z',
       updatedAt: '2000-01-01T00:00:00.000Z',
+      savedOnDBAt: null,
       isDeleted: false,
     }
     const documentsRequest: DocumentsUpdateRequest = {
       updates: [
         newDocumentWithTooLongNameFromDevice,
-      ],
-      requestUpdatesOnDBAfter: null
+      ]
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -435,7 +447,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       .send(documentsRequest)
     // EXPECTED RESPONSE
     expect(res.status).toBe(400)
-    expect(res.body.message).toBe("\"updated[0].name\" length must be less than or equal to 50 characters long")
+    expect(res.body.message).toBe("\"updates[0].name\" length must be less than or equal to 50 characters long")
     // Check database.
     const result = await db.query(sql`
       SELECT id
@@ -466,19 +478,22 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is a new document from the device.',
       createdAt: '2000-01-01T00:00:00.000Z',
       updatedAt: '2000-01-01T00:00:00.000Z',
+      savedOnDBAt: null,
       isDeleted: false,
     }
     const documentsRequest: DocumentsUpdateRequest = {
       updates: [
         newDocumentWithNotTooLongNameFromDevice,
-      ],
-      requestUpdatesOnDBAfter: null
+      ]
     }
     const documentsUploadResponse: DocumentsUpdateResponse = {
-      updatesFromDB: [],
-      updateSuccessIds: [
-        newDocumentWithNotTooLongNameFromDevice.id,
-      ]
+      allDocuments: [
+        {
+          ...newDocumentWithNotTooLongNameFromDevice,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+      ],
+      savedOnDBAt: expect.stringMatching(regIsISODateString)
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -499,7 +514,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     ])
     // Check no event on websocket.
     await new Promise<void>(resolve => setTimeout(resolve, 100))
-    expect(mainUserCallback).toBeCalledWith(newDocumentWithNotTooLongNameFromDevice.updatedAt)
+    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(regIsISODateString))
     mainUserSocket.close()
     expect(otherUserCallback).not.toBeCalled()
     otherUserSocket.close()
@@ -520,13 +535,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'a'.repeat(DOCUMENT_CONTENT_LENGTH_LIMIT + 1),
       createdAt: '2000-01-01T00:00:00.000Z',
       updatedAt: '2000-01-01T00:00:00.000Z',
+      savedOnDBAt: null,
       isDeleted: false,
     }
     const documentsRequest: DocumentsUpdateRequest = {
       updates: [
         newDocumentWithTooLongContentFromDevice,
-      ],
-      requestUpdatesOnDBAfter: null
+      ]
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -535,7 +550,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       .send(documentsRequest)
     // EXPECTED RESPONSE
     expect(res.status).toBe(400)
-    expect(res.body.message).toBe("\"updated[0].content\" length must be less than or equal to 20000 characters long")
+    expect(res.body.message).toBe("\"updates[0].content\" length must be less than or equal to 20000 characters long")
     // Check database.
     const result = await db.query(sql`
       SELECT id
@@ -566,19 +581,22 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'a'.repeat(DOCUMENT_CONTENT_LENGTH_LIMIT),
       createdAt: '2000-01-01T00:00:00.000Z',
       updatedAt: '2000-01-01T00:00:00.000Z',
+      savedOnDBAt: null,
       isDeleted: false,
     }
     const documentsRequest: DocumentsUpdateRequest = {
       updates: [
         newDocumentWithNotTooLongContentFromDevice,
-      ],
-      requestUpdatesOnDBAfter: null
+      ]
     }
     const documentsUploadResponse: DocumentsUpdateResponse = {
-      updatesFromDB: [],
-      updateSuccessIds: [
-        newDocumentWithNotTooLongContentFromDevice.id,
-      ]
+      allDocuments: [
+        {
+          ...newDocumentWithNotTooLongContentFromDevice,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+      ],
+      savedOnDBAt: expect.stringMatching(regIsISODateString)
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -599,7 +617,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     ])
     // Check no event on websocket.
     await new Promise<void>(resolve => setTimeout(resolve, 100))
-    expect(mainUserCallback).toBeCalledWith(newDocumentWithNotTooLongContentFromDevice.updatedAt)
+    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(regIsISODateString))
     mainUserSocket.close()
     expect(otherUserCallback).not.toBeCalled()
     otherUserSocket.close()
@@ -631,19 +649,22 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is a new document from the device.',
       createdAt: '2000-01-02T00:00:00.000Z',
       updatedAt: '2000-01-02T00:00:00.000Z',
+      savedOnDBAt: null,
       isDeleted: false,
     }
     const documentsRequest: DocumentsUpdateRequest = {
       updates: [
         newDocumentFromDevice,
-      ],
-      requestUpdatesOnDBAfter: null
+      ]
     }
     const documentsUploadResponse: DocumentsUpdateResponse = {
-      updatesFromDB: [],
-      updateSuccessIds: [
-        newDocumentFromDevice.id,
-      ]
+      allDocuments: [
+        {
+          ...newDocumentFromDevice,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+      ],
+      savedOnDBAt: expect.stringMatching(regIsISODateString)
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -664,7 +685,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     ])
     // Check no event on websocket.
     await new Promise<void>(resolve => setTimeout(resolve, 100))
-    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/))
+    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(regIsISODateString))
     mainUserSocket.close()
     expect(otherUserCallback).not.toBeCalled()
     otherUserSocket.close()
@@ -685,6 +706,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is an old document from the database.',
       createdAt: '2000-01-01T00:00:00.000Z',
       updatedAt: '2000-01-01T00:00:00.000Z',
+      savedOnDBAt: '2000-01-01T00:00:01.000Z',
       isDeleted: false,
     }
     const newDocumentFromDatabase: Document = {
@@ -693,6 +715,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is a new document from the database.',
       createdAt: '2000-01-02T00:00:00.000Z',
       updatedAt: '2000-01-02T00:00:00.000Z',
+      savedOnDBAt: '2000-01-02T00:00:01.000Z',
       isDeleted: false,
     }
     // Add documents from other device beforehand.
@@ -704,6 +727,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         content,
         created_at,
         updated_at,
+        saved_on_db_at,
         is_deleted
       )
       VALUES (
@@ -713,6 +737,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${oldDocumentFromDatabase.content},
         ${fromISOStringToTimeStamp(oldDocumentFromDatabase.createdAt)},
         ${fromISOStringToTimeStamp(oldDocumentFromDatabase.updatedAt)},
+        ${fromISOStringToTimeStamp(oldDocumentFromDatabase.savedOnDBAt!)},
         ${oldDocumentFromDatabase.isDeleted}
       );
     `)
@@ -724,6 +749,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         content,
         created_at,
         updated_at,
+        saved_on_db_at,
         is_deleted
       )
       VALUES (
@@ -733,19 +759,25 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${newDocumentFromDatabase.content},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
+        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt!)},
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
     const documentsRequest: DocumentsUpdateRequest = {
-      updates: [],
-      requestUpdatesOnDBAfter: null
+      updates: []
     }
     const documentsUploadResponse: DocumentsUpdateResponse = {
-      updatesFromDB: [
-        newDocumentFromDatabase,
-        oldDocumentFromDatabase,
+      allDocuments: [
+        {
+          ...newDocumentFromDatabase,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+        {
+          ...oldDocumentFromDatabase,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
       ],
-      updateSuccessIds: []
+      savedOnDBAt: expect.stringMatching(regIsISODateString)
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -778,6 +810,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is an old document from the database.',
       createdAt: '2000-01-01T00:00:00.000Z',
       updatedAt: '2000-01-01T00:00:00.000Z',
+      savedOnDBAt: '2000-01-01T00:00:01.000Z',
       isDeleted: false,
     }
     const newDocumentFromDatabase: Document = {
@@ -786,6 +819,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is a new document from the database.',
       createdAt: '2000-01-02T00:00:00.000Z',
       updatedAt: '2000-01-02T00:00:00.000Z',
+      savedOnDBAt: '2000-01-02T00:00:01.000Z',
       isDeleted: false,
     }
     // Add documents from other device beforehand.
@@ -797,6 +831,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         content,
         created_at,
         updated_at,
+        saved_on_db_at,
         is_deleted
       )
       VALUES (
@@ -806,6 +841,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${oldDocumentFromDatabase.content},
         ${fromISOStringToTimeStamp(oldDocumentFromDatabase.createdAt)},
         ${fromISOStringToTimeStamp(oldDocumentFromDatabase.updatedAt)},
+        ${fromISOStringToTimeStamp(oldDocumentFromDatabase.savedOnDBAt!)},
         ${oldDocumentFromDatabase.isDeleted}
       );
     `)
@@ -817,6 +853,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         content,
         created_at,
         updated_at,
+        saved_on_db_at,
         is_deleted
       )
       VALUES (
@@ -826,18 +863,25 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${newDocumentFromDatabase.content},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
+        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt!)},
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
     const documentsRequest: DocumentsUpdateRequest = {
-      updates: [],
-      requestUpdatesOnDBAfter: oldDocumentFromDatabase.updatedAt
+      updates: []
     }
     const documentsUploadResponse: DocumentsUpdateResponse = {
-      updatesFromDB: [
-        newDocumentFromDatabase,
+      allDocuments: [
+        {
+          ...newDocumentFromDatabase,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+        {
+          ...oldDocumentFromDatabase,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
       ],
-      updateSuccessIds: []
+      savedOnDBAt: expect.stringMatching(regIsISODateString)
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -870,6 +914,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is an old document from the database.',
       createdAt: '2000-01-01T00:00:00.000Z',
       updatedAt: '2000-01-01T00:00:00.000Z',
+      savedOnDBAt: '2000-01-01T00:00:01.000Z',
       isDeleted: false,
     }
     const newDocumentFromDevice: Document = {
@@ -878,6 +923,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is a new document from the database.',
       createdAt: oldDocumentFromDatabase.createdAt,
       updatedAt: '2000-01-02T00:00:00.000Z',
+      savedOnDBAt: oldDocumentFromDatabase.savedOnDBAt,
       isDeleted: false,
     }
     // Add documents from other device beforehand.
@@ -889,6 +935,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         content,
         created_at,
         updated_at,
+        saved_on_db_at,
         is_deleted
       )
       VALUES (
@@ -898,20 +945,23 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${oldDocumentFromDatabase.content},
         ${fromISOStringToTimeStamp(oldDocumentFromDatabase.createdAt)},
         ${fromISOStringToTimeStamp(oldDocumentFromDatabase.updatedAt)},
+        ${fromISOStringToTimeStamp(oldDocumentFromDatabase.savedOnDBAt!)},
         ${oldDocumentFromDatabase.isDeleted}
       );
     `)
     const documentsRequest: DocumentsUpdateRequest = {
       updates: [
         newDocumentFromDevice,
-      ],
-      requestUpdatesOnDBAfter: oldDocumentFromDatabase.updatedAt
+      ]
     }
     const documentsUploadResponse: DocumentsUpdateResponse = {
-      updatesFromDB: [],
-      updateSuccessIds: [
-        newDocumentFromDevice.id,
-      ]
+      allDocuments: [
+        {
+          ...newDocumentFromDevice,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+      ],
+      savedOnDBAt: expect.stringMatching(regIsISODateString)
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -923,7 +973,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     expect(res.body).toEqual(documentsUploadResponse)
     // Check no event on websocket.
     await new Promise<void>(resolve => setTimeout(resolve, 100))
-    expect(mainUserCallback).toBeCalledWith(newDocumentFromDevice.updatedAt)
+    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(regIsISODateString))
     mainUserSocket.close()
     expect(otherUserCallback).not.toBeCalled()
     otherUserSocket.close()
@@ -944,15 +994,17 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is an original document.',
       createdAt: '2000-01-01T00:00:00.000Z',
       updatedAt: '2000-01-01T00:00:00.000Z',
+      savedOnDBAt: '2000-01-01T00:00:01.000Z',
       isDeleted: false,
     }
     const updatedOnDatabase: Document = {
       ...originalDocument,
-      updatedAt: '2000-01-02T00:00:00.000Z'
+      updatedAt: '2000-01-02T00:00:00.000Z',
+      savedOnDBAt: '2000-01-02T00:00:01.000Z',
     }
     const updatedOnDevice: Document = {
       ...originalDocument,
-      updatedAt: '2000-01-03T00:00:00.000Z'
+      updatedAt: '2000-01-03T00:00:00.000Z',
     }
     // Add documents from other device beforehand.
     await db.query(sql`
@@ -963,6 +1015,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         content,
         created_at,
         updated_at,
+        saved_on_db_at,
         is_deleted
       )
       VALUES (
@@ -972,27 +1025,34 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${updatedOnDatabase.content},
         ${fromISOStringToTimeStamp(updatedOnDatabase.createdAt)},
         ${fromISOStringToTimeStamp(updatedOnDatabase.updatedAt)},
+        ${fromISOStringToTimeStamp(updatedOnDatabase.savedOnDBAt!)},
         ${updatedOnDatabase.isDeleted}
       );
     `)
     const documentsRequest: DocumentsUpdateRequest = {
       updates: [
         updatedOnDevice,
-      ],
-      requestUpdatesOnDBAfter: originalDocument.updatedAt
+      ]
     }
     const copiedOnConflictDuplication: Document = {
       ...updatedOnDevice,
       id: expect.any(String),
       name: `[Conflicted]: ${updatedOnDevice.name}`,
-      updatedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/),
+      updatedAt: expect.stringMatching(regIsISODateString),
+      savedOnDBAt: expect.stringMatching(regIsISODateString)
     }
     const documentsUploadResponse: DocumentsUpdateResponse = {
-      updatesFromDB: [
-        copiedOnConflictDuplication,
-        updatedOnDatabase,
+      allDocuments: [
+        {
+          ...copiedOnConflictDuplication,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+        {
+          ...updatedOnDatabase,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
       ],
-      updateSuccessIds: []
+      savedOnDBAt: expect.stringMatching(regIsISODateString)
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -1004,7 +1064,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     expect(res.body).toEqual(documentsUploadResponse)
     // Check no event on websocket.
     await new Promise<void>(resolve => setTimeout(resolve, 100))
-    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/))
+    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(regIsISODateString))
     mainUserSocket.close()
     expect(otherUserCallback).not.toBeCalled()
     otherUserSocket.close()
@@ -1027,6 +1087,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is already synced on both device and database.',
       createdAt: '2000-01-01T00:00:00.000Z',
       updatedAt: '2000-01-01T00:00:00.000Z',
+      savedOnDBAt: '2000-01-01T00:00:01.000Z',
       isDeleted: false
     }
     const toBeDeletedOnDevice: Document = {
@@ -1035,6 +1096,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is to be deleted on device.',
       createdAt: '2000-01-01T01:00:00.000Z',
       updatedAt: '2000-01-01T01:00:00.000Z',
+      savedOnDBAt: '2000-01-01T01:00:01.000Z',
       isDeleted: false
     }
     const toBeDeletedOnDatabase: Document = {
@@ -1043,6 +1105,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is to be deleted on database.',
       createdAt: '2000-01-01T02:00:00.000Z',
       updatedAt: '2000-01-01T02:00:00.000Z',
+      savedOnDBAt: '2000-01-01T02:00:01.000Z',
       isDeleted: false
     }
     const toBeConflicted: Document = {
@@ -1051,6 +1114,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is to be conflicted.',
       createdAt: '2000-01-01T03:00:00.000Z',
       updatedAt: '2000-01-01T03:00:00.000Z',
+      savedOnDBAt: '2000-01-01T03:00:01.000Z',
       isDeleted: false
     }
     // Deleted.
@@ -1060,6 +1124,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: null,
       createdAt: toBeDeletedOnDevice.createdAt,
       updatedAt: '2000-01-01T04:00:00.000Z',
+      savedOnDBAt: toBeDeletedOnDevice.savedOnDBAt,
       isDeleted: true
     }
     const deletedOnDatabase: Document = {
@@ -1068,16 +1133,18 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: null,
       createdAt: toBeDeletedOnDatabase.createdAt,
       updatedAt: '2000-01-01T05:00:00.000Z',
+      savedOnDBAt: toBeDeletedOnDatabase.savedOnDBAt,
       isDeleted: true
     }
     // Modified.
     const conflictedAsBeingModifiedOnDevice: Document = {
       ...toBeConflicted,
-      updatedAt: '2000-01-01T06:00:00.000Z'
+      updatedAt: '2000-01-01T06:00:00.000Z',
     }
     const conflictedAsBeingModifiedOnDatabase: Document = {
       ...toBeConflicted,
-      updatedAt: '2000-01-01T07:00:00.000Z'
+      updatedAt: '2000-01-01T07:00:00.000Z',
+      savedOnDBAt: '2000-01-01T07:00:01.000Z',
     }
     // Added.
     const addedOnDevice: Document = {
@@ -1086,6 +1153,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is added on device.',
       createdAt: '2000-01-01T08:00:00.000Z',
       updatedAt: '2000-01-01T08:00:00.000Z',
+      savedOnDBAt: null,
       isDeleted: false
     }
     const addedOnDatabase: Document = {
@@ -1094,6 +1162,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       content: 'This is added on database.',
       createdAt: '2000-01-01T09:00:00.000Z',
       updatedAt: '2000-01-01T09:00:00.000Z',
+      savedOnDBAt: '2000-01-01T09:00:01.000Z',
       isDeleted: false
     }
     // Prepare database.
@@ -1106,6 +1175,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         content,
         created_at,
         updated_at,
+        saved_on_db_at,
         is_deleted
       )
       VALUES (
@@ -1115,6 +1185,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${alreadySynched.content},
         ${fromISOStringToTimeStamp(alreadySynched.createdAt)},
         ${fromISOStringToTimeStamp(alreadySynched.updatedAt)},
+        ${fromISOStringToTimeStamp(alreadySynched.savedOnDBAt!)},
         false
       );
     `)
@@ -1126,6 +1197,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         content,
         created_at,
         updated_at,
+        saved_on_db_at,
         is_deleted
       )
       VALUES (
@@ -1135,6 +1207,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${toBeDeletedOnDevice.content},
         ${fromISOStringToTimeStamp(toBeDeletedOnDevice.createdAt)},
         ${fromISOStringToTimeStamp(toBeDeletedOnDevice.updatedAt)},
+        ${fromISOStringToTimeStamp(toBeDeletedOnDevice.savedOnDBAt!)},
         false
       );
     `)
@@ -1147,6 +1220,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         content,
         created_at,
         updated_at,
+        saved_on_db_at,
         is_deleted
       )
       VALUES (
@@ -1156,6 +1230,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${deletedOnDatabase.content},
         ${fromISOStringToTimeStamp(deletedOnDatabase.createdAt)},
         ${fromISOStringToTimeStamp(deletedOnDatabase.updatedAt)},
+        ${fromISOStringToTimeStamp(deletedOnDatabase.savedOnDBAt!)},
         true
       );
     `)
@@ -1168,6 +1243,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         content,
         created_at,
         updated_at,
+        saved_on_db_at,
         is_deleted
       )
       VALUES (
@@ -1177,6 +1253,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${conflictedAsBeingModifiedOnDatabase.content},
         ${fromISOStringToTimeStamp(conflictedAsBeingModifiedOnDatabase.createdAt)},
         ${fromISOStringToTimeStamp(conflictedAsBeingModifiedOnDatabase.updatedAt)},
+        ${fromISOStringToTimeStamp(conflictedAsBeingModifiedOnDatabase.savedOnDBAt!)},
         false
       );
     `)
@@ -1189,6 +1266,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         content,
         created_at,
         updated_at,
+        saved_on_db_at,
         is_deleted
       )
       VALUES (
@@ -1198,6 +1276,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${addedOnDatabase.content},
         ${fromISOStringToTimeStamp(addedOnDatabase.createdAt)},
         ${fromISOStringToTimeStamp(addedOnDatabase.updatedAt)},
+        ${fromISOStringToTimeStamp(addedOnDatabase.savedOnDBAt!)},
         false
       );
     `)
@@ -1206,26 +1285,46 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         addedOnDevice,
         deletedOnDevice,
         conflictedAsBeingModifiedOnDevice,
-      ],
-      requestUpdatesOnDBAfter: toBeConflicted.updatedAt
+      ]
     }
     const copiedOnConflictDuplication: Document = {
       ...conflictedAsBeingModifiedOnDevice,
       id: expect.any(String),
       name: `[Conflicted]: ${conflictedAsBeingModifiedOnDevice.name}`,
-      updatedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/),
+      updatedAt: expect.stringMatching(regIsISODateString),
     }
     const documentsUploadResponse: DocumentsUpdateResponse = {
-      updatesFromDB: [
-        copiedOnConflictDuplication,
-        addedOnDatabase,
-        conflictedAsBeingModifiedOnDatabase,
-        deletedOnDatabase,
+      allDocuments: [
+        {
+          ...copiedOnConflictDuplication,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+        {
+          ...addedOnDatabase,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+        {
+          ...addedOnDevice,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+        {
+          ...conflictedAsBeingModifiedOnDatabase,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+        {
+          ...deletedOnDatabase,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+        {
+          ...deletedOnDevice,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+        {
+          ...alreadySynched,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
       ],
-      updateSuccessIds: [
-        addedOnDevice.id,
-        deletedOnDevice.id,
-      ]
+      savedOnDBAt: expect.stringMatching(regIsISODateString)
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -1242,19 +1341,127 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         WHERE user_id = ${mainUser.id}
         ORDER BY updated_at DESC, created_at DESC;
     `)) as DocumentFromDB[]
-    expect(onDatabase.map(document => normalize(document))).toEqual([
-      copiedOnConflictDuplication,
-      addedOnDatabase,
-      addedOnDevice,
-      conflictedAsBeingModifiedOnDatabase,
-      deletedOnDatabase,
-      deletedOnDevice,
-      alreadySynched,
-    ])
+    expect(onDatabase.map(document => normalize(document))).toEqual(documentsUploadResponse.allDocuments)
     await new Promise<void>(resolve => setTimeout(resolve, 100))
-    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/))
+    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(regIsISODateString))
     mainUserSocket.close()
     expect(otherUserCallback).not.toBeCalled()
     otherUserSocket.close()
   })
+
+  test('returns old update from other device', async () => {
+    console.log('TODO: Test returns old update from other device.')
+  })
+})
+
+describe('buildGetDocumentsQuery', () => {
+  test('builds a query which gets all documents with given id', async () => {
+    // Prepare documents.
+    const mainUserDocument1: DocumentFromDB = {
+      id: uuidv4(),
+      user_id: mainUser.id,
+      name: "Main user's Document #1",
+      content: "This is main user's Document #1.",
+      created_at: new Date('2000-01-01T01:00:00.000Z'),
+      updated_at: new Date('2000-01-01T01:00:00.000Z'),
+      saved_on_db_at: new Date('2000-01-01T01:00:01.000Z'),
+      is_deleted: 0
+    }
+    const mainUserDocument2: DocumentFromDB = {
+      id: uuidv4(),
+      user_id: mainUser.id,
+      name: "Main user's Document #2",
+      content: "This is main user's Document #2.",
+      created_at: new Date('2000-01-01T02:00:00.000Z'),
+      updated_at: new Date('2000-01-01T02:00:00.000Z'),
+      saved_on_db_at: new Date('2000-01-01T02:00:01.000Z'),
+      is_deleted: 0
+    }
+    const otherUserDocument1: DocumentFromDB = {
+      id: uuidv4(),
+      user_id: otherUser.id,
+      name: "Other user's Document #1",
+      content: "This is other user's Document #1.",
+      created_at: new Date('2000-01-02T01:00:00.000Z'),
+      updated_at: new Date('2000-01-02T01:00:00.000Z'),
+      saved_on_db_at: new Date('2000-01-02T01:00:01.000Z'),
+      is_deleted: 0
+    }
+    // Add to database.
+    await db.query(sql`
+      INSERT INTO documents (
+        id,
+        user_id,
+        name,
+        content,
+        created_at,
+        updated_at,
+        saved_on_db_at,
+        is_deleted
+      )
+      VALUES (
+        ${mainUserDocument1.id},
+        ${mainUserDocument1.user_id},
+        ${mainUserDocument1.name},
+        ${mainUserDocument1.content},
+        ${fromISOStringToTimeStamp(mainUserDocument1.created_at.toISOString())},
+        ${fromISOStringToTimeStamp(mainUserDocument1.updated_at.toISOString())},
+        ${fromISOStringToTimeStamp(mainUserDocument1.saved_on_db_at.toISOString())},
+        false
+      );
+      INSERT INTO documents (
+        id,
+        user_id,
+        name,
+        content,
+        created_at,
+        updated_at,
+        saved_on_db_at,
+        is_deleted
+      )
+      VALUES (
+        ${mainUserDocument2.id},
+        ${mainUserDocument2.user_id},
+        ${mainUserDocument2.name},
+        ${mainUserDocument2.content},
+        ${fromISOStringToTimeStamp(mainUserDocument2.created_at.toISOString())},
+        ${fromISOStringToTimeStamp(mainUserDocument2.updated_at.toISOString())},
+        ${fromISOStringToTimeStamp(mainUserDocument2.saved_on_db_at.toISOString())},
+        false
+      );
+      INSERT INTO documents (
+        id,
+        user_id,
+        name,
+        content,
+        created_at,
+        updated_at,
+        saved_on_db_at,
+        is_deleted
+      )
+      VALUES (
+        ${otherUserDocument1.id},
+        ${otherUserDocument1.user_id},
+        ${otherUserDocument1.name},
+        ${otherUserDocument1.content},
+        ${fromISOStringToTimeStamp(otherUserDocument1.created_at.toISOString())},
+        ${fromISOStringToTimeStamp(otherUserDocument1.updated_at.toISOString())},
+        ${fromISOStringToTimeStamp(otherUserDocument1.saved_on_db_at.toISOString())},
+        false
+      );
+    `)
+    // TEST
+    const query = buildGetDocumentsQuery(
+      mainUserDocument1.id
+    )
+    const result = await db.query(query)
+    // RESULT
+    expect(result).toEqual([
+      mainUserDocument1
+    ])
+  })
+})
+
+describe('getNewSafeId', () => {
+  console.log('TODO: Test getNewSafeId')
 })

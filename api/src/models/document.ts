@@ -35,4 +35,6 @@ export type DocumentsUpdateRequest = {
 }
 export type DocumentsUpdateResponse = {
   allDocuments: Document[]
+  /** 2000-01-01T00:00:00.000Z */
+  savedOnDBAt: string
 }

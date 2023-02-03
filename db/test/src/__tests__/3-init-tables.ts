@@ -108,7 +108,7 @@ test('documents table has expected columns', async () => {
       "Extra": "",
       "Field": "saved_on_db_at",
       "Key": "",
-      "Null": "YES",
+      "Null": "NO",
       "Type": "datetime",
     },
     {

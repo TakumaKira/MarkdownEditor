@@ -610,7 +610,7 @@ describe('update_document', () => {
         ${user1Id},
         "New document",
         ${lessThanTooLongContent},
-        ${user1Document1.created_at},
+        ${buildDatetimeStrForTest(user1Document1.created_at)},
         ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
         ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z"))},
         false
