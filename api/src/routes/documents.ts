@@ -27,7 +27,7 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
   const documentsOnDBToBeUpdated: DocumentFromDB[] = await db.tx(async db => {
     const documents: DocumentFromDB[] = []
     for (const updateFromDevice of updatesFromDevice) {
-      const foundOnDB: DocumentFromDB = (await db.query(buildGetDocumentsQuery(updateFromDevice.id)))[0]
+      const foundOnDB: DocumentFromDB = (await db.query(buildGetDocumentQuery(updateFromDevice.id)))[0][0]
       if (foundOnDB) {
         documents.push(foundOnDB)
       }
@@ -124,11 +124,9 @@ export function normalize(document: DocumentFromDB): Document {
 }
 
 // TODO: Change this to use transaction?
-export function buildGetDocumentsQuery(id: string): SQLQuery {
+export function buildGetDocumentQuery(id: string): SQLQuery {
   return sql`
-    SELECT *
-      FROM documents
-      WHERE id = ${id};
+    CALL get_document (${id});
   `
 }
 /** TODO: Make name and content encrypted with user's password? */
@@ -149,11 +147,7 @@ function buildUpdateDocumentQuery(document: Document, userId: number): SQLQuery 
 
 export async function getNewSafeId(db: ConnectionPool): Promise<string> {
   const id = uuidv4()
-  const result = await db.query(sql`
-    SELECT id
-      FROM documents
-      WHERE id = ${id};
-  `)
+  const result = (await db.query(buildGetDocumentQuery(id)))[0]
   if (result.length === 0) {
     return id
   }

@@ -7,7 +7,7 @@ import getConnectionPool, { ConnectionPool, sql } from '../../src/db/database'
 import { API_PATHS, AUTH_TOKEN_KEY, DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT, DOCUMENT_UPDATED_WS_EVENT } from "../../src/constants"
 import { Document, DocumentFromDB, DocumentsUpdateRequest, DocumentsUpdateResponse } from '../../src/models/document'
 import { JWT_SECRET_KEY, WS_PORT } from '../../src/getEnvs'
-import { buildGetDocumentsQuery, fromISOStringToTimeStamp, normalize } from '../../src/routes/documents'
+import { buildGetDocumentQuery, fromISOStringToTimeStamp, normalize } from '../../src/routes/documents'
 import { io } from 'socket.io-client'
 import { regIsISODateString } from '../../src/middlewares/validator'
 
@@ -1451,10 +1451,10 @@ describe('buildGetDocumentsQuery', () => {
       );
     `)
     // TEST
-    const query = buildGetDocumentsQuery(
+    const query = buildGetDocumentQuery(
       mainUserDocument1.id
     )
-    const result = await db.query(query)
+    const result = (await db.query(query))[0]
     // RESULT
     expect(result).toEqual([
       mainUserDocument1
