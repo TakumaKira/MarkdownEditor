@@ -493,7 +493,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
           savedOnDBAt: expect.stringMatching(regIsISODateString)
         },
       ],
-      savedOnDBAt: expect.stringMatching(regIsISODateString)
+      savedOnDBAt: expect.stringMatching(regIsISODateString),
+      updatedIdsAsUnavailable: [],
+      duplicatedIdsAsConflicted: [],
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -596,7 +598,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
           savedOnDBAt: expect.stringMatching(regIsISODateString)
         },
       ],
-      savedOnDBAt: expect.stringMatching(regIsISODateString)
+      savedOnDBAt: expect.stringMatching(regIsISODateString),
+      updatedIdsAsUnavailable: [],
+      duplicatedIdsAsConflicted: [],
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -664,7 +668,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
           savedOnDBAt: expect.stringMatching(regIsISODateString)
         },
       ],
-      savedOnDBAt: expect.stringMatching(regIsISODateString)
+      savedOnDBAt: expect.stringMatching(regIsISODateString),
+      updatedIdsAsUnavailable: [],
+      duplicatedIdsAsConflicted: [],
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -777,7 +783,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
           savedOnDBAt: expect.stringMatching(regIsISODateString)
         },
       ],
-      savedOnDBAt: expect.stringMatching(regIsISODateString)
+      savedOnDBAt: expect.stringMatching(regIsISODateString),
+      updatedIdsAsUnavailable: [],
+      duplicatedIdsAsConflicted: [],
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -881,7 +889,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
           savedOnDBAt: expect.stringMatching(regIsISODateString)
         },
       ],
-      savedOnDBAt: expect.stringMatching(regIsISODateString)
+      savedOnDBAt: expect.stringMatching(regIsISODateString),
+      updatedIdsAsUnavailable: [],
+      duplicatedIdsAsConflicted: [],
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -961,7 +971,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
           savedOnDBAt: expect.stringMatching(regIsISODateString)
         },
       ],
-      savedOnDBAt: expect.stringMatching(regIsISODateString)
+      savedOnDBAt: expect.stringMatching(regIsISODateString),
+      updatedIdsAsUnavailable: [],
+      duplicatedIdsAsConflicted: [],
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -1043,16 +1055,17 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     }
     const documentsUploadResponse: DocumentsUpdateResponse = {
       allDocuments: [
-        {
-          ...copiedOnConflictDuplication,
-          savedOnDBAt: expect.stringMatching(regIsISODateString)
-        },
+        copiedOnConflictDuplication,
         {
           ...updatedOnDatabase,
           savedOnDBAt: expect.stringMatching(regIsISODateString)
         },
       ],
-      savedOnDBAt: expect.stringMatching(regIsISODateString)
+      savedOnDBAt: expect.stringMatching(regIsISODateString),
+      updatedIdsAsUnavailable: [],
+      duplicatedIdsAsConflicted: [
+        {original: originalDocument.id, duplicated: copiedOnConflictDuplication.id}
+      ],
     }
     // TESTED REQUEST
     const res = await request(apiApp)
@@ -1324,7 +1337,14 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
           savedOnDBAt: expect.stringMatching(regIsISODateString)
         },
       ],
-      savedOnDBAt: expect.stringMatching(regIsISODateString)
+      savedOnDBAt: expect.stringMatching(regIsISODateString),
+      updatedIdsAsUnavailable: [],
+      duplicatedIdsAsConflicted: [
+        {
+          original: conflictedAsBeingModifiedOnDevice.id,
+          duplicated: copiedOnConflictDuplication.id
+        }
+      ]
     }
     // TESTED REQUEST
     const res = await request(apiApp)

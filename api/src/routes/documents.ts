@@ -45,6 +45,9 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
   /** The time at which sent updates are reflected to database. 2000-01-01T00:00:00.000Z */
   const savedOnDBAt = new Date().toISOString()
 
+  const updatedIdsAsUnavailable: DocumentsUpdateResponse['updatedIdsAsUnavailable'] = []
+  const duplicatedIdsAsConflicted: DocumentsUpdateResponse['duplicatedIdsAsConflicted'] = []
+
   // Check if these documents are ok to be inserted or updated, needed to be resolved conflict, or needed the id to be changed.
   for (const updateFromDevice of updatesFromDevice) {
     const documentFromDB = documentsOnDBToBeUpdated.find(({id}) => id === updateFromDevice.id)
@@ -59,10 +62,12 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
       updateFromDevice.name = `[Conflicted]: ${updateFromDevice.name}`
       updateFromDevice.updatedAt = savedOnDBAt
       updateFromDevice.savedOnDBAt = savedOnDBAt
+      duplicatedIdsAsConflicted.push({original: documentFromDB.id, duplicated: updateFromDevice.id})
     // If a document is needed the id to be changed, find new id and assign it as new id(this operation looks fairly costly, but this won't happen so many times so just leave log), then push it to update list.
     } else if (documentFromDB && documentFromDB.user_id !== req.user.id) {
       updateFromDevice.id = await getNewSafeId(db)
       updateFromDevice.savedOnDBAt = savedOnDBAt
+      updatedIdsAsUnavailable.push({from: documentFromDB.id, to: updateFromDevice.id})
     // If a document is ok to be inserted or updated, just push it to update list.
     } else {
       // updateFromDevice.id is safe anyway here.
@@ -91,7 +96,7 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
 
   const allDocuments: Document[] = allDocumentsOnDB.map(doc => normalize(doc))
 
-  res.send({allDocuments, savedOnDBAt} as DocumentsUpdateResponse)
+  res.send({allDocuments, updatedIdsAsUnavailable, duplicatedIdsAsConflicted, savedOnDBAt} as DocumentsUpdateResponse)
 
   // If there's update to database, send update notification.
   if (updatesFromDevice.length > 0) {
