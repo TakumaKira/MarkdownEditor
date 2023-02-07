@@ -16,7 +16,7 @@ export type DocumentFromDB = {
   saved_on_db_at: Date
   is_deleted: 0 | 1
 }
-export type Document = {
+type DocumentBase = {
   id: string
   /** This is null only when deleted. */
   name: string | null
@@ -26,12 +26,18 @@ export type Document = {
   createdAt: string
   /** 2000-01-01T00:00:00.000Z */
   updatedAt: string
-  /** 2000-01-01T00:00:00.000Z */
-  savedOnDBAt: string | null
   isDeleted: boolean
 }
+export type Document = DocumentBase & {
+  /** 2000-01-01T00:00:00.000Z */
+  savedOnDBAt: string
+}
+export type DocumentFromDevice = DocumentBase & {
+  /** 2000-01-01T00:00:00.000Z */
+  savedOnDBAt: string | null
+}
 export type DocumentsUpdateRequest = {
-  updates: Document[]
+  updates: DocumentFromDevice[]
 }
 export type DocumentsUpdateResponse = {
   allDocuments: Document[]

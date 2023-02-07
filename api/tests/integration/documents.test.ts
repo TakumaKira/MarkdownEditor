@@ -1,15 +1,21 @@
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import request from 'supertest'
+import * as uuid from 'uuid'
 import { v4 as uuidv4 } from 'uuid'
 import apiApp, { wsServer } from '../../src/servers/api'
 import getConnectionPool, { ConnectionPool, sql } from '../../src/db/database'
 import { API_PATHS, AUTH_TOKEN_KEY, DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT, DOCUMENT_UPDATED_WS_EVENT } from "../../src/constants"
-import { Document, DocumentFromDB, DocumentsUpdateRequest, DocumentsUpdateResponse } from '../../src/models/document'
+import { DocumentFromDevice, DocumentFromDB, DocumentsUpdateRequest, DocumentsUpdateResponse, Document } from '../../src/models/document'
 import { JWT_SECRET_KEY, WS_PORT } from '../../src/getEnvs'
-import { buildGetDocumentQuery, fromISOStringToTimeStamp, normalize } from '../../src/routes/documents'
+import { buildGetDocumentQuery, fromISOStringToTimeStamp, getNewSafeId, normalize, updateDocuments } from '../../src/routes/documents'
 import { io } from 'socket.io-client'
 import { regIsISODateString } from '../../src/middlewares/validator'
+
+jest.mock('uuid', () => ({
+  __esModule: true,
+  ...jest.requireActual('uuid')
+}))
 
 let db: ConnectionPool
 beforeAll(() => {
@@ -95,7 +101,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
-    const newDocumentFromDevice: Document = {
+    const newDocumentFromDevice: DocumentFromDevice = {
       id: uuidv4(),
       name: 'New Document from Device',
       content: 'This is a new document from the device.',
@@ -137,7 +143,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${newDocumentFromDatabase.content},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt!)},
+        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt)},
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
@@ -175,7 +181,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
-    const newDocumentFromDevice: Document = {
+    const newDocumentFromDevice: DocumentFromDevice = {
       id: uuidv4(),
       name: 'New Document from Device',
       content: 'This is a new document from the device.',
@@ -217,7 +223,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${newDocumentFromDatabase.content},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt!)},
+        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt)},
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
@@ -259,7 +265,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
-    const newDocumentFromDevice: Document = {
+    const newDocumentFromDevice: DocumentFromDevice = {
       id: uuidv4(),
       name: 'New Document from Device',
       content: 'This is a new document from the device.',
@@ -301,7 +307,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${newDocumentFromDatabase.content},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt!)},
+        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt)},
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
@@ -346,7 +352,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
-    const invalidNewDocumentFromDevice: Document = {
+    const invalidNewDocumentFromDevice: DocumentFromDevice = {
       id: uuidv4(),
       name: 'New Document from Device',
       content: 'This is a new document from the device.',
@@ -388,7 +394,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${newDocumentFromDatabase.content},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt!)},
+        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt)},
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
@@ -426,7 +432,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
-    const newDocumentWithTooLongNameFromDevice: Document = {
+    const newDocumentWithTooLongNameFromDevice: DocumentFromDevice = {
       id: uuidv4(),
       name: 'a'.repeat(DOCUMENT_NAME_LENGTH_LIMIT + 1),
       content: 'This is a new document from the device.',
@@ -472,7 +478,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
-    const newDocumentWithNotTooLongNameFromDevice: Document = {
+    const newDocumentWithNotTooLongNameFromDevice: DocumentFromDevice = {
       id: uuidv4(),
       name: 'a'.repeat(DOCUMENT_NAME_LENGTH_LIMIT),
       content: 'This is a new document from the device.',
@@ -531,7 +537,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
-    const newDocumentWithTooLongContentFromDevice: Document = {
+    const newDocumentWithTooLongContentFromDevice: DocumentFromDevice = {
       id: uuidv4(),
       name: 'New Document from Device',
       content: 'a'.repeat(DOCUMENT_CONTENT_LENGTH_LIMIT + 1),
@@ -577,7 +583,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
-    const newDocumentWithNotTooLongContentFromDevice: Document = {
+    const newDocumentWithNotTooLongContentFromDevice: DocumentFromDevice = {
       id: uuidv4(),
       name: 'New Document from Device',
       content: 'a'.repeat(DOCUMENT_CONTENT_LENGTH_LIMIT),
@@ -627,14 +633,198 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     otherUserSocket.close()
   })
 
-  test("inserts on database with new id and returns id change back to device if new document id from device is already registered as the user's another document with different creation time", async () => {
-    console.log('TODO: Write test.')
-  })
-
   test("inserts on database with new id and returns id change back to device if new document id from device is already registered as another user's document", async () => {
-    console.log('TODO: Write test.')
+    const mainUserCallback = jest.fn()
+    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
+    mainUserSocket.connect()
+    const otherUserCallback = jest.fn()
+    const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
+    otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
+    otherUserSocket.connect()
+    const otherUserDocument: Document = {
+      id: uuidv4(),
+      name: "Other user's document",
+      content: "This is other user's document.",
+      createdAt: '2000-01-01T00:00:00.000Z',
+      updatedAt: '2000-01-01T00:00:00.000Z',
+      savedOnDBAt: '2000-01-01T00:00:01.000Z',
+      isDeleted: false,
+    }
+    await db.query(sql`
+      INSERT INTO documents (
+        id,
+        user_id,
+        name,
+        content,
+        created_at,
+        updated_at,
+        saved_on_db_at,
+        is_deleted
+      )
+      VALUES (
+        ${otherUserDocument.id},
+        ${otherUser.id},
+        ${otherUserDocument.name},
+        ${otherUserDocument.content},
+        ${fromISOStringToTimeStamp(otherUserDocument.createdAt)},
+        ${fromISOStringToTimeStamp(otherUserDocument.updatedAt)},
+        ${fromISOStringToTimeStamp(otherUserDocument.savedOnDBAt)},
+        ${otherUserDocument.isDeleted}
+      );
+    `)
+    const mainUsersNewDocument: DocumentFromDevice = {
+      id: otherUserDocument.id,
+      name: "Main user's new document",
+      content: "This is main user's new document.",
+      createdAt: '2000-01-02T00:00:00.000Z',
+      updatedAt: '2000-01-02T00:00:00.000Z',
+      savedOnDBAt: null,
+      isDeleted: false,
+    }
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [
+        mainUsersNewDocument,
+      ]
+    }
+    const documentsUploadResponse: DocumentsUpdateResponse = {
+      allDocuments: [
+        {
+          ...mainUsersNewDocument,
+          id: expect.any(String),
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+      ],
+      savedOnDBAt: expect.stringMatching(regIsISODateString),
+      updatedIdsAsUnavailable: [
+        {
+          from: mainUsersNewDocument.id,
+          to: expect.any(String)
+        },
+      ],
+      duplicatedIdsAsConflicted: [],
+    }
+    // TESTED REQUEST
+    const res = await request(apiApp)
+      .post(API_PATHS.DOCUMENTS.path)
+      .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
+      .send(documentsRequest)
+    // EXPECTED RESPONSE
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual(documentsUploadResponse)
+    const response: DocumentsUpdateResponse = res.body
+    expect(response.allDocuments[0].id).not.toBe(mainUsersNewDocument.id)
+    expect(response.updatedIdsAsUnavailable[0].to).toBe(response.allDocuments[0].id)
+    // Check database.
+    const result = await db.query(sql`
+      SELECT id
+        FROM documents
+        WHERE user_id = ${mainUser.id};
+    `)
+    expect(result[0].id).not.toEqual([
+      {id: mainUsersNewDocument.id},
+    ])
+    // Check no event on websocket.
+    await new Promise<void>(resolve => setTimeout(resolve, 100))
+    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(regIsISODateString))
+    mainUserSocket.close()
+    expect(otherUserCallback).not.toBeCalled()
+    otherUserSocket.close()
   })
 
+  test("inserts on database with new id and returns id change back to device if new document id from device is already registered as the user's another document with different creation time", async () => {
+    const mainUserCallback = jest.fn()
+    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
+    mainUserSocket.connect()
+    const oldDocument: Document = {
+      id: uuidv4(),
+      name: "Old document",
+      content: "This is old document.",
+      createdAt: '2000-01-01T00:00:00.000Z',
+      updatedAt: '2000-01-01T00:00:00.000Z',
+      savedOnDBAt: '2000-01-01T00:00:01.000Z',
+      isDeleted: false,
+    }
+    await db.query(sql`
+      INSERT INTO documents (
+        id,
+        user_id,
+        name,
+        content,
+        created_at,
+        updated_at,
+        saved_on_db_at,
+        is_deleted
+      )
+      VALUES (
+        ${oldDocument.id},
+        ${mainUser.id},
+        ${oldDocument.name},
+        ${oldDocument.content},
+        ${fromISOStringToTimeStamp(oldDocument.createdAt)},
+        ${fromISOStringToTimeStamp(oldDocument.updatedAt)},
+        ${fromISOStringToTimeStamp(oldDocument.savedOnDBAt)},
+        ${oldDocument.isDeleted}
+      );
+    `)
+    const newDocument: DocumentFromDevice = {
+      id: oldDocument.id,
+      name: "New document",
+      content: "This is new document.",
+      createdAt: '2000-01-02T00:00:00.000Z',
+      updatedAt: '2000-01-02T00:00:00.000Z',
+      savedOnDBAt: null,
+      isDeleted: false,
+    }
+    const documentsRequest: DocumentsUpdateRequest = {
+      updates: [
+        newDocument,
+      ]
+    }
+    const documentsUploadResponse: DocumentsUpdateResponse = {
+      allDocuments: [
+        {
+          ...newDocument,
+          id: expect.any(String),
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+        oldDocument,
+      ],
+      savedOnDBAt: expect.stringMatching(regIsISODateString),
+      updatedIdsAsUnavailable: [
+        {
+          from: newDocument.id,
+          to: expect.any(String)
+        },
+      ],
+      duplicatedIdsAsConflicted: [],
+    }
+    // TESTED REQUEST
+    const res = await request(apiApp)
+      .post(API_PATHS.DOCUMENTS.path)
+      .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
+      .send(documentsRequest)
+    // EXPECTED RESPONSE
+    expect(res.status).toBe(200)
+    expect(res.body).toEqual(documentsUploadResponse)
+    const response: DocumentsUpdateResponse = res.body
+    expect(response.allDocuments[0].id).not.toBe(newDocument.id)
+    expect(response.updatedIdsAsUnavailable[0].to).toBe(response.allDocuments[0].id)
+    // Check database.
+    const result = await db.query(sql`
+      SELECT id
+        FROM documents
+        WHERE user_id = ${mainUser.id}
+        ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
+    `)
+    expect(result[0].id).not.toEqual(newDocument.id)
+    expect(result[1].id).toEqual(newDocument.id)
+    // Check no event on websocket.
+    await new Promise<void>(resolve => setTimeout(resolve, 100))
+    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(regIsISODateString))
+    mainUserSocket.close()
+  })
 
   // documentsRouter tests
 
@@ -647,7 +837,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
-    const newDocumentFromDevice: Document = {
+    const newDocumentFromDevice: DocumentFromDevice = {
       id: uuidv4(),
       name: 'New Document from Device',
       content: 'This is a new document from the device.',
@@ -697,7 +887,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     otherUserSocket.close()
   })
 
-  test('returns all documents on database if latestUpdatedDocumentFromDBAt is not provided', async () => {
+  test('returns all documents on database', async () => {
     const mainUserCallback = jest.fn()
     const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
@@ -743,7 +933,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${oldDocumentFromDatabase.content},
         ${fromISOStringToTimeStamp(oldDocumentFromDatabase.createdAt)},
         ${fromISOStringToTimeStamp(oldDocumentFromDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(oldDocumentFromDatabase.savedOnDBAt!)},
+        ${fromISOStringToTimeStamp(oldDocumentFromDatabase.savedOnDBAt)},
         ${oldDocumentFromDatabase.isDeleted}
       );
     `)
@@ -765,113 +955,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${newDocumentFromDatabase.content},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
         ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt!)},
-        ${newDocumentFromDatabase.isDeleted}
-      );
-    `)
-    const documentsRequest: DocumentsUpdateRequest = {
-      updates: []
-    }
-    const documentsUploadResponse: DocumentsUpdateResponse = {
-      allDocuments: [
-        {
-          ...newDocumentFromDatabase,
-          savedOnDBAt: expect.stringMatching(regIsISODateString)
-        },
-        {
-          ...oldDocumentFromDatabase,
-          savedOnDBAt: expect.stringMatching(regIsISODateString)
-        },
-      ],
-      savedOnDBAt: expect.stringMatching(regIsISODateString),
-      updatedIdsAsUnavailable: [],
-      duplicatedIdsAsConflicted: [],
-    }
-    // TESTED REQUEST
-    const res = await request(apiApp)
-      .post(API_PATHS.DOCUMENTS.path)
-      .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
-      .send(documentsRequest)
-    // EXPECTED RESPONSE
-    expect(res.status).toBe(200)
-    expect(res.body).toEqual(documentsUploadResponse)
-    // Check no event on websocket.
-    await new Promise<void>(resolve => setTimeout(resolve, 100))
-    expect(mainUserCallback).not.toBeCalled()
-    mainUserSocket.close()
-    expect(otherUserCallback).not.toBeCalled()
-    otherUserSocket.close()
-  })
-
-  test('returns documents on database updated after the time if latestUpdatedDocumentFromDBAt is provided', async () => {
-    const mainUserCallback = jest.fn()
-    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
-    mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
-    mainUserSocket.connect()
-    const otherUserCallback = jest.fn()
-    const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
-    otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
-    otherUserSocket.connect()
-    const oldDocumentFromDatabase: Document = {
-      id: uuidv4(),
-      name: 'Old Document from Database',
-      content: 'This is an old document from the database.',
-      createdAt: '2000-01-01T00:00:00.000Z',
-      updatedAt: '2000-01-01T00:00:00.000Z',
-      savedOnDBAt: '2000-01-01T00:00:01.000Z',
-      isDeleted: false,
-    }
-    const newDocumentFromDatabase: Document = {
-      id: uuidv4(),
-      name: 'New Document from Database',
-      content: 'This is a new document from the database.',
-      createdAt: '2000-01-02T00:00:00.000Z',
-      updatedAt: '2000-01-02T00:00:00.000Z',
-      savedOnDBAt: '2000-01-02T00:00:01.000Z',
-      isDeleted: false,
-    }
-    // Add documents from other device beforehand.
-    await db.query(sql`
-      INSERT INTO documents (
-        id,
-        user_id,
-        name,
-        content,
-        created_at,
-        updated_at,
-        saved_on_db_at,
-        is_deleted
-      )
-      VALUES (
-        ${oldDocumentFromDatabase.id},
-        ${mainUser.id},
-        ${oldDocumentFromDatabase.name},
-        ${oldDocumentFromDatabase.content},
-        ${fromISOStringToTimeStamp(oldDocumentFromDatabase.createdAt)},
-        ${fromISOStringToTimeStamp(oldDocumentFromDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(oldDocumentFromDatabase.savedOnDBAt!)},
-        ${oldDocumentFromDatabase.isDeleted}
-      );
-    `)
-    await db.query(sql`
-      INSERT INTO documents (
-        id,
-        user_id,
-        name,
-        content,
-        created_at,
-        updated_at,
-        saved_on_db_at,
-        is_deleted
-      )
-      VALUES (
-        ${newDocumentFromDatabase.id},
-        ${mainUser.id},
-        ${newDocumentFromDatabase.name},
-        ${newDocumentFromDatabase.content},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt!)},
+        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt)},
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
@@ -927,7 +1011,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       savedOnDBAt: '2000-01-01T00:00:01.000Z',
       isDeleted: false,
     }
-    const newDocumentFromDevice: Document = {
+    const newDocumentFromDevice: DocumentFromDevice = {
       id: oldDocumentFromDatabase.id,
       name: 'New Document from Database',
       content: 'This is a new document from the database.',
@@ -955,7 +1039,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${oldDocumentFromDatabase.content},
         ${fromISOStringToTimeStamp(oldDocumentFromDatabase.createdAt)},
         ${fromISOStringToTimeStamp(oldDocumentFromDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(oldDocumentFromDatabase.savedOnDBAt!)},
+        ${fromISOStringToTimeStamp(oldDocumentFromDatabase.savedOnDBAt)},
         ${oldDocumentFromDatabase.isDeleted}
       );
     `)
@@ -1000,7 +1084,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
-    const originalDocument: Document = {
+    const originalDocument: DocumentFromDevice = {
       id: uuidv4(),
       name: 'Original Document',
       content: 'This is an original document.',
@@ -1014,7 +1098,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       updatedAt: '2000-01-02T00:00:00.000Z',
       savedOnDBAt: '2000-01-02T00:00:01.000Z',
     }
-    const updatedOnDevice: Document = {
+    const updatedOnDevice: DocumentFromDevice = {
       ...originalDocument,
       updatedAt: '2000-01-03T00:00:00.000Z',
     }
@@ -1037,7 +1121,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${updatedOnDatabase.content},
         ${fromISOStringToTimeStamp(updatedOnDatabase.createdAt)},
         ${fromISOStringToTimeStamp(updatedOnDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(updatedOnDatabase.savedOnDBAt!)},
+        ${fromISOStringToTimeStamp(updatedOnDatabase.savedOnDBAt)},
         ${updatedOnDatabase.isDeleted}
       );
     `)
@@ -1046,7 +1130,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         updatedOnDevice,
       ]
     }
-    const copiedOnConflictDuplication: Document = {
+    const copiedOnConflictDuplication: DocumentFromDevice = {
       ...updatedOnDevice,
       id: expect.any(String),
       name: `[Conflicted]: ${updatedOnDevice.name}`,
@@ -1131,7 +1215,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       isDeleted: false
     }
     // Deleted.
-    const deletedOnDevice: Document = {
+    const deletedOnDevice: DocumentFromDevice = {
       id: toBeDeletedOnDevice.id,
       name: null,
       content: null,
@@ -1150,7 +1234,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       isDeleted: true
     }
     // Modified.
-    const conflictedAsBeingModifiedOnDevice: Document = {
+    const conflictedAsBeingModifiedOnDevice: DocumentFromDevice = {
       ...toBeConflicted,
       updatedAt: '2000-01-01T06:00:00.000Z',
     }
@@ -1160,7 +1244,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       savedOnDBAt: '2000-01-01T07:00:01.000Z',
     }
     // Added.
-    const addedOnDevice: Document = {
+    const addedOnDevice: DocumentFromDevice = {
       id: uuidv4(),
       name: 'Added on device',
       content: 'This is added on device.',
@@ -1198,7 +1282,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${alreadySynched.content},
         ${fromISOStringToTimeStamp(alreadySynched.createdAt)},
         ${fromISOStringToTimeStamp(alreadySynched.updatedAt)},
-        ${fromISOStringToTimeStamp(alreadySynched.savedOnDBAt!)},
+        ${fromISOStringToTimeStamp(alreadySynched.savedOnDBAt)},
         false
       );
     `)
@@ -1220,7 +1304,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${toBeDeletedOnDevice.content},
         ${fromISOStringToTimeStamp(toBeDeletedOnDevice.createdAt)},
         ${fromISOStringToTimeStamp(toBeDeletedOnDevice.updatedAt)},
-        ${fromISOStringToTimeStamp(toBeDeletedOnDevice.savedOnDBAt!)},
+        ${fromISOStringToTimeStamp(toBeDeletedOnDevice.savedOnDBAt)},
         false
       );
     `)
@@ -1243,7 +1327,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${deletedOnDatabase.content},
         ${fromISOStringToTimeStamp(deletedOnDatabase.createdAt)},
         ${fromISOStringToTimeStamp(deletedOnDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(deletedOnDatabase.savedOnDBAt!)},
+        ${fromISOStringToTimeStamp(deletedOnDatabase.savedOnDBAt)},
         true
       );
     `)
@@ -1266,7 +1350,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${conflictedAsBeingModifiedOnDatabase.content},
         ${fromISOStringToTimeStamp(conflictedAsBeingModifiedOnDatabase.createdAt)},
         ${fromISOStringToTimeStamp(conflictedAsBeingModifiedOnDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(conflictedAsBeingModifiedOnDatabase.savedOnDBAt!)},
+        ${fromISOStringToTimeStamp(conflictedAsBeingModifiedOnDatabase.savedOnDBAt)},
         false
       );
     `)
@@ -1289,7 +1373,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${addedOnDatabase.content},
         ${fromISOStringToTimeStamp(addedOnDatabase.createdAt)},
         ${fromISOStringToTimeStamp(addedOnDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(addedOnDatabase.savedOnDBAt!)},
+        ${fromISOStringToTimeStamp(addedOnDatabase.savedOnDBAt)},
         false
       );
     `)
@@ -1300,7 +1384,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         conflictedAsBeingModifiedOnDevice,
       ]
     }
-    const copiedOnConflictDuplication: Document = {
+    const copiedOnConflictDuplication: DocumentFromDevice = {
       ...conflictedAsBeingModifiedOnDevice,
       id: expect.any(String),
       name: `[Conflicted]: ${conflictedAsBeingModifiedOnDevice.name}`,
@@ -1359,7 +1443,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       SELECT *
         FROM documents
         WHERE user_id = ${mainUser.id}
-        ORDER BY updated_at DESC, created_at DESC;
+        ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
     `)) as DocumentFromDB[]
     expect(onDatabase.map(document => normalize(document))).toEqual(documentsUploadResponse.allDocuments)
     await new Promise<void>(resolve => setTimeout(resolve, 100))
@@ -1370,7 +1454,96 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
   })
 
   test('returns old update from other device', async () => {
-    console.log('TODO: Test returns old update from other device.')
+    const newerDocument: DocumentFromDevice = {
+      id: uuidv4(),
+      name: 'Newer document',
+      content: 'This is newer document.',
+      createdAt: '2000-01-01T02:00:00.000Z',
+      updatedAt: '2000-01-01T02:00:00.000Z',
+      savedOnDBAt: null,
+      isDeleted: false
+    }
+    const olderDocument: DocumentFromDevice = {
+      id: uuidv4(),
+      name: 'Older document',
+      content: 'This is older document.',
+      createdAt: '2000-01-01T01:00:00.000Z',
+      updatedAt: '2000-01-01T01:00:00.000Z',
+      savedOnDBAt: null,
+      isDeleted: false
+    }
+
+    const documentsRequest1FromDeviceA: DocumentsUpdateRequest = {
+      updates: [
+        newerDocument,
+      ]
+    }
+    const documentsUploadResponse1ForDeviceA: DocumentsUpdateResponse = {
+      allDocuments: [
+        {
+          ...newerDocument,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+      ],
+      savedOnDBAt: expect.stringMatching(regIsISODateString),
+      updatedIdsAsUnavailable: [],
+      duplicatedIdsAsConflicted: []
+    }
+    const res1ForDeviceA = await request(apiApp)
+      .post(API_PATHS.DOCUMENTS.path)
+      .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
+      .send(documentsRequest1FromDeviceA)
+    expect(res1ForDeviceA.body).toEqual(documentsUploadResponse1ForDeviceA)
+
+    const documentsRequestFromDeviceB: DocumentsUpdateRequest = {
+      updates: [
+        olderDocument,
+      ]
+    }
+    const documentsUploadResponseForDeviceB: DocumentsUpdateResponse = {
+      allDocuments: [
+        {
+          ...newerDocument,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+        {
+          ...olderDocument,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+      ],
+      savedOnDBAt: expect.stringMatching(regIsISODateString),
+      updatedIdsAsUnavailable: [],
+      duplicatedIdsAsConflicted: []
+    }
+    const resForDeviceB = await request(apiApp)
+      .post(API_PATHS.DOCUMENTS.path)
+      .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
+      .send(documentsRequestFromDeviceB)
+    expect(resForDeviceB.body).toEqual(documentsUploadResponseForDeviceB)
+
+    const documentsRequest2FromDeviceA: DocumentsUpdateRequest = {
+      updates: []
+    }
+    const documentsUploadResponse2ForDeviceA: DocumentsUpdateResponse = {
+      allDocuments: [
+        {
+          ...newerDocument,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+        {
+          ...olderDocument,
+          savedOnDBAt: expect.stringMatching(regIsISODateString)
+        },
+      ],
+      savedOnDBAt: expect.stringMatching(regIsISODateString),
+      updatedIdsAsUnavailable: [],
+      duplicatedIdsAsConflicted: []
+    }
+    const res2ForDeviceA = await request(apiApp)
+      .post(API_PATHS.DOCUMENTS.path)
+      .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
+      .send(documentsRequest2FromDeviceA)
+    expect(res2ForDeviceA.body).toEqual(documentsUploadResponse2ForDeviceA)
   })
 })
 
@@ -1482,6 +1655,296 @@ describe('buildGetDocumentsQuery', () => {
   })
 })
 
+describe('updateDocuments', () => {
+  test('updates all documents', async () => {
+    const document1: Document = {
+      id: uuidv4(),
+      name: 'Document #1',
+      content: 'This is Document #1.',
+      createdAt: '2000-01-01T01:00:00.000Z',
+      updatedAt: '2000-01-01T01:00:00.000Z',
+      savedOnDBAt: '2000-01-01T01:00:01.000Z',
+      isDeleted: false
+    }
+    const document2: Document = {
+      id: uuidv4(),
+      name: 'Document #2',
+      content: 'This is Document #2.',
+      createdAt: '2000-01-01T02:00:00.000Z',
+      updatedAt: '2000-01-01T02:00:00.000Z',
+      savedOnDBAt: '2000-01-01T02:00:01.000Z',
+      isDeleted: false
+    }
+    const documents: Document[] = [
+      document1,
+      document2,
+    ]
+    await updateDocuments(documents, mainUser.id, db)
+    const result = (await db.query(sql`
+      SELECT *
+        FROM documents
+        WHERE user_id = ${mainUser.id}
+        ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
+    `)) as DocumentFromDB[]
+    expect(result.map(document => normalize(document))).toEqual([
+      document2,
+      document1,
+    ])
+  })
+
+  test('does not update any documents if one of them has duplicated id', async () => {
+    const otherUsersDocument: Document = {
+      id: uuidv4(),
+      name: "Other user's document",
+      content: "This is other user's document.",
+      createdAt: '2000-01-01T01:00:00.000Z',
+      updatedAt: '2000-01-01T01:00:00.000Z',
+      savedOnDBAt: '2000-01-01T01:00:01.000Z',
+      isDeleted: false
+    }
+    await db.query(sql`
+      INSERT INTO documents (
+        id,
+        user_id,
+        name,
+        content,
+        created_at,
+        updated_at,
+        saved_on_db_at,
+        is_deleted
+      )
+      VALUES (
+        ${otherUsersDocument.id},
+        ${otherUser.id},
+        ${otherUsersDocument.name},
+        ${otherUsersDocument.content},
+        ${fromISOStringToTimeStamp(otherUsersDocument.createdAt)},
+        ${fromISOStringToTimeStamp(otherUsersDocument.updatedAt)},
+        ${fromISOStringToTimeStamp(otherUsersDocument.savedOnDBAt)},
+        ${otherUsersDocument.isDeleted}
+      );
+    `)
+    const documentWithAvailableId: Document = {
+      id: uuidv4(),
+      name: 'Document #1',
+      content: 'This is Document #1.',
+      createdAt: '2000-01-01T02:00:00.000Z',
+      updatedAt: '2000-01-01T02:00:00.000Z',
+      savedOnDBAt: '2000-01-01T02:00:01.000Z',
+      isDeleted: false
+    }
+    const documentWithDuplicatedId: Document = {
+      id: otherUsersDocument.id,
+      name: 'Document #2',
+      content: 'This is Document #2.',
+      createdAt: '2000-01-01T03:00:00.000Z',
+      updatedAt: '2000-01-01T03:00:00.000Z',
+      savedOnDBAt: '2000-01-01T03:00:01.000Z',
+      isDeleted: false
+    }
+    const documents: Document[] = [
+      documentWithAvailableId,
+      documentWithDuplicatedId,
+    ]
+    try {
+      await updateDocuments(documents, mainUser.id, db)
+    } catch (e: any) {
+      expect(e.code).toBe('ER_SIGNAL_EXCEPTION')
+      expect(e.errno).toBe(1644)
+      expect(e.sqlState).toBe('45021')
+      expect(e.sqlMessage).toBe("Another user's document is using the same id.")
+      expect(e.message).toBe("Another user's document is using the same id.")
+    }
+    const result = (await db.query(sql`
+      SELECT *
+        FROM documents
+        WHERE user_id = ${mainUser.id}
+        ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
+    `)) as DocumentFromDB[]
+    expect(result.map(document => normalize(document))).toEqual([])
+  })
+
+  test('does not update any documents if one of them has too long name', async () => {
+    const alreadySynchedDocument: Document = {
+      id: uuidv4(),
+      name: 'Already synched document #1',
+      content: 'This is already synched document #1.',
+      createdAt: '2000-01-01T01:00:00.000Z',
+      updatedAt: '2000-01-01T01:00:00.000Z',
+      savedOnDBAt: '2000-01-01T01:00:01.000Z',
+      isDeleted: false
+    }
+    await db.query(sql`
+      INSERT INTO documents (
+        id,
+        user_id,
+        name,
+        content,
+        created_at,
+        updated_at,
+        saved_on_db_at,
+        is_deleted
+      )
+      VALUES (
+        ${alreadySynchedDocument.id},
+        ${mainUser.id},
+        ${alreadySynchedDocument.name},
+        ${alreadySynchedDocument.content},
+        ${fromISOStringToTimeStamp(alreadySynchedDocument.createdAt)},
+        ${fromISOStringToTimeStamp(alreadySynchedDocument.updatedAt)},
+        ${fromISOStringToTimeStamp(alreadySynchedDocument.savedOnDBAt)},
+        ${alreadySynchedDocument.isDeleted}
+      );
+    `)
+    const documentWithAvailableId: Document = {
+      id: uuidv4(),
+      name: 'Document #1',
+      content: 'This is Document #1.',
+      createdAt: '2000-01-01T02:00:00.000Z',
+      updatedAt: '2000-01-01T02:00:00.000Z',
+      savedOnDBAt: '2000-01-01T02:00:01.000Z',
+      isDeleted: false
+    }
+    const documentWithTooLongName: Document = {
+      id: alreadySynchedDocument.id,
+      name: 'a'.repeat(DOCUMENT_NAME_LENGTH_LIMIT + 1),
+      content: 'This is document with too long name.',
+      createdAt: '2000-01-01T03:00:00.000Z',
+      updatedAt: '2000-01-01T03:00:00.000Z',
+      savedOnDBAt: '2000-01-01T03:00:01.000Z',
+      isDeleted: false
+    }
+    const documents: Document[] = [
+      documentWithAvailableId,
+      documentWithTooLongName,
+    ]
+    try {
+      await updateDocuments(documents, mainUser.id, db)
+    } catch (e: any) {
+      expect(e.code).toBe('ER_DATA_TOO_LONG')
+      expect(e.errno).toBe(1406)
+      expect(e.sqlState).toBe('22001')
+      expect(e.sqlMessage).toBe("Data too long for column 'p_name' at row 1")
+      expect(e.message).toBe("Data too long for column 'p_name' at row 1")
+    }
+    const result = (await db.query(sql`
+      SELECT *
+        FROM documents
+        WHERE user_id = ${mainUser.id}
+        ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
+    `)) as DocumentFromDB[]
+    expect(result.map(document => normalize(document))).toEqual([
+      alreadySynchedDocument,
+    ])
+  })
+
+  test('does not update any documents if one of them has too long content', async () => {
+    const alreadySynchedDocument: Document = {
+      id: uuidv4(),
+      name: 'Already synched document #1',
+      content: 'This is already synched document #1.',
+      createdAt: '2000-01-01T01:00:00.000Z',
+      updatedAt: '2000-01-01T01:00:00.000Z',
+      savedOnDBAt: '2000-01-01T01:00:01.000Z',
+      isDeleted: false
+    }
+    await db.query(sql`
+      INSERT INTO documents (
+        id,
+        user_id,
+        name,
+        content,
+        created_at,
+        updated_at,
+        saved_on_db_at,
+        is_deleted
+      )
+      VALUES (
+        ${alreadySynchedDocument.id},
+        ${mainUser.id},
+        ${alreadySynchedDocument.name},
+        ${alreadySynchedDocument.content},
+        ${fromISOStringToTimeStamp(alreadySynchedDocument.createdAt)},
+        ${fromISOStringToTimeStamp(alreadySynchedDocument.updatedAt)},
+        ${fromISOStringToTimeStamp(alreadySynchedDocument.savedOnDBAt)},
+        ${alreadySynchedDocument.isDeleted}
+      );
+    `)
+    const documentWithAvailableId: Document = {
+      id: uuidv4(),
+      name: 'Document #1',
+      content: 'This is Document #1.',
+      createdAt: '2000-01-01T02:00:00.000Z',
+      updatedAt: '2000-01-01T02:00:00.000Z',
+      savedOnDBAt: '2000-01-01T02:00:01.000Z',
+      isDeleted: false
+    }
+    const documentWithTooLongContent: Document = {
+      id: alreadySynchedDocument.id,
+      name: 'Document with too long content',
+      content: 'a'.repeat(DOCUMENT_CONTENT_LENGTH_LIMIT + 1),
+      createdAt: '2000-01-01T03:00:00.000Z',
+      updatedAt: '2000-01-01T03:00:00.000Z',
+      savedOnDBAt: '2000-01-01T03:00:01.000Z',
+      isDeleted: false
+    }
+    const documents: Document[] = [
+      documentWithAvailableId,
+      documentWithTooLongContent,
+    ]
+    try {
+      await updateDocuments(documents, mainUser.id, db)
+    } catch (e: any) {
+      expect(e.code).toBe('ER_DATA_TOO_LONG')
+      expect(e.errno).toBe(1406)
+      expect(e.sqlState).toBe('22001')
+      expect(e.sqlMessage).toBe("Data too long for column 'p_content' at row 1")
+      expect(e.message).toBe("Data too long for column 'p_content' at row 1")
+    }
+    const result = (await db.query(sql`
+      SELECT *
+        FROM documents
+        WHERE user_id = ${mainUser.id}
+        ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
+    `)) as DocumentFromDB[]
+    expect(result.map(document => normalize(document))).toEqual([
+      alreadySynchedDocument,
+    ])
+  })
+})
+
 describe('getNewSafeId', () => {
-  console.log('TODO: Test getNewSafeId')
+  test('gets new id after several try', async () => {
+    const TRY = 5
+    const idList: string[] = [...new Array(TRY).keys()].map(() => uuidv4())
+    let i = 0
+    jest.spyOn(uuid, 'v4').mockImplementation(() => idList[i++])
+    await db.tx(async db => {
+      for (let j = 0; j < TRY - 1; j++) {
+        await db.query(sql`
+          INSERT INTO documents (
+            id,
+            user_id,
+            name,
+            content,
+            created_at,
+            updated_at,
+            saved_on_db_at,
+            is_deleted
+          )
+          VALUES (
+            ${idList[j]},
+            ${mainUser.id},
+            ${'Document #' + j},
+            ${'This is document #' + j +  '.'},
+            ${fromISOStringToTimeStamp('2000-01-01T00:00:0' + j + '.000Z')},
+            ${fromISOStringToTimeStamp('2000-01-01T00:00:0' + j + '.000Z')},
+            ${fromISOStringToTimeStamp('2000-01-01T00:00:0' + j + '.000Z')},
+            false
+          );
+        `)
+      }
+    })
+    await expect(getNewSafeId(db)).resolves.toBe(idList[TRY - 1])
+  })
 })

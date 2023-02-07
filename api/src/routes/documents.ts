@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { DOCUMENT_UPDATED_WS_EVENT } from '../constants'
 import { apiAuthMiddleware } from '../middlewares/auth'
 import { documentsRequestValidatorMiddleware } from '../middlewares/validator'
-import { Document, DocumentFromDB, DocumentsUpdateResponse } from '../models/document'
+import { DocumentFromDevice, DocumentFromDB, DocumentsUpdateResponse, Document } from '../models/document'
 import { wsServer } from '../servers/api'
 import getConnectionPool, { ConnectionPool, sql } from '../../src/db/database'
 import { SQLQuery } from '@databases/sql'
@@ -49,6 +49,7 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
   const duplicatedIdsAsConflicted: DocumentsUpdateResponse['duplicatedIdsAsConflicted'] = []
 
   // Check if these documents are ok to be inserted or updated, needed to be resolved conflict, or needed the id to be changed.
+  const updatesToDB: Document[] = []
   for (const updateFromDevice of updatesFromDevice) {
     const documentFromDB = documentsOnDBToBeUpdated.find(({id}) => id === updateFromDevice.id)
 
@@ -57,32 +58,50 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
      */
 
     // If a document is needed to be resolve conflict, resolve and push it to update list.
-    if (documentFromDB && documentFromDB.saved_on_db_at.toISOString() !== updateFromDevice.savedOnDBAt) {
-      updateFromDevice.id = await getNewSafeId(db)
-      updateFromDevice.name = `[Conflicted]: ${updateFromDevice.name}`
-      updateFromDevice.updatedAt = savedOnDBAt
-      updateFromDevice.savedOnDBAt = savedOnDBAt
-      duplicatedIdsAsConflicted.push({original: documentFromDB.id, duplicated: updateFromDevice.id})
+    if (documentFromDB && (
+      documentFromDB.user_id === req.user.id
+      && documentFromDB.created_at.toISOString() === updateFromDevice.createdAt
+      && documentFromDB.saved_on_db_at.toISOString() !== updateFromDevice.savedOnDBAt
+    )) {
+      const updateToDB: Document = {
+        ...updateFromDevice,
+        id: await getNewSafeId(db),
+        name: `[Conflicted]: ${updateFromDevice.name}`,
+        updatedAt: savedOnDBAt,
+        savedOnDBAt
+      }
+      updatesToDB.push(updateToDB)
+      duplicatedIdsAsConflicted.push({original: updateFromDevice.id, duplicated: updateToDB.id})
     // If a document is needed the id to be changed, find new id and assign it as new id(this operation looks fairly costly, but this won't happen so many times so just leave log), then push it to update list.
-    } else if (documentFromDB && documentFromDB.user_id !== req.user.id) {
-      updateFromDevice.id = await getNewSafeId(db)
-      updateFromDevice.savedOnDBAt = savedOnDBAt
-      updatedIdsAsUnavailable.push({from: documentFromDB.id, to: updateFromDevice.id})
+    } else if (documentFromDB && (
+      documentFromDB.user_id !== req.user.id
+      || (
+        documentFromDB.user_id === req.user.id
+        && documentFromDB.created_at.toISOString() !== updateFromDevice.createdAt
+      )
+    )) {
+      const updateToDB: Document = {
+        ...updateFromDevice,
+        id: await getNewSafeId(db),
+        savedOnDBAt
+      }
+      updatesToDB.push(updateToDB)
+      updatedIdsAsUnavailable.push({from: updateFromDevice.id, to: updateToDB.id})
     // If a document is ok to be inserted or updated, just push it to update list.
     } else {
       // updateFromDevice.id is safe anyway here.
-      updateFromDevice.savedOnDBAt = savedOnDBAt
+      const updateToDB: Document = {
+        ...updateFromDevice,
+        savedOnDBAt
+      }
+      updatesToDB.push(updateToDB)
     }
   }
 
   // Now all of updateFromDevice should be safe to update to database.
 
   try {
-    await db.tx(async db => {
-      for (const updateFromDevice of updatesFromDevice) {
-        await db.query(buildUpdateDocumentQuery(updateFromDevice, req.user.id))
-      }
-    })
+    await updateDocuments(updatesToDB, req.user.id, db)
   } catch (e) {
     // If the transaction was unsuccessful, return unhandled error.
     console.error(e)
@@ -111,11 +130,6 @@ export function fromISOStringToTimeStamp(isoString: string): string {
   return isoString.slice(0, -5).replace('T', ' ')
 }
 
-function escapeSingleQuote(string: string): string {
-  // TODO: Test succeeding single quotes cases
-  return string.replace(/\'/g, '\'\'')
-}
-
 export function normalize(document: DocumentFromDB): Document {
   return {
     id: document.id,
@@ -141,10 +155,10 @@ function buildUpdateDocumentQuery(document: Document, userId: number): SQLQuery 
       ${document.id},
       ${userId},
       ${document.name !== null ? document.name : null},
-      ${document.content !== null ? escapeSingleQuote(document.content) : null},
+      ${document.content !== null ? document.content : null},
       ${fromISOStringToTimeStamp(document.createdAt)},
       ${fromISOStringToTimeStamp(document.updatedAt)},
-      ${fromISOStringToTimeStamp(document.savedOnDBAt!)},
+      ${fromISOStringToTimeStamp(document.savedOnDBAt)},
       ${document.isDeleted}
     );
   `
@@ -157,4 +171,12 @@ export async function getNewSafeId(db: ConnectionPool): Promise<string> {
     return id
   }
   return getNewSafeId(db)
+}
+
+export async function updateDocuments(documents: Document[], userId: number, db: ConnectionPool): Promise<void> {
+  return db.tx(async db => {
+    for (const document of documents) {
+      await db.query(buildUpdateDocumentQuery(document, userId))
+    }
+  })
 }
