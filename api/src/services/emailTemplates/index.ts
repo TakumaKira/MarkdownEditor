@@ -1,4 +1,4 @@
-import { FRONTEND_DOMAIN, FRONTEND_PROTOCOL } from "../getEnvs"
+import { FRONTEND_DOMAIN, FRONTEND_PROTOCOL } from "../../getEnvs"
 import getChangeEmailConfirmation from "./changeEmailConfirmation"
 import getResetPasswordConfirmation from "./resetPasswordConfirmation"
 import getSignupEmailConfirmation from "./signupEmailConfirmation"

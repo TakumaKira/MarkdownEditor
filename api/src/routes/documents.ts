@@ -3,10 +3,10 @@ import { v4 as uuidv4 } from 'uuid'
 import { DOCUMENT_UPDATED_WS_EVENT } from '../constants'
 import { apiAuthMiddleware } from '../middlewares/auth'
 import { documentsRequestValidatorMiddleware } from '../middlewares/validator'
-import { DocumentFromDevice, DocumentFromDB, DocumentsUpdateResponse, Document } from '../models/document'
-import { wsServer } from '../servers/api'
-import db, { ConnectionPool, sql } from '../../src/db/database'
+import { DocumentFromDB, DocumentsUpdateResponse, Document } from '../models/document'
+import db, { ConnectionPool, sql } from '../services/database'
 import { SQLQuery } from '@databases/sql'
+import wsServer from '../servers/wsServer/wsServer'
 
 const documentsRouter = Router()
 

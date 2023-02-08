@@ -1,8 +1,7 @@
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET_KEY } from "../getEnvs"
 import { UserInfoOnDB } from '../models/user'
-import db from '../db/database';
-import { sql } from '@databases/mysql';
+import db, { sql } from '../services/database';
 
 export function generateEmailConfirmationToken(is: 'SignupToken' | 'ResetPasswordToken', email: string, options?: jwt.SignOptions): string {
   return jwt.sign(
@@ -17,7 +16,7 @@ export function generateEmailConfirmationToken(is: 'SignupToken' | 'ResetPasswor
  */
 export async function generateAuthToken(id: number, email: string): Promise<string> {
   const user: UserInfoOnDB | undefined = (await db.query(sql`
-    CALL get_user(${email})
+    CALL get_user(${email});
   `))[0][0]
   if (!user) {
     throw new Error(`User with email ${email} is not found.`)

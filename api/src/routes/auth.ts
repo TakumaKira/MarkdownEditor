@@ -2,15 +2,14 @@ import bcrypt from 'bcrypt'
 import { Router } from 'express'
 import { TokenExpiredError } from 'jsonwebtoken'
 import { API_PATHS, EMAIL_LENGTH_MAX, MIN_PASSWORD_LENGTH } from '../constants'
-import getConfirmationEmail from '../emailTemplates'
+import getConfirmationEmail from '../services/emailTemplates'
 import { JWT_SECRET_KEY, mailServer } from '../getEnvs'
-import decode from '../helper/decode'
-import { generateEmailConfirmationToken, generateAuthToken, generateEmailChangeToken } from '../helper/encode'
+import decode from '../services/decode'
+import { generateEmailConfirmationToken, generateAuthToken, generateEmailChangeToken } from '../services/encode'
 import { apiAuthMiddleware } from '../middlewares/auth'
 import { UserInfoOnDB } from '../models/user'
 import Joi from 'joi'
-import db from '../db/database';
-import { sql } from '@databases/mysql';
+import db, { sql } from '../services/database';
 
 const authApiRouter = Router()
 
@@ -33,7 +32,7 @@ authApiRouter.post(API_PATHS.AUTH.SIGNUP.dir, async (req, res, next) => {
   const hashedPassword = await bcrypt.hash(password, salt)
   try {
     await db.query(sql`
-      CALL create_user(${email}, ${hashedPassword})
+      CALL create_user(${email}, ${hashedPassword});
     `)
   } catch (error: any) {
     if (error?.sqlState === '45012') {
@@ -80,7 +79,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir, async (req, res, nex
 
   try {
     const {id, is_activated} = (await db.query(sql`
-      CALL activate_user(${email})
+      CALL activate_user(${email});
     `))[0][0] as {id: number, is_activated: boolean}
     if (!is_activated) {
       throw new Error(`User with email ${email} is not activated successfully. Please try again.`)

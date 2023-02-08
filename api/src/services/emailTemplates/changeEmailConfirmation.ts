@@ -1,4 +1,4 @@
-import { API_PATHS } from "../constants"
+import { API_PATHS } from "../../constants"
 
 export default function getChangeEmailConfirmation(frontendProtocol: string, frontendDomain: string, token: string): {subject: string, text: string, html: string} {
   return {

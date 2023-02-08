@@ -1,4 +1,4 @@
-import { API_PATHS } from "../constants"
+import { API_PATHS } from "../../constants"
 
 export default function getResetPasswordConfirmation(frontendProtocol: string, frontendDomain: string, token: string): {subject: string, text: string, html: string} {
   return {

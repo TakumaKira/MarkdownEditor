@@ -3,14 +3,15 @@ import jwt from 'jsonwebtoken'
 import request from 'supertest'
 import * as uuid from 'uuid'
 import { v4 as uuidv4 } from 'uuid'
-import apiApp, { wsServer } from '../../src/servers/api'
-import db, { sql } from '../../src/db/database'
+import apiServer from '../../src/servers/apiServer/apiServer'
+import db, { sql } from '../../src/services/database'
 import { API_PATHS, AUTH_TOKEN_KEY, DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT, DOCUMENT_UPDATED_WS_EVENT } from "../../src/constants"
 import { DocumentFromDevice, DocumentFromDB, DocumentsUpdateRequest, DocumentsUpdateResponse, Document } from '../../src/models/document'
 import { JWT_SECRET_KEY, WS_PORT } from '../../src/getEnvs'
 import { buildGetDocumentQuery, fromISOStringToTimeStamp, getNewSafeId, normalize, updateDocuments } from '../../src/routes/documents'
 import { io } from 'socket.io-client'
 import { regIsISODateString } from '../../src/middlewares/validator'
+import wsServer from '../../src/servers/wsServer/wsServer'
 
 jest.mock('uuid', () => ({
   __esModule: true,
@@ -82,7 +83,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       updates: []
     }
     // TESTED REQUEST
-    const res = await request(apiApp)
+    const res = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .send(documentsRequest)
     expect(res.status).toBe(401)
@@ -145,7 +146,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       );
     `)
     // TESTED REQUEST
-    const res = await request(apiApp)
+    const res = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: `${mainUser.authToken}1`})
       .send(documentsRequest)
@@ -229,7 +230,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       `${JWT_SECRET_KEY}1`
     )
     // TESTED REQUEST
-    const res = await request(apiApp)
+    const res = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: invalidMainUserAuthToken})
       .send(documentsRequest)
@@ -313,7 +314,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       JWT_SECRET_KEY
     )
     // TESTED REQUEST
-    const res = await request(apiApp)
+    const res = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: mainUserNotAuthToken})
       .send(documentsRequest)
@@ -396,7 +397,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       );
     `)
     // TESTED REQUEST
-    const res = await request(apiApp)
+    const res = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest)
@@ -444,7 +445,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       ]
     }
     // TESTED REQUEST
-    const res = await request(apiApp)
+    const res = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest)
@@ -501,7 +502,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       duplicatedIdsAsConflicted: [],
     }
     // TESTED REQUEST
-    const res = await request(apiApp)
+    const res = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest)
@@ -549,7 +550,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       ]
     }
     // TESTED REQUEST
-    const res = await request(apiApp)
+    const res = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest)
@@ -606,7 +607,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       duplicatedIdsAsConflicted: [],
     }
     // TESTED REQUEST
-    const res = await request(apiApp)
+    const res = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest)
@@ -702,7 +703,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       duplicatedIdsAsConflicted: [],
     }
     // TESTED REQUEST
-    const res = await request(apiApp)
+    const res = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest)
@@ -798,7 +799,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       duplicatedIdsAsConflicted: [],
     }
     // TESTED REQUEST
-    const res = await request(apiApp)
+    const res = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest)
@@ -860,7 +861,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       duplicatedIdsAsConflicted: [],
     }
     // TESTED REQUEST
-    const res = await request(apiApp)
+    const res = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest)
@@ -975,7 +976,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       duplicatedIdsAsConflicted: [],
     }
     // TESTED REQUEST
-    const res = await request(apiApp)
+    const res = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest)
@@ -1057,7 +1058,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       duplicatedIdsAsConflicted: [],
     }
     // TESTED REQUEST
-    const res = await request(apiApp)
+    const res = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest)
@@ -1149,7 +1150,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       ],
     }
     // TESTED REQUEST
-    const res = await request(apiApp)
+    const res = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest)
@@ -1428,7 +1429,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       ]
     }
     // TESTED REQUEST
-    const res = await request(apiApp)
+    const res = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest)
@@ -1486,7 +1487,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       updatedIdsAsUnavailable: [],
       duplicatedIdsAsConflicted: []
     }
-    const res1ForDeviceA = await request(apiApp)
+    const res1ForDeviceA = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest1FromDeviceA)
@@ -1512,7 +1513,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       updatedIdsAsUnavailable: [],
       duplicatedIdsAsConflicted: []
     }
-    const resForDeviceB = await request(apiApp)
+    const resForDeviceB = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequestFromDeviceB)
@@ -1536,7 +1537,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       updatedIdsAsUnavailable: [],
       duplicatedIdsAsConflicted: []
     }
-    const res2ForDeviceA = await request(apiApp)
+    const res2ForDeviceA = await request(apiServer)
       .post(API_PATHS.DOCUMENTS.path)
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest2FromDeviceA)

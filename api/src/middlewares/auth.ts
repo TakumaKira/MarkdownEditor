@@ -3,7 +3,7 @@ import { Socket } from 'socket.io';
 import { ExtendedError } from 'socket.io/dist/namespace';
 import { AUTH_TOKEN_KEY, EMAIL_LENGTH_MAX } from '../constants';
 import { JWT_SECRET_KEY } from '../getEnvs';
-import decode from '../helper/decode';
+import decode from '../services/decode';
 import Joi from 'joi'
 import { UserInfoOnAuthToken } from '../models/user';
 
