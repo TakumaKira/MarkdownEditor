@@ -1,9 +1,7 @@
 import bcrypt from 'bcrypt'
 import { Router } from 'express'
 import { TokenExpiredError } from 'jsonwebtoken'
-import { RowDataPacket } from 'mysql2/promise'
 import { API_PATHS, EMAIL_LENGTH_MAX, MIN_PASSWORD_LENGTH } from '../constants'
-import getConnection from '../db/getConnection'
 import getConfirmationEmail from '../emailTemplates'
 import { JWT_SECRET_KEY, mailServer } from '../getEnvs'
 import decode from '../helper/decode'
@@ -11,6 +9,8 @@ import { generateEmailConfirmationToken, generateAuthToken, generateEmailChangeT
 import { apiAuthMiddleware } from '../middlewares/auth'
 import { UserInfoOnDB } from '../models/user'
 import Joi from 'joi'
+import db from '../db/database';
+import { sql } from '@databases/mysql';
 
 const authApiRouter = Router()
 
@@ -32,9 +32,8 @@ authApiRouter.post(API_PATHS.AUTH.SIGNUP.dir, async (req, res, next) => {
   const salt = await bcrypt.genSalt(10)
   const hashedPassword = await bcrypt.hash(password, salt)
   try {
-    const connection = await getConnection()
-    await connection.execute<RowDataPacket[][]>(`
-      CALL create_user('${email}', '${hashedPassword}')
+    await db.query(sql`
+      CALL create_user(${email}, ${hashedPassword})
     `)
   } catch (error: any) {
     if (error?.sqlState === '45012') {
@@ -80,11 +79,9 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir, async (req, res, nex
   }
 
   try {
-    const connection = await getConnection()
-    const [rows, fields] = await connection.execute<RowDataPacket[][]>(`
-      CALL activate_user('${email}');
-    `)
-    const {id, is_activated} = rows[0][0] as unknown as {id: number, is_activated: boolean}
+    const {id, is_activated} = (await db.query(sql`
+      CALL activate_user(${email})
+    `))[0][0] as {id: number, is_activated: boolean}
     if (!is_activated) {
       throw new Error(`User with email ${email} is not activated successfully. Please try again.`)
     }
@@ -114,12 +111,9 @@ authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
   const {email, password} = result.value
 
   try {
-    const connection = await getConnection()
-    const [rows, fields] = await connection.execute<RowDataPacket[][]>(`
-      CALL get_user('${email}');
-    `)
-
-    const user = rows[0][0] as unknown as (UserInfoOnDB | undefined)
+    const user: UserInfoOnDB | undefined = (await db.query(sql`
+      CALL get_user(${email});
+    `))[0][0]
     if (!user) return res.status(400).send({message: 'Email/Password is incorrect.'})
 
     if (!user.is_activated) return res.status(400).send({message: 'This user is not activated.'})
@@ -151,13 +145,11 @@ authApiRouter.post(API_PATHS.AUTH.EDIT.dir, apiAuthMiddleware, async (req, res, 
     if (newPassword) {
       const salt = await bcrypt.genSalt(10)
       const hashedPassword = await bcrypt.hash(newPassword, salt)
-
-      const connection = await getConnection()
-      await connection.execute<RowDataPacket[][]>(`
+      await db.query(sql`
         CALL update_user(
           ${id},
           NULL,
-          '${hashedPassword}'
+          ${hashedPassword}
         );
       `)
     }
@@ -201,13 +193,12 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
     return res.status(400).send({message: 'Invalid token.'})
   }
 
+  let user: UserInfoOnDB | undefined
   try {
-    const connection = await getConnection()
-    const [rows, fields] = await connection.execute<RowDataPacket[][]>(`
-      CALL get_user('${oldEmail}');
-    `)
+    user = (await db.query(sql`
+      CALL get_user(${oldEmail});
+    `))[0][0]
 
-    var user = rows[0][0] as unknown as UserInfoOnDB
     if (!user) return res.status(400).send({message: `User with email: ${oldEmail} does not exist.`})
     if (!user.is_activated) {
       return res.status(400).send({message: `User with email ${oldEmail} is not activated yet. Please activate then retry.`})
@@ -221,11 +212,10 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
   }
 
   try {
-    const connection = await getConnection()
-    await connection.execute<RowDataPacket[][]>(`
+    await db.query(sql`
       CALL update_user(
         ${user.id},
-        '${newEmail}',
+        ${newEmail},
         NULL
       );
     `)
@@ -248,12 +238,9 @@ authApiRouter.post(API_PATHS.AUTH.RESET_PASSWORD.dir, async (req, res, next) => 
   const {email} = result.value
 
   try {
-    const connection = await getConnection()
-    const [rows, fields] = await connection.execute<RowDataPacket[][]>(`
-      CALL get_user('${email}');
-    `)
-
-    const user = rows[0][0] as unknown as UserInfoOnDB
+    const user: UserInfoOnDB | undefined = (await db.query(sql`
+      CALL get_user(${email});
+    `))[0][0]
     if (!user) return res.status(400).send({message: `There is no user with email: ${email}`})
 
     if (!user.is_activated) return res.status(400).send({message: 'This user is not activated.'})
@@ -291,13 +278,11 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, n
     return res.status(400).send({message: 'Invalid token.'})
   }
 
+  let user: UserInfoOnDB | undefined
   try {
-    const connection = await getConnection()
-    const [rows, fields] = await connection.execute<RowDataPacket[][]>(`
-      CALL get_user('${email}');
-    `)
-
-    var user = rows[0][0] as unknown as UserInfoOnDB
+    user = (await db.query(sql`
+      CALL get_user(${email});
+    `))[0][0]
     if (!user) return res.status(400).send({message: `User with email: ${email} does not exist.`})
     if (!user.is_activated) {
       return res.status(400).send({message: `User with email ${email} is not activated yet. Please activate then retry.`})
@@ -310,13 +295,11 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, n
   try {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
-
-    const connection = await getConnection()
-    await connection.execute<RowDataPacket[][]>(`
+    await db.query(sql`
       CALL update_user(
         ${user.id},
         NULL,
-        '${hashedPassword}'
+        ${hashedPassword}
       );
     `)
     const token = await generateAuthToken(user.id, email)
@@ -329,8 +312,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, n
 
 authApiRouter.post(API_PATHS.AUTH.DELETE.dir, apiAuthMiddleware, async (req, res, next) => {
   try {
-    const connection = await getConnection()
-    await connection.execute<RowDataPacket[][]>(`
+    await db.query(sql`
       CALL delete_user(
         ${req.user.id}
       );

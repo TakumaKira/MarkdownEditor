@@ -1,6 +1,6 @@
 import request from 'supertest'
 import { API_PATHS, AUTH_TOKEN_KEY } from '../../src/constants'
-import getConnectionPool, { ConnectionPool, sql } from '../../src/db/database'
+import db, { sql } from '../../src/db/database'
 import apiApp, { wsServer } from '../../src/servers/api'
 import { JWT_SECRET_KEY, mailServer, WS_PORT } from '../../src/getEnvs'
 import bcrypt from 'bcrypt'
@@ -17,13 +17,10 @@ jest.mock('../../src/getEnvs', () => ({
   }
 }))
 
-let db: ConnectionPool
 beforeAll(() => {
-  db = getConnectionPool()
 })
 afterAll(() => {
   wsServer.close()
-  return db.dispose()
 })
 
 beforeEach(() => {

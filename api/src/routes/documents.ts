@@ -5,7 +5,7 @@ import { apiAuthMiddleware } from '../middlewares/auth'
 import { documentsRequestValidatorMiddleware } from '../middlewares/validator'
 import { DocumentFromDevice, DocumentFromDB, DocumentsUpdateResponse, Document } from '../models/document'
 import { wsServer } from '../servers/api'
-import getConnectionPool, { ConnectionPool, sql } from '../../src/db/database'
+import db, { ConnectionPool, sql } from '../../src/db/database'
 import { SQLQuery } from '@databases/sql'
 
 const documentsRouter = Router()
@@ -20,8 +20,6 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
    * If any error happens, revert every change.
    * If every update reflected without error, return every document of the user.
    */
-
-  const db = getConnectionPool()
 
   // Get every document by id of updated from device.
   const documentsOnDBToBeUpdated: DocumentFromDB[] = await db.tx(async db => {
@@ -65,7 +63,7 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
     )) {
       const updateToDB: Document = {
         ...updateFromDevice,
-        id: await getNewSafeId(db),
+        id: await getNewSafeId(),
         name: `[Conflicted]: ${updateFromDevice.name}`,
         updatedAt: savedOnDBAt,
         savedOnDBAt
@@ -82,7 +80,7 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
     )) {
       const updateToDB: Document = {
         ...updateFromDevice,
-        id: await getNewSafeId(db),
+        id: await getNewSafeId(),
         savedOnDBAt
       }
       updatesToDB.push(updateToDB)
@@ -164,13 +162,13 @@ function buildUpdateDocumentQuery(document: Document, userId: number): SQLQuery 
   `
 }
 
-export async function getNewSafeId(db: ConnectionPool): Promise<string> {
+export async function getNewSafeId(): Promise<string> {
   const id = uuidv4()
   const result = (await db.query(buildGetDocumentQuery(id)))[0]
   if (result.length === 0) {
     return id
   }
-  return getNewSafeId(db)
+  return getNewSafeId()
 }
 
 export async function updateDocuments(documents: Document[], userId: number, db: ConnectionPool): Promise<void> {

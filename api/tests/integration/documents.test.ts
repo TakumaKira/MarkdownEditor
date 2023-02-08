@@ -4,7 +4,7 @@ import request from 'supertest'
 import * as uuid from 'uuid'
 import { v4 as uuidv4 } from 'uuid'
 import apiApp, { wsServer } from '../../src/servers/api'
-import getConnectionPool, { ConnectionPool, sql } from '../../src/db/database'
+import db, { sql } from '../../src/db/database'
 import { API_PATHS, AUTH_TOKEN_KEY, DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT, DOCUMENT_UPDATED_WS_EVENT } from "../../src/constants"
 import { DocumentFromDevice, DocumentFromDB, DocumentsUpdateRequest, DocumentsUpdateResponse, Document } from '../../src/models/document'
 import { JWT_SECRET_KEY, WS_PORT } from '../../src/getEnvs'
@@ -17,14 +17,11 @@ jest.mock('uuid', () => ({
   ...jest.requireActual('uuid')
 }))
 
-let db: ConnectionPool
 beforeAll(() => {
-  db = getConnectionPool()
   return addUsers()
 })
 afterAll(() => {
   wsServer.close()
-  return db.dispose()
 })
 
 type User = { id: number, email: string, password: string, authToken: string }
@@ -1945,6 +1942,6 @@ describe('getNewSafeId', () => {
         `)
       }
     })
-    await expect(getNewSafeId(db)).resolves.toBe(idList[TRY - 1])
+    await expect(getNewSafeId()).resolves.toBe(idList[TRY - 1])
   })
 })

@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken'
-import { RowDataPacket } from 'mysql2/promise'
-import getConnection from '../db/getConnection'
 import { JWT_SECRET_KEY } from "../getEnvs"
 import { UserInfoOnDB } from '../models/user'
+import db from '../db/database';
+import { sql } from '@databases/mysql';
 
 export function generateEmailConfirmationToken(is: 'SignupToken' | 'ResetPasswordToken', email: string, options?: jwt.SignOptions): string {
   return jwt.sign(
@@ -16,11 +16,9 @@ export function generateEmailConfirmationToken(is: 'SignupToken' | 'ResetPasswor
  * This method will throw an error if the user with given id and email is not valid.
  */
 export async function generateAuthToken(id: number, email: string): Promise<string> {
-  const connection = await getConnection()
-  const [rows, fields] = await connection.execute<RowDataPacket[][]>(`
-    CALL get_user('${email}');
-  `)
-  const user = rows[0][0] as unknown as (UserInfoOnDB | undefined)
+  const user: UserInfoOnDB | undefined = (await db.query(sql`
+    CALL get_user(${email})
+  `))[0][0]
   if (!user) {
     throw new Error(`User with email ${email} is not found.`)
   }
