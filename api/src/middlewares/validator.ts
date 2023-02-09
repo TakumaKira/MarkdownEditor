@@ -17,11 +17,15 @@ const documentsRequestSchema = Joi.object<DocumentsUpdateRequest>({
 })
 
 const documentsRequestValidatorMiddleware: RequestHandler = (req, res, next) => {
-  const result = documentsRequestSchema.validate(req.body)
-  if (result.error) {
-    return res.status(400).send({message: result.error.message})
+  try {
+    const result = documentsRequestSchema.validate(req.body)
+    if (result.error) {
+      return res.status(400).send({message: result.error.message})
+    }
+    req.documentsRequest = result.value
+    next()
+  } catch (e) {
+    next(e)
   }
-  req.documentsRequest = result.value
-  next()
 }
 export { documentsRequestValidatorMiddleware }

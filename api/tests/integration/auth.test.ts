@@ -1,15 +1,14 @@
 import request from 'supertest'
 import { API_PATHS, AUTH_TOKEN_KEY } from '../../src/constants'
 import db, { sql } from '../../src/services/database'
-import apiServer from '../../src/servers/apiServer/apiServer'
-import { JWT_SECRET_KEY, mailServer, WS_PORT } from '../../src/getEnvs'
+import apiApp from '../../src/servers/apiServer/apiApp'
+import { JWT_SECRET_KEY, mailServer } from '../../src/getEnvs'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import decode from '../../src/services/decode'
+import decodeToken from '../../src/services/decodeToken'
 import { UserInfoOnAuthToken } from '../../src/models/user'
 import { v4 as uuidv4 } from 'uuid'
-import { io } from 'socket.io-client'
-import wsServer from '../../src/servers/wsServer/wsServer'
+import wsServer from '../../src/servers/wsServer'
 
 jest.mock('../../src/getEnvs', () => ({
   ...jest.requireActual('../../src/getEnvs'),
@@ -33,12 +32,10 @@ beforeEach(() => {
 afterEach(() => {
 })
 
-// TODO: Update main script to use @database/mysql?
-
 describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
   test('returns 400 if email and password are not provided on request body', async () => {
     // Post and check response.
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({})
     expect(res.status).toBe(400)
@@ -47,7 +44,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
 
   test('returns 400 if email is not provided on request body', async () => {
     // Post and check response.
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({password: 'password'})
     expect(res.status).toBe(400)
@@ -57,7 +54,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
   test('returns 400 if password is not provided on request body and new user does not be created', async () => {
     const email = 'test@email.com'
     // Post and check response.
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({email})
     expect(res.status).toBe(400)
@@ -90,7 +87,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
       );
     `)
     // Signup the user again and check error response.
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({email, password})
     // Make sure the user is not updated.
@@ -103,7 +100,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
     const email = 'test@email.com'
     const password = 'password'
     // Signup a user and check response.
-    await request(apiServer)
+    await request(apiApp)
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({email, password})
     // Make sure if the un-activated user is created.
@@ -145,7 +142,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
       );
     `)
     // Signup the user again and check response.
-    await request(apiServer)
+    await request(apiApp)
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({email, password: password2})
     // Make sure the password is updated.
@@ -165,13 +162,13 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
 
 describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
   test('returns 400 if request does not have token', async () => {
-    const resForUndefined = await request(apiServer)
+    const resForUndefined = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
       .send()
     expect(resForUndefined.status).toBe(400)
     expect(resForUndefined.body.message).toBe("\"token\" is required")
 
-    const resForEmptyObject = await request(apiServer)
+    const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
       .send({})
     expect(resForEmptyObject.status).toBe(400)
@@ -183,7 +180,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
       {is: 'SignupToken', email: 'test@email.com'},
       `${JWT_SECRET_KEY}1`
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
       .send({token: tokenWithIncorrectSecret})
     expect(res.status).toBe(400)
@@ -195,7 +192,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
       {is: 'SignupToken'},
       JWT_SECRET_KEY
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
       .send({token: tokenWithoutEmail})
     expect(res.status).toBe(400)
@@ -207,7 +204,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
       {is: 'ResetPasswordToken', email: 'test@email.com'},
       JWT_SECRET_KEY
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
       .send({token})
     expect(res.status).toBe(400)
@@ -219,7 +216,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
       {is: 'SignupToken', email: 'test@email.com'},
       JWT_SECRET_KEY
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
       .send({token})
     expect(res.status).toBe(400)
@@ -249,7 +246,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
       {is: 'SignupToken', email},
       JWT_SECRET_KEY
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
       .send({token})
     expect(res.status).toBe(409)
@@ -279,13 +276,13 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
       {is: 'SignupToken', email},
       JWT_SECRET_KEY
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
       .send({token})
     expect(res.status).toBe(200)
     const authToken = res.body?.token
     expect(typeof authToken).toBe('string')
-    const decodedAuthToken = decode<UserInfoOnAuthToken>(authToken, JWT_SECRET_KEY)
+    const decodedAuthToken = decodeToken<UserInfoOnAuthToken>(authToken, JWT_SECRET_KEY)
     expect(decodedAuthToken.is).toBe('AuthToken')
     expect(decodedAuthToken.email).toBe(email)
   })
@@ -293,13 +290,13 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
 
 describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
   test('returns 400 if email and password are not provided on request body', async () => {
-    const resForUndefined = await request(apiServer)
+    const resForUndefined = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send()
     expect(resForUndefined.status).toBe(400)
     expect(resForUndefined.body.message).toBe("\"email\" is required")
 
-    const resForEmptyObject = await request(apiServer)
+    const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({})
     expect(resForEmptyObject.status).toBe(400)
@@ -307,7 +304,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
   })
 
   test('returns 400 if email is not provided on request body', async () => {
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({password: 'password'})
     expect(res.status).toBe(400)
@@ -315,7 +312,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
   })
 
   test('returns 400 if password is not provided on request body', async () => {
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({email: 'test@email.com'})
     expect(res.status).toBe(400)
@@ -323,7 +320,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
   })
 
   test('returns 400 if user with given email does not exist', async () => {
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: 'test@email.com', password: 'password' })
     expect(res.status).toBe(400)
@@ -349,7 +346,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
       );
     `)
     // Try to login and check the response.
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email, password })
     expect(res.status).toBe(400)
@@ -375,7 +372,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
       );
     `)
     // Try to login and check the response.
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email, password: `${password}1` })
     expect(res.status).toBe(400)
@@ -401,13 +398,13 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
       );
     `)
     // Try to login and check the response.
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email, password })
     expect(res.status).toBe(200)
     const authToken = res.body?.token
     expect(typeof authToken).toBe('string')
-    const decodedAuthToken = decode<UserInfoOnAuthToken>(authToken, JWT_SECRET_KEY)
+    const decodedAuthToken = decodeToken<UserInfoOnAuthToken>(authToken, JWT_SECRET_KEY)
     expect(decodedAuthToken.is).toBe('AuthToken')
     expect(decodedAuthToken.email).toBe(email)
   })
@@ -440,13 +437,13 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
         WHERE email = ${oldEmail};
     `))[0].id
 
-    const resForNoSet = await request(apiServer)
+    const resForNoSet = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
       .send({ email: newEmail, password: newPassword })
     expect(resForNoSet.status).toBe(401)
     expect(resForNoSet.body.message).toBe('Access denied. Request does not have valid token.')
 
-    const resForEmptyString = await request(apiServer)
+    const resForEmptyString = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
       .set({[AUTH_TOKEN_KEY]: ''})
       .send({ email: newEmail, password: newPassword })
@@ -491,13 +488,13 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
         WHERE email = ${oldEmail};
     `))[0].id
 
-    const resForNoSet = await request(apiServer)
+    const resForNoSet = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
       .send({ email: newEmail, password: newPassword })
     expect(resForNoSet.status).toBe(401)
     expect(resForNoSet.body.message).toBe('Access denied. Request does not have valid token.')
 
-    const resForEmptyString = await request(apiServer)
+    const resForEmptyString = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
       .set({[AUTH_TOKEN_KEY]: ''})
       .send({ email: newEmail, password: newPassword })
@@ -546,7 +543,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
       {is: 'AuthToken', id: 1, email: oldEmail},
       JWT_SECRET_KEY
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
       .set({[AUTH_TOKEN_KEY]: `${validAuthToken}1`})
       .send({ email: newEmail, password: newPassword })
@@ -595,7 +592,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
       {is: 'AuthToken', id: 1, email: oldEmail},
       `${JWT_SECRET_KEY}1`
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
       .set({[AUTH_TOKEN_KEY]: tokenWithIncorrectSecret})
       .send({ email: newEmail, password: newPassword })
@@ -644,7 +641,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
       {is: 'SignupToken', email: oldEmail},
       JWT_SECRET_KEY
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
       .set({[AUTH_TOKEN_KEY]: nonAuthToken})
       .send({ email: newEmail, password: newPassword })
@@ -693,14 +690,14 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
       JWT_SECRET_KEY
     )
 
-    const resForUndefined = await request(apiServer)
+    const resForUndefined = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
       .set({[AUTH_TOKEN_KEY]: validAuthToken})
       .send()
     expect(resForUndefined.status).toBe(400)
     expect(resForUndefined.body.message).toBe("\"value\" must have at least 1 key")
 
-    const resForEmptyObject = await request(apiServer)
+    const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
       .set({[AUTH_TOKEN_KEY]: validAuthToken})
       .send({})
@@ -750,7 +747,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
       {is: 'AuthToken', id: 1, email: oldEmail},
       JWT_SECRET_KEY
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
       .set({[AUTH_TOKEN_KEY]: validAuthToken})
       .send({email: newEmail})
@@ -798,7 +795,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
       JWT_SECRET_KEY
     )
     const newPassword = 'newPassword'
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
       .set({[AUTH_TOKEN_KEY]: validAuthToken})
       .send({password: newPassword})
@@ -847,7 +844,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     )
     const newEmail = 'new@email.com'
     const newPassword = 'newPassword'
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
       .set({[AUTH_TOKEN_KEY]: validAuthToken})
       .send({email: newEmail, password: newPassword})
@@ -869,13 +866,13 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
 
 describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
   test('returns 400 if token and password are missing on request body', async () => {
-    const resForUndefined = await request(apiServer)
+    const resForUndefined = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send()
     expect(resForUndefined.status).toBe(400)
     expect(resForUndefined.body.message).toBe("\"token\" is required")
 
-    const resForEmptyObject = await request(apiServer)
+    const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({})
     expect(resForEmptyObject.status).toBe(400)
@@ -883,7 +880,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
   })
 
   test('returns 400 if token is missing on request body', async () => {
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({password: 'password'})
     expect(res.status).toBe(400)
@@ -920,7 +917,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({token})
     expect(res.status).toBe(400)
@@ -964,7 +961,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '0ms'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({token: expiredToken, password})
     expect(res.status).toBe(400)
@@ -1008,7 +1005,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({token: `${token}1`, password})
     expect(res.status).toBe(400)
@@ -1052,7 +1049,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       `${JWT_SECRET_KEY}1`,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({token: tokenWithIncorrectSecret, password})
     expect(res.status).toBe(400)
@@ -1096,7 +1093,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       `${JWT_SECRET_KEY}1`,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({token: tokenWithIncorrectSecret, password})
     expect(res.status).toBe(400)
@@ -1116,7 +1113,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({token: tokenWithoutOldEmail, password: 'password'})
     expect(res.status).toBe(400)
@@ -1152,7 +1149,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({token: tokenWithoutNewEmail, password})
     expect(res.status).toBe(400)
@@ -1172,7 +1169,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({token: tokenWithoutOldEmailAndNewEmail, password: 'password'})
     expect(res.status).toBe(400)
@@ -1186,7 +1183,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({token, password: 'password'})
     expect(res.status).toBe(400)
@@ -1220,7 +1217,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({token, password})
     expect(res.status).toBe(400)
@@ -1261,7 +1258,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({token, password: `${password}1`})
     expect(res.status).toBe(400)
@@ -1304,14 +1301,14 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({token, password})
     expect(res.status).toBe(200)
     expect(res.body.message).toBe('Email change successful.')
     const authToken = res.body?.token
     expect(typeof authToken).toBe('string')
-    const decodedAuthToken = decode<UserInfoOnAuthToken>(authToken, JWT_SECRET_KEY)
+    const decodedAuthToken = decodeToken<UserInfoOnAuthToken>(authToken, JWT_SECRET_KEY)
     expect(decodedAuthToken.is).toBe('AuthToken')
     expect(decodedAuthToken.email).toBe(newEmail)
     // Make sure email is updated.
@@ -1326,13 +1323,13 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
 
 describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
   test('returns 400 if request does not have email', async () => {
-    const resForUndefined = await request(apiServer)
+    const resForUndefined = await request(apiApp)
       .post(API_PATHS.AUTH.RESET_PASSWORD.path)
       .send()
     expect(resForUndefined.status).toBe(400)
     expect(resForUndefined.body.message).toBe("\"email\" is required")
 
-    const resForEmptyObject = await request(apiServer)
+    const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.RESET_PASSWORD.path)
       .send({})
     expect(resForEmptyObject.status).toBe(400)
@@ -1341,7 +1338,7 @@ describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
 
   test('returns 400 if user with given email does not exist', async () => {
     const email = 'test@email.com'
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.RESET_PASSWORD.path)
       .send({email})
     expect(res.status).toBe(400)
@@ -1365,7 +1362,7 @@ describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
         false
       );
     `)
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.RESET_PASSWORD.path)
       .send({email})
     expect(res.status).toBe(400)
@@ -1390,7 +1387,7 @@ describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
         true
       );
     `)
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.RESET_PASSWORD.path)
       .send({email})
     expect(res.status).toBe(200)
@@ -1401,13 +1398,13 @@ describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
 
 describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
   test('returns 400 if request does not have token and password', async () => {
-    const resForUndefined = await request(apiServer)
+    const resForUndefined = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send()
     expect(resForUndefined.status).toBe(400)
     expect(resForUndefined.body.message).toBe("\"token\" is required")
 
-    const resForEmptyObject = await request(apiServer)
+    const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send({})
     expect(resForEmptyObject.status).toBe(400)
@@ -1416,7 +1413,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
 
   test('returns 400 if request does not have token', async () => {
     const password = 'password'
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send({password})
     expect(res.status).toBe(400)
@@ -1451,7 +1448,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send({token})
     expect(res.status).toBe(400)
@@ -1495,7 +1492,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send({token: `${token}1`, password: newPassword})
     expect(res.status).toBe(400)
@@ -1541,7 +1538,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
       `${JWT_SECRET_KEY}1`,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send({token: tokenWithIncorrectSecret, password: newPassword})
     expect(res.status).toBe(400)
@@ -1587,7 +1584,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send({token, password: newPassword})
     expect(res.status).toBe(400)
@@ -1611,7 +1608,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send({token, password: newPassword})
     expect(res.status).toBe(400)
@@ -1627,7 +1624,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send({token, password: newPassword})
     expect(res.status).toBe(400)
@@ -1663,7 +1660,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send({token, password: newPassword})
     expect(res.status).toBe(400)
@@ -1709,7 +1706,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
       JWT_SECRET_KEY,
       {expiresIn: '30m'}
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send({token, password: newPassword})
     expect(res.status).toBe(200)
@@ -1752,13 +1749,13 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
         WHERE email = ${email};
     `))[0].id
 
-    const resForNoSet = await request(apiServer)
+    const resForNoSet = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
       .send()
     expect(resForNoSet.status).toBe(401)
     expect(resForNoSet.body.message).toBe('Access denied. Request does not have valid token.')
 
-    const resForEmptyString = await request(apiServer)
+    const resForEmptyString = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
       .set({[AUTH_TOKEN_KEY]: ''})
       .send()
@@ -1803,7 +1800,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
       {is: 'AuthToken', id: 1, email},
       JWT_SECRET_KEY
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
       .set({[AUTH_TOKEN_KEY]: `${validAuthToken}1`})
       .send()
@@ -1848,7 +1845,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
       {is: 'AuthToken', id: 1, email},
       `${JWT_SECRET_KEY}1`
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
       .set({[AUTH_TOKEN_KEY]: tokenWithIncorrectSecret})
       .send()
@@ -1893,7 +1890,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
       {is: 'SignupToken', id: 1, email},
       JWT_SECRET_KEY
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
       .set({[AUTH_TOKEN_KEY]: notAuthToken})
       .send()
@@ -1917,7 +1914,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
       {is: 'AuthToken', id: 1, email},
       JWT_SECRET_KEY
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
       .set({[AUTH_TOKEN_KEY]: validAuthToken})
       .send()
@@ -1978,7 +1975,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
       {is: 'AuthToken', id: userId, email},
       JWT_SECRET_KEY
     )
-    const res = await request(apiServer)
+    const res = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
       .set({[AUTH_TOKEN_KEY]: validAuthToken})
       .send()
@@ -1998,130 +1995,5 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
         WHERE id = ${documentId};
     `)
     expect(resultForDocumentSelectQuery).toEqual([])
-  })
-})
-
-describe('WebSocket', () => {
-  test('emits connect_error when no AuthToken is provided', done => {
-    const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false})
-    clientSocket.on('connect_error', err => {
-      expect(err instanceof Error).toBe(true)
-      expect(err.message).toBe('Access denied. Request does not have valid token.')
-      clientSocket.close()
-      done()
-    })
-    clientSocket.connect()
-  })
-
-  test('emits connect_error when invalid AuthToken is provided', done => {
-    const validAuthToken = jwt.sign(
-      {is: 'AuthToken', id: 1, email: 'test@email.com'},
-      JWT_SECRET_KEY
-    )
-    const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: `${validAuthToken}1`}})
-    clientSocket.on('connect_error', err => {
-      expect(err instanceof Error).toBe(true)
-      expect(err.message).toBe('Access denied. Request does not have valid token.')
-      clientSocket.close()
-      done()
-    })
-    clientSocket.connect()
-  })
-
-  test('emits connect_error when AuthToken is provided with incorrect secret', done => {
-    const invalidAuthToken = jwt.sign(
-      {is: 'AuthToken', id: 1, email: 'test@email.com'},
-      `${JWT_SECRET_KEY}1`
-    )
-    const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: invalidAuthToken}})
-    clientSocket.on('connect_error', err => {
-      expect(err instanceof Error).toBe(true)
-      expect(err.message).toBe('Access denied. Request does not have valid token.')
-      clientSocket.close()
-      done()
-    })
-    clientSocket.connect()
-  })
-
-  test('emits connect_error when provided token is not AuthToken', done => {
-    const notAuthToken = jwt.sign(
-      {is: 'SignupToken', id: 1, email: 'test@email.com'},
-      JWT_SECRET_KEY
-    )
-    const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: notAuthToken}})
-    clientSocket.on('connect_error', err => {
-      expect(err instanceof Error).toBe(true)
-      expect(err.message).toBe('Access denied. Request does not have valid token.')
-      clientSocket.close()
-      done()
-    })
-    clientSocket.connect()
-  })
-
-  test('cannot get message if client did not provide valid AuthToken', done => {
-    const testFn = jest.fn()
-    const userId = 1
-    const invalidAuthToken = jwt.sign(
-      {is: 'AuthToken', id: userId, email: 'test@email.com'},
-      `${JWT_SECRET_KEY}1`
-    )
-    const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: invalidAuthToken}})
-    const eventName = 'test'
-    const message = 'test message'
-    clientSocket.on(eventName, arg => testFn(arg))
-    clientSocket.connect()
-    setTimeout(() => {
-      wsServer.to(userId.toString()).emit(eventName, message)
-      setTimeout(() => {
-        expect(testFn).not.toBeCalled()
-        clientSocket.close()
-        done()
-      }, 100)
-    }, 100)
-  })
-
-  test('cannot get message if the message emitted to another user', done => {
-    const testFn = jest.fn()
-    const userId = 1
-    const anotherUserId = 2
-    const validAuthToken = jwt.sign(
-      {is: 'AuthToken', id: userId, email: 'test@email.com'},
-      JWT_SECRET_KEY
-    )
-    const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: validAuthToken}})
-    const eventName = 'test'
-    const message = 'test message'
-    clientSocket.on(eventName, arg => testFn(arg))
-    clientSocket.connect()
-    setTimeout(() => {
-      wsServer.to(anotherUserId.toString()).emit(eventName, message)
-      setTimeout(() => {
-        expect(testFn).not.toBeCalled()
-        clientSocket.close()
-        done()
-      }, 100)
-    }, 100)
-  })
-
-  test('gets message if the message emitted to the user', done => {
-    const testFn = jest.fn()
-    const userId = 1
-    const validAuthToken = jwt.sign(
-      {is: 'AuthToken', id: userId, email: 'test@email.com'},
-      JWT_SECRET_KEY
-    )
-    const clientSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: validAuthToken}})
-    const eventName = 'test'
-    const message = 'test message'
-    clientSocket.on(eventName, arg => testFn(arg))
-    clientSocket.connect()
-    setTimeout(() => {
-      wsServer.to(userId.toString()).emit(eventName, message)
-      setTimeout(() => {
-        expect(testFn).toBeCalledWith(message)
-        clientSocket.close()
-        done()
-      }, 100)
-    }, 100)
   })
 })

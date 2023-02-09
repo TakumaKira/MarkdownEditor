@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET_KEY } from "../getEnvs"
-import { UserInfoOnDB } from '../models/user'
-import db, { sql } from '../services/database';
+import { getUser } from './database';
 
 export function generateEmailConfirmationToken(is: 'SignupToken' | 'ResetPasswordToken', email: string, options?: jwt.SignOptions): string {
   return jwt.sign(
@@ -15,9 +14,7 @@ export function generateEmailConfirmationToken(is: 'SignupToken' | 'ResetPasswor
  * This method will throw an error if the user with given id and email is not valid.
  */
 export async function generateAuthToken(id: number, email: string): Promise<string> {
-  const user: UserInfoOnDB | undefined = (await db.query(sql`
-    CALL get_user(${email});
-  `))[0][0]
+  const user = await getUser(email)
   if (!user) {
     throw new Error(`User with email ${email} is not found.`)
   }

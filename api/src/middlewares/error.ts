@@ -1,7 +1,7 @@
 import { ErrorRequestHandler } from 'express'
 
-const error: ErrorRequestHandler = (err, req, res, next) => {
-  console.log(err)
-  res.status(500).send('Something went wrong.')
+const errorMiddleware: ErrorRequestHandler = (err, req, res, next) => {
+  console.error(err)
+  res.status(500).send({message: 'Something went wrong.'})
 }
-export default error
+export default errorMiddleware
