@@ -8,7 +8,7 @@ const documentsRequestSchema = Joi.object<DocumentsUpdateRequest>({
   updates: Joi.array().required().items(Joi.object({
     id: Joi.string().required().guid({version: ['uuidv4']}),
     name: Joi.string().required().allow(null).max(DOCUMENT_NAME_LENGTH_LIMIT),
-    content: Joi.string().required().allow(null).max(DOCUMENT_CONTENT_LENGTH_LIMIT),
+    content: Joi.string().required().allow(null).max(DOCUMENT_CONTENT_LENGTH_LIMIT).allow(''),
     createdAt: Joi.string().required().regex(regIsISODateString),
     updatedAt: Joi.string().required().regex(regIsISODateString),
     savedOnDBAt: Joi.string().required().allow(null).regex(regIsISODateString),

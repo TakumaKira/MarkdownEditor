@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import env from '../env';
 import { RootStateRestore } from "../store";
-import { DocumentState, DocumentStateRestore } from '../store/models/document';
+import { DocumentState, DocumentStateOnAsyncStorage } from '../store/models/document';
 import { ThemeState, ThemeStateRestore } from '../store/models/theme';
 import { UserState, UserStateRestore } from '../store/models/user';
 
@@ -32,13 +32,13 @@ export function filterUserStateToRestore(user: UserState): UserStateRestore {
   }
 }
 /** TODO: Test automatically check to not miss restoring any property. */
-export function filterDocumentStateToRestore(document: DocumentState): DocumentStateRestore {
+export function filterDocumentStateToRestore(document: DocumentState): DocumentStateOnAsyncStorage {
   return {
     documentList: document.documentList,
     documentOnEdit: {
       id: document.documentOnEdit.id
     },
-    latestUpdatedDocumentFromDBAt: document.latestUpdatedDocumentFromDBAt,
+    lastSyncWithDBAt: document.lastSyncWithDBAt,
   }
 }
 /** TODO: Test automatically check to not miss restoring any property. */

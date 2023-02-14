@@ -13,7 +13,6 @@ const Frame = (props: {sidebar: typeof SideBar, main: typeof MainView}) => {
   } = props
   const [showSidebar, setShowSidebar] = React.useState(false)
   const {width: windowWidth, height: windowHeight} = useWindowDimensions()
-  const containerWidthAnim = React.useRef(new Animated.Value(windowWidth)).current
   const sidebarWidthAnim = React.useRef(new Animated.Value(0)).current
   const {top: iosStatusbarHeight} = useSafeAreaInsets()
   const androidStatusbarHeight = StatusBar.currentHeight ?? 0
@@ -28,20 +27,10 @@ const Frame = (props: {sidebar: typeof SideBar, main: typeof MainView}) => {
       duration: SIDE_MENU_ANIM_DURATION,
       useNativeDriver: false
     }).start()
-    Animated.timing(containerWidthAnim, {
-      toValue: windowWidth + SIDEBAR_WIDTH,
-      duration: SIDE_MENU_ANIM_DURATION,
-      useNativeDriver: false
-    }).start()
   }
   const hideAnim = () => {
     Animated.timing(sidebarWidthAnim, {
       toValue: 0,
-      duration: SIDE_MENU_ANIM_DURATION,
-      useNativeDriver: false
-    }).start()
-    Animated.timing(containerWidthAnim, {
-      toValue: windowWidth,
       duration: SIDE_MENU_ANIM_DURATION,
       useNativeDriver: false
     }).start()
@@ -53,27 +42,23 @@ const Frame = (props: {sidebar: typeof SideBar, main: typeof MainView}) => {
       duration: 0,
       useNativeDriver: false
     }).start()
-    Animated.timing(containerWidthAnim, {
-      toValue: showSidebar ? windowWidth + SIDEBAR_WIDTH : windowWidth,
-      duration: 0,
-      useNativeDriver: false
-    }).start()
   }, [windowWidth])
 
   return (
-    <Animated.View style={[styles.container, {width: containerWidthAnim, height: windowHeight - iosStatusbarHeight - androidStatusbarHeight}]}>
+    <View style={[styles.container, {height: windowHeight - iosStatusbarHeight - androidStatusbarHeight}]}>
       <Animated.View style={[styles.sidebarContainer, {width: sidebarWidthAnim}]}>
         {sidebar()}
       </Animated.View>
-      <View style={styles.mainContainer}>
+      <View style={[styles.mainContainer, {width: windowWidth}]}>
         {main({setShowSidebar, showSidebar})}
       </View>
-    </Animated.View>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
+    overflow: 'hidden',
     flexDirection: 'row',
   },
   sidebarContainer: {
@@ -81,7 +66,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   mainContainer: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 0,
   },
 })
 

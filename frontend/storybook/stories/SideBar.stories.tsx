@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
 import SideBar from '../../components/SideBar';
 import { ConfirmationStateTypes } from "../../constants/confirmationMessages";
-import { DocumentOnDevice } from '../../store/models/document';
+import { DocumentFromDevice } from '../../store/models/document';
 import themeColors from '../../theme/themeColors';
 import { LONG_TITLE } from '../utils/constants';
 import getMockStore from '../utils/getMockStore';
@@ -13,7 +13,7 @@ import ThemeWrapper from '../utils/ThemeWrapper';
 
 const mockStore = getMockStore()
 
-const documentWithLongTitle = (): DocumentOnDevice => ({
+const documentWithLongTitle = (): DocumentFromDevice => ({
   createdAt: '2022-04-01T00:00:00.000Z',
   updatedAt: '2022-04-01T00:00:00.000Z',
   name: LONG_TITLE + '.md',
@@ -22,7 +22,7 @@ const documentWithLongTitle = (): DocumentOnDevice => ({
   isUploaded: false,
   isDeleted: false
 })
-const generateDocuments: (length: number) => DocumentOnDevice[] = length => {
+const generateDocuments: (length: number) => DocumentFromDevice[] = length => {
   return [...Array(length).keys()].map(() => documentWithLongTitle())
 }
 const documents = generateDocuments(10)
@@ -37,7 +37,7 @@ const mockStoreWithManyDocumentsWithLongTitle = getMockStore({
     },
     latestUpdatedDocumentFromDBAt: null,
     confirmationState: null,
-    restoreIsDone: true,
+    restoreFromAsyncStorageIsDone: true,
   },
   theme: {
     deviceColorSchemeIsDark: false,

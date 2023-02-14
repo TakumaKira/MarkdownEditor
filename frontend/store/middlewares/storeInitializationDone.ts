@@ -10,9 +10,9 @@ export const storeInitializationDoneMiddleware: ThunkMiddleware<RootState, AnyAc
   if (
     !state.storeInitializationIsDone
     && state.user.restoreIsDone
-    && state.document.restoreIsDone
+    && state.document.restoreFromAsyncStorageIsDone
     && state.theme.restoreIsDone
   ) {
-    next(storeInitializationDone())
+    store.dispatch(storeInitializationDone())
   }
 }

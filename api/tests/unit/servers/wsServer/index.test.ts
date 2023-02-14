@@ -3,9 +3,9 @@ import jwt from 'jsonwebtoken'
 import { JWT_SECRET_KEY, WS_PORT } from "../../../../src/getEnvs"
 import wsServer from '../../../../src/servers/wsServer'
 
-describe('wsServer', () => {
-  const TESTING_WS_SERVER_AP = `ws://localhost:${WS_PORT}`
+const TESTING_WS_SERVER_AP = `ws://localhost:${WS_PORT}`
 
+describe('wsServer', () => {
   test('emits connect_error when no AuthToken is provided', done => {
     const clientSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false})
     clientSocket.on('connect_error', err => {

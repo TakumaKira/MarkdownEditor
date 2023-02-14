@@ -339,9 +339,11 @@ const AuthModal = () => {
                       />
                     )
                   case ContentTypes.LINK:
-                    return <TouchableOpacity onPress={() => dispatch(content.createAction())}>
-                      <Text style={[styles.link, textStyles.link, themeColors[colorScheme].link, i > 0 ? styles.marginTop : undefined]}>{content.label}</Text>
-                    </TouchableOpacity>
+                    return (
+                      <TouchableOpacity key={i} onPress={() => dispatch(content.createAction())}>
+                        <Text style={[styles.link, textStyles.link, themeColors[colorScheme].link, i > 0 ? styles.marginTop : undefined]}>{content.label}</Text>
+                      </TouchableOpacity>
+                    )
                 }
               })}
             </View>

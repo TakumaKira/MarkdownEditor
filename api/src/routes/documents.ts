@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { DOCUMENT_UPDATED_WS_EVENT } from '../constants'
 import { apiAuthMiddleware } from '../middlewares/auth'
 import { documentsRequestValidatorMiddleware } from '../middlewares/validator'
-import { DocumentsUpdateResponse, Document } from '../models/document'
+import { DocumentsUpdateResponse, Document, DocumentUpdatedWsMessage } from '../models/document'
 import { getDocuments, getNewSafeId, getUserDocuments, normalizeDocument, updateDocuments } from '../services/database'
 import wsServer from '../servers/wsServer'
 
@@ -100,7 +100,7 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
     // If there's update to database, send update notification.
     if (updatesFromDevice.length > 0) {
       // Device may ignore the notification if updatedAt has been already accepted as response.
-      wsServer.to(req.user.id.toString()).emit(DOCUMENT_UPDATED_WS_EVENT, savedOnDBAt)
+      wsServer.to(req.user.id.toString()).emit(DOCUMENT_UPDATED_WS_EVENT, {savedOnDBAt} as DocumentUpdatedWsMessage)
     }
   } catch (e) {
     next(e)

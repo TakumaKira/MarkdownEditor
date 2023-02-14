@@ -1,3 +1,4 @@
+import { DocumentUpdatedWsMessage } from "@api/document"
 import React from "react"
 import { io, Socket } from 'socket.io-client'
 import { DOCUMENT_UPDATED_WS_EVENT } from "../constants"
@@ -24,6 +25,7 @@ const useApiAuth = (): void => {
     setTokenToRequestHeader(token)
     if (token) {
       getSocket(token)
+      dispatch(askServerUpdate(documentState))
     }
   }, [storeInitializationIsDone, userState.token])
 
@@ -32,11 +34,21 @@ const useApiAuth = (): void => {
     setSocket(socket)
   }
 
-  const documentsUpdated = React.useCallback((updatedAt: string) => {
-    if (isLoggedIn && documentState.latestUpdatedDocumentFromDBAt! < updatedAt) {
-      dispatch(askServerUpdate(documentState))
+  const [shouldCheckUpdate, setShouldCheckUpdate] = React.useState<null | DocumentUpdatedWsMessage>(null)
+
+  const documentsUpdated = React.useCallback((message: DocumentUpdatedWsMessage) => {
+    // Wait until finishing asking update to avoid to call api if this very device is causing the ws message.
+    if (isLoggedIn) {
+      setShouldCheckUpdate(message)
     }
   }, [documentState, isLoggedIn])
+
+  React.useEffect(() => {
+    if (shouldCheckUpdate && !documentState.isAskingUpdate && (documentState.lastSyncWithDBAt !== null && documentState.lastSyncWithDBAt !== shouldCheckUpdate.savedOnDBAt)) {
+      dispatch(askServerUpdate(documentState))
+      setShouldCheckUpdate(null)
+    }
+  }, [shouldCheckUpdate, documentState.isAskingUpdate, shouldCheckUpdate])
 
   React.useEffect(() => {
     socket?.on(DOCUMENT_UPDATED_WS_EVENT, documentsUpdated)

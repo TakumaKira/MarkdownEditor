@@ -1,12 +1,11 @@
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import request from 'supertest'
-import * as uuid from 'uuid'
 import { v4 as uuidv4 } from 'uuid'
 import apiApp from '../../src/servers/apiServer/apiApp'
-import db, { fromISOStringToTimeStamp, getDocuments, getNewSafeId, normalizeDocument, sql, updateDocuments } from '../../src/services/database'
+import db, { fromISOStringToTimeStamp, normalizeDocument, sql } from '../../src/services/database'
 import { API_PATHS, AUTH_TOKEN_KEY, DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT, DOCUMENT_UPDATED_WS_EVENT } from "../../src/constants"
-import { DocumentFromDevice, DocumentFromDB, DocumentsUpdateRequest, DocumentsUpdateResponse, Document } from '../../src/models/document'
+import { DocumentFromDevice, DocumentFromDB, DocumentsUpdateRequest, DocumentsUpdateResponse, Document, DocumentUpdatedWsMessage } from '../../src/models/document'
 import { JWT_SECRET_KEY, WS_PORT } from '../../src/getEnvs'
 import { io } from 'socket.io-client'
 import { regIsISODateString } from '../../src/middlewares/validator'
@@ -77,6 +76,8 @@ beforeEach(() => {
 afterEach(() => {
 })
 
+const TESTING_WS_SERVER_AP = `ws://localhost:${WS_PORT}`
+
 describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   // apiAuthMiddleware tests(check if it guards invalid requests)
@@ -95,11 +96,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   test('returns 401 without updating any documents and emitting no event if no auth token is not valid', async () => {
     const mainUserCallback = jest.fn()
-    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
     mainUserSocket.connect()
     const otherUserCallback = jest.fn()
-    const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
+    const otherUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
     const newDocumentFromDevice: DocumentFromDevice = {
@@ -175,11 +176,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   test('returns 401 without updating any documents and emitting no event if no auth token is not encoded with right secret', async () => {
     const mainUserCallback = jest.fn()
-    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
     mainUserSocket.connect()
     const otherUserCallback = jest.fn()
-    const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
+    const otherUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
     const newDocumentFromDevice: DocumentFromDevice = {
@@ -259,11 +260,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   test('returns 401 without updating any documents and emitting no event if no auth token is not authToken', async () => {
     const mainUserCallback = jest.fn()
-    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
     mainUserSocket.connect()
     const otherUserCallback = jest.fn()
-    const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
+    const otherUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
     const newDocumentFromDevice: DocumentFromDevice = {
@@ -346,11 +347,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   test('return 400 without updating any documents and emitting no event if request body is not valid DocumentsRequest', async () => {
     const mainUserCallback = jest.fn()
-    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
     mainUserSocket.connect()
     const otherUserCallback = jest.fn()
-    const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
+    const otherUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
     const invalidNewDocumentFromDevice: DocumentFromDevice = {
@@ -426,11 +427,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   test('not update database with too long name and not send the id back', async () => {
     const mainUserCallback = jest.fn()
-    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
     mainUserSocket.connect()
     const otherUserCallback = jest.fn()
-    const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
+    const otherUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
     const newDocumentWithTooLongNameFromDevice: DocumentFromDevice = {
@@ -472,11 +473,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   test('update database with not too long name and sends the id back', async () => {
     const mainUserCallback = jest.fn()
-    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
     mainUserSocket.connect()
     const otherUserCallback = jest.fn()
-    const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
+    const otherUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
     const newDocumentWithNotTooLongNameFromDevice: DocumentFromDevice = {
@@ -523,7 +524,8 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     ])
     // Check no event on websocket.
     await new Promise<void>(resolve => setTimeout(resolve, 100))
-    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(regIsISODateString))
+    const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
+    expect(mainUserCallback).toBeCalledWith(message)
     mainUserSocket.close()
     expect(otherUserCallback).not.toBeCalled()
     otherUserSocket.close()
@@ -531,11 +533,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   test('not update database with too long content and not send the id back', async () => {
     const mainUserCallback = jest.fn()
-    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
     mainUserSocket.connect()
     const otherUserCallback = jest.fn()
-    const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
+    const otherUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
     const newDocumentWithTooLongContentFromDevice: DocumentFromDevice = {
@@ -577,11 +579,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   test('updates database with not too long content and sends the id back', async () => {
     const mainUserCallback = jest.fn()
-    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
     mainUserSocket.connect()
     const otherUserCallback = jest.fn()
-    const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
+    const otherUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
     const newDocumentWithNotTooLongContentFromDevice: DocumentFromDevice = {
@@ -628,7 +630,8 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     ])
     // Check no event on websocket.
     await new Promise<void>(resolve => setTimeout(resolve, 100))
-    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(regIsISODateString))
+    const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
+    expect(mainUserCallback).toBeCalledWith(message)
     mainUserSocket.close()
     expect(otherUserCallback).not.toBeCalled()
     otherUserSocket.close()
@@ -636,11 +639,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   test("inserts on database with new id and returns id change back to device if new document id from device is already registered as another user's document", async () => {
     const mainUserCallback = jest.fn()
-    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
     mainUserSocket.connect()
     const otherUserCallback = jest.fn()
-    const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
+    const otherUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
     const otherUserDocument: Document = {
@@ -727,7 +730,8 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     ])
     // Check no event on websocket.
     await new Promise<void>(resolve => setTimeout(resolve, 100))
-    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(regIsISODateString))
+    const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
+    expect(mainUserCallback).toBeCalledWith(message)
     mainUserSocket.close()
     expect(otherUserCallback).not.toBeCalled()
     otherUserSocket.close()
@@ -735,7 +739,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   test("inserts on database with new id and returns id change back to device if new document id from device is already registered as the user's another document with different creation time", async () => {
     const mainUserCallback = jest.fn()
-    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
     mainUserSocket.connect()
     const oldDocument: Document = {
@@ -823,7 +827,8 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     expect(result[1].id).toEqual(newDocument.id)
     // Check no event on websocket.
     await new Promise<void>(resolve => setTimeout(resolve, 100))
-    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(regIsISODateString))
+    const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
+    expect(mainUserCallback).toBeCalledWith(message)
     mainUserSocket.close()
   })
 
@@ -831,11 +836,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   test('updates database with updated documents from device and send back updated document id and emit event', async () => {
     const mainUserCallback = jest.fn()
-    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
     mainUserSocket.connect()
     const otherUserCallback = jest.fn()
-    const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
+    const otherUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
     const newDocumentFromDevice: DocumentFromDevice = {
@@ -882,7 +887,8 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     ])
     // Check no event on websocket.
     await new Promise<void>(resolve => setTimeout(resolve, 100))
-    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(regIsISODateString))
+    const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
+    expect(mainUserCallback).toBeCalledWith(message)
     mainUserSocket.close()
     expect(otherUserCallback).not.toBeCalled()
     otherUserSocket.close()
@@ -890,11 +896,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   test('returns all documents on database', async () => {
     const mainUserCallback = jest.fn()
-    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
     mainUserSocket.connect()
     const otherUserCallback = jest.fn()
-    const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
+    const otherUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
     const oldDocumentFromDatabase: Document = {
@@ -996,11 +1002,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   test('Updates document on database.', async () => {
     const mainUserCallback = jest.fn()
-    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
     mainUserSocket.connect()
     const otherUserCallback = jest.fn()
-    const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
+    const otherUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
     const oldDocumentFromDatabase: Document = {
@@ -1070,7 +1076,8 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     expect(res.body).toEqual(documentsUploadResponse)
     // Check no event on websocket.
     await new Promise<void>(resolve => setTimeout(resolve, 100))
-    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(regIsISODateString))
+    const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
+    expect(mainUserCallback).toBeCalledWith(message)
     mainUserSocket.close()
     expect(otherUserCallback).not.toBeCalled()
     otherUserSocket.close()
@@ -1078,11 +1085,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   test('inserts conflicted document with new id on database and returns it back to device with updated on database if document of an id has update both from device and database and emit update to websocket', async () => {
     const mainUserCallback = jest.fn()
-    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
     mainUserSocket.connect()
     const otherUserCallback = jest.fn()
-    const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
+    const otherUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
     const originalDocument: DocumentFromDevice = {
@@ -1162,7 +1169,8 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     expect(res.body).toEqual(documentsUploadResponse)
     // Check no event on websocket.
     await new Promise<void>(resolve => setTimeout(resolve, 100))
-    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(regIsISODateString))
+    const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
+    expect(mainUserCallback).toBeCalledWith(message)
     mainUserSocket.close()
     expect(otherUserCallback).not.toBeCalled()
     otherUserSocket.close()
@@ -1171,11 +1179,11 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
   // Test every case at once.
   test("returns updated documents and emit latest updated time to user's websocket with modified document from device and other device being updated to database and conflicted document being duplicated", async () => {
     const mainUserCallback = jest.fn()
-    const mainUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: mainUser.authToken}})
+    const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
     mainUserSocket.connect()
     const otherUserCallback = jest.fn()
-    const otherUserSocket = io(`ws://localhost:${WS_PORT}`, {autoConnect: false, auth: {token: otherUser.authToken}})
+    const otherUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: otherUser.authToken}})
     otherUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, otherUserCallback)
     otherUserSocket.connect()
     // Synched before this time.
@@ -1448,7 +1456,8 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     `)) as DocumentFromDB[]
     expect(onDatabase.map(document => normalizeDocument(document))).toEqual(documentsUploadResponse.allDocuments)
     await new Promise<void>(resolve => setTimeout(resolve, 100))
-    expect(mainUserCallback).toBeCalledWith(expect.stringMatching(regIsISODateString))
+    const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
+    expect(mainUserCallback).toBeCalledWith(message)
     mainUserSocket.close()
     expect(otherUserCallback).not.toBeCalled()
     otherUserSocket.close()

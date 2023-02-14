@@ -4,7 +4,7 @@ import { apiMiddleware } from './middlewares/api'
 import { asyncStorageMiddleware } from './middlewares/asyncStorage'
 import { authMiddleware } from './middlewares/auth'
 import { storeInitializationDoneMiddleware } from './middlewares/storeInitializationDone'
-import { DocumentState, DocumentStateRestore } from './models/document'
+import { DocumentState, DocumentStateOnAsyncStorage } from './models/document'
 import { ThemeState, ThemeStateRestore } from './models/theme'
 import { UserState, UserStateRestore } from './models/user'
 import documentReducer from './slices/document'
@@ -19,7 +19,7 @@ export type RootState = {
   storeInitializationIsDone: boolean
 }
 export type RootStateRestore = {
-  document: DocumentStateRestore
+  document: DocumentStateOnAsyncStorage
   theme: ThemeStateRestore
   user: UserStateRestore
 }
