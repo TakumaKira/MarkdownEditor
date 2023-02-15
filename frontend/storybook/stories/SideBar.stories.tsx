@@ -3,8 +3,7 @@ import { View } from 'react-native';
 import { Provider } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
 import SideBar from '../../components/SideBar';
-import { ConfirmationStateTypes } from "../../constants/confirmationMessages";
-import { DocumentFromDevice } from '../../store/models/document';
+import { DocumentOnDevice } from '../../store/models/document';
 import themeColors from '../../theme/themeColors';
 import { LONG_TITLE } from '../utils/constants';
 import getMockStore from '../utils/getMockStore';
@@ -13,16 +12,17 @@ import ThemeWrapper from '../utils/ThemeWrapper';
 
 const mockStore = getMockStore()
 
-const documentWithLongTitle = (): DocumentFromDevice => ({
-  createdAt: '2022-04-01T00:00:00.000Z',
-  updatedAt: '2022-04-01T00:00:00.000Z',
+const documentWithLongTitle = (): DocumentOnDevice => ({
+  id: uuidv4(),
   name: LONG_TITLE + '.md',
   content: '',
-  id: uuidv4(),
+  createdAt: '2022-04-01T00:00:00.000Z',
+  updatedAt: '2022-04-01T00:00:00.000Z',
+  savedOnDBAt: '2022-04-01T00:00:01.000Z',
   isUploaded: false,
   isDeleted: false
 })
-const generateDocuments: (length: number) => DocumentFromDevice[] = length => {
+const generateDocuments: (length: number) => DocumentOnDevice[] = length => {
   return [...Array(length).keys()].map(() => documentWithLongTitle())
 }
 const documents = generateDocuments(10)
@@ -35,9 +35,10 @@ const mockStoreWithManyDocumentsWithLongTitle = getMockStore({
       titleInput: documents[selectedDocumentIndex].name!,
       mainInput: documents[selectedDocumentIndex].content!,
     },
-    latestUpdatedDocumentFromDBAt: null,
+    lastSyncWithDBAt: null,
     confirmationState: null,
     restoreFromAsyncStorageIsDone: true,
+    isAskingUpdate: false,
   },
   theme: {
     deviceColorSchemeIsDark: false,
