@@ -25,7 +25,7 @@ axios.interceptors.response.use(
       // API server respond with error message.
       return Promise.reject(error.response.data.message)
     }
-    if (error.request.status === 0) {
+    if (error.request?.status === 0) {
       // Network error(Server not respond).
       return Promise.reject('Server not respond. Please check internet connection and try again later.')
     }
