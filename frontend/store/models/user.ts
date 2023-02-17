@@ -1,4 +1,4 @@
-import { AuthStateTypes } from '../../components/AuthModal'
+import { AuthStateTypes } from "../slices/user"
 
 interface AuthStateBase {
   type: AuthStateTypes

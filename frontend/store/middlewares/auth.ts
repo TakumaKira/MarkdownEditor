@@ -1,10 +1,9 @@
 import { AnyAction } from '@reduxjs/toolkit';
 import { ThunkMiddleware } from 'redux-thunk';
 import { RootState } from "..";
-import { AuthStateTypes } from '../../components/AuthModal';
 import { MIN_PASSWORD_LENGTH } from '../../constants';
 import { AuthStateConfirmChangeEmail, AuthStateConfirmResetPassword } from '../models/user';
-import { askServerConfirmChangeEmail, askServerConfirmResetPassword, askServerConfirmSignupEmail, askServerEdit, askServerLogin, askServerResetPassword, askServerSignup, callAuthModal, submitConfirmNewEmail, submitEdit, submitLogin, submitNewPassword, submitResetPassword, submitSignup, validationError } from '../slices/user';
+import { askServerConfirmChangeEmail, askServerConfirmResetPassword, askServerConfirmSignupEmail, askServerEdit, askServerLogin, askServerResetPassword, askServerSignup, AuthStateTypes, callAuthModal, submitConfirmNewEmail, submitEdit, submitLogin, submitNewPassword, submitResetPassword, submitSignup, validationError } from '../slices/user';
 
 enum SubmitTypes {
   SIGNUP = 'signup',

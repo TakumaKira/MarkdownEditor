@@ -1,10 +1,9 @@
 import React from 'react'
 import env from '../env'
-import { AuthStateTypes } from '../components/AuthModal'
 import { API_PATHS } from '../constants'
 import { useAppDispatch, useAppSelector } from "../store/hooks"
 import { deselectDocument, updateMainInput, updateTitleInput } from "../store/slices/document"
-import { callAuthModal } from "../store/slices/user"
+import { AuthStateTypes, callAuthModal } from "../store/slices/user"
 
 /** Dependent on redux store. */
 const useLoadPath = () => {
@@ -25,7 +24,7 @@ const useLoadPath = () => {
     }
     // Execute here only on web.
     const location = window.location
-    if (!location.search) {
+    if (!location?.search) {
       return
     }
     const searchParams = new URLSearchParams(location.search)

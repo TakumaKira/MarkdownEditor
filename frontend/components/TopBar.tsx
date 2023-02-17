@@ -274,11 +274,21 @@ const SaveButton = (props: {onPress: () => void, mockWindowWidth?: number}) => {
   const mediaType = useMediaquery({width: mockWindowWidth})
 
   return (
-    <ButtonWithHoverColorAnimation onPress={onPress} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={styles.saveButton} childrenWrapperStyle={styles.saveButtonContents}>
+    <ButtonWithHoverColorAnimation
+      onPress={onPress}
+      offBgColorRGB={colors.Orange}
+      onBgColorRGB={colors.OrangeHover}
+      style={styles.saveButton}
+      childrenWrapperStyle={styles.saveButtonContents}
+    >
       <SvgWrapper>
         <SaveIcon />
       </SvgWrapper>
-      {mediaType !== MediaType.MOBILE && <Text style={[styles.saveButtonLabel, textStyles.headingM]}>Save Changes</Text>}
+      {mediaType !== MediaType.MOBILE &&
+        <Text style={[styles.saveButtonLabel, textStyles.headingM]}>
+          Save Changes
+        </Text>
+      }
     </ButtonWithHoverColorAnimation>
   )
 }

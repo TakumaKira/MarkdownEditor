@@ -41,6 +41,7 @@ EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0 \
 API_DOMAIN=localhost \
 API_PORT=3000 \
 WS_PORT=3001 \
+WEB_VERSION_URL=http://localhost:19006 \
 yarn start:storybook
 ```
 
@@ -75,6 +76,14 @@ API_DOMAIN=localhost \
 API_PORT=3000 \
 WS_PORT=3001 \
 yarn web
+```
+
+```sh
+API_DOMAIN=localhost \
+API_PORT=3000 \
+WS_PORT=3001 \
+WEB_VERSION_URL=http://localhost:19006 \
+yarn ios
 ```
 
 ## Run unit test

@@ -1,7 +1,6 @@
 import { UserInfoOnAuthToken } from "@api/user";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import jwt from 'jsonwebtoken';
-import { AuthStateTypes } from "../../components/AuthModal";
+import decodeToken from "../../helpers/decodeToken";
 import { confirmChangeEmail, confirmResetPassword, confirmSignupEmail, deleteUser, editUser, login, resetPassword, signup } from "../../services/api";
 import { getData } from "../../services/asyncStorage";
 import { AuthStateConfirmChangeEmail, AuthStateConfirmResetPassword, AuthStateConfirmSignupEmail, AuthStateDelete, AuthStateEdit, AuthStateLogin, AuthStateResetPassword, AuthStateSignup, UserState } from "../models/user";
@@ -11,6 +10,16 @@ const initialState: UserState = {
   email: null,
   authState: null,
   restoreIsDone: false
+}
+export enum AuthStateTypes {
+  SIGNUP = 'signup',
+  CONFIRM_SIGNUP_EMAIL = 'confirmSignupEmail',
+  LOGIN = 'login,',
+  EDIT = 'edit,',
+  CONFIRM_CHANGE_EMAIL = 'confirmChangeEmail',
+  RESET_PASSWORD = 'resetPassword',
+  CONFIRM_RESET_PASSWORD = 'confirmResetPassword',
+  DELETE = 'delete,',
 }
 const initialAuthStateSignup: AuthStateSignup = {
   type: AuthStateTypes.SIGNUP,
@@ -266,7 +275,7 @@ const userSlice = createSlice({
     builder.addCase(askServerConfirmSignupEmail.fulfilled, (state, action) => {
       const token = action.payload.token as string
       try {
-        const {email} = jwt.decode(token) as UserInfoOnAuthToken
+        const {email} = decodeToken<UserInfoOnAuthToken>(token)
         state.token = token
         state.email = email
         if (state.authState) {
@@ -293,7 +302,7 @@ const userSlice = createSlice({
     builder.addCase(askServerLogin.fulfilled, (state, action) => {
       const token = action.payload.token as string
       try {
-        const {email} = jwt.decode(token) as UserInfoOnAuthToken
+        const {email} = decodeToken<UserInfoOnAuthToken>(token)
         state.token = token
         state.email = email
         if (state.authState) {
@@ -337,7 +346,7 @@ const userSlice = createSlice({
     builder.addCase(askServerConfirmChangeEmail.fulfilled, (state, action) => {
       const token = action.payload.token as string
       try {
-        const {email} = jwt.decode(token) as UserInfoOnAuthToken
+        const {email} = decodeToken<UserInfoOnAuthToken>(token)
         state.token = token
         state.email = email
         if (state.authState) {
@@ -382,7 +391,7 @@ const userSlice = createSlice({
     builder.addCase(askServerConfirmResetPassword.fulfilled, (state, action) => {
       const token = action.payload.token as string
       try {
-        const {email} = jwt.decode(token) as UserInfoOnAuthToken
+        const {email} = decodeToken<UserInfoOnAuthToken>(token)
         state.token = token
         state.email = email
         if (state.authState) {

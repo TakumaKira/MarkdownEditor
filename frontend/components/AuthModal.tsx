@@ -5,7 +5,7 @@ import { RootState } from '../store'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { NEEDS_AT_LEAST_EMAIL_OR_PASSWORD } from '../store/middlewares/auth'
 import { selectColorScheme } from '../store/slices/theme'
-import { askServerDeleteAccount, callAuthModal, dismissAuthModal, resetErrorMessage, submitConfirmNewEmail, submitEdit, submitLogin, submitNewPassword, submitResetPassword, submitSignup } from '../store/slices/user'
+import { askServerDeleteAccount, AuthStateTypes, callAuthModal, dismissAuthModal, resetErrorMessage, submitConfirmNewEmail, submitEdit, submitLogin, submitNewPassword, submitResetPassword, submitSignup } from '../store/slices/user'
 import colors from '../theme/colors'
 import fonts from '../theme/fonts'
 import textStyles from '../theme/textStyles'
@@ -14,17 +14,6 @@ import ButtonWithHoverColorAnimation from './common/ButtonWithHoverColorAnimatio
 import LoadingCircles from './common/LoadingCircles'
 import Modal from './common/Modal'
 import { Text, TextInput } from './common/withCustomFont'
-
-export enum AuthStateTypes {
-  SIGNUP = 'signup',
-  CONFIRM_SIGNUP_EMAIL = 'confirmSignupEmail',
-  LOGIN = 'login,',
-  EDIT = 'edit,',
-  CONFIRM_CHANGE_EMAIL = 'confirmChangeEmail',
-  RESET_PASSWORD = 'resetPassword',
-  CONFIRM_RESET_PASSWORD = 'confirmResetPassword',
-  DELETE = 'delete,',
-}
 
 const styles = StyleSheet.create({
   modalContentContainer: {
@@ -373,6 +362,8 @@ const Input = (props: {label: string, input: string, setInput: (input: string) =
         onChangeText={setInput}
         selectionColor={colors.Orange}
         secureTextEntry={secureTextEntry}
+        autoCapitalize="none"
+        autoCorrect={false}
       />
       <View style={[styles.inputUnderline, themeColors[colorScheme].modalBackgroundColor]} />
       {errorMessage && <Text style={[styles.errorMessage, styles.inputErrorMessage]}>{errorMessage}</Text>}
