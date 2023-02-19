@@ -9,6 +9,7 @@
   "author": "Takuma Kira <takuma@kirakiraworx.com>",
   "license": "MIT",
   "devDependencies": {
-    "cypress": "^11.1.0"
+    "cypress": "^11.1.0",
+    "typescript": "^4.9.5"
   }
 }
