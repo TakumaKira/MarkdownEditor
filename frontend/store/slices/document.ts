@@ -178,19 +178,15 @@ const documentSlice = createSlice({
     builder.addCase(restoreDocument.fulfilled, (state, action) => {
       const restored = action.payload
       if (restored) {
-        try {
-          // TODO: Test automatically check to not miss restoring any property.
-          state.documentList = restored.documentList
-          state.documentOnEdit.id = restored.documentOnEdit.id
-          const selectedDocumentOnList = selectSelectedDocumentOnList({document: state})
-          if (selectedDocumentOnList) {
-            state.documentOnEdit.titleInput = selectedDocumentOnList.name ?? ''
-            state.documentOnEdit.mainInput = selectedDocumentOnList.content ?? ''
-          }
-          state.lastSyncWithDBAt = restored.lastSyncWithDBAt
-        } catch (err) {
-          console.error(err)
+        // TODO: Test automatically check to not miss restoring any property.
+        state.documentList = restored.documentList
+        state.documentOnEdit.id = restored.documentOnEdit.id
+        const selectedDocumentOnList = selectSelectedDocumentOnList({document: state})
+        if (selectedDocumentOnList) {
+          state.documentOnEdit.titleInput = selectedDocumentOnList.name ?? ''
+          state.documentOnEdit.mainInput = selectedDocumentOnList.content ?? ''
         }
+        state.lastSyncWithDBAt = restored.lastSyncWithDBAt
       } else {
         const initialDocuments: {name: string, content: string}[] = env.INITIAL_DOCUMENTS
         state.documentList.push(...initialDocuments.map(({name, content}) => {

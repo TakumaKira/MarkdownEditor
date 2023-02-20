@@ -2,13 +2,14 @@ import React from 'react'
 import env from '../env'
 import { API_PATHS } from '../constants'
 import { useAppDispatch, useAppSelector } from "../store/hooks"
-import { deselectDocument, updateMainInput, updateTitleInput } from "../store/slices/document"
+import { deselectDocument, selectLatestDocument, updateMainInput, updateTitleInput } from "../store/slices/document"
 import { AuthStateTypes, callAuthModal } from "../store/slices/user"
 
 /** Dependent on redux store. */
 const useLoadPath = () => {
   const dispatch = useAppDispatch()
   const storeInitializationIsDone = useAppSelector(state => state.storeInitializationIsDone)
+  const documentState = useAppSelector(state => state.document)
 
   const tryLoadingInputFromUrlParams = (input: string) => {
     dispatch(deselectDocument())
@@ -25,6 +26,9 @@ const useLoadPath = () => {
     // Execute here only on web.
     const location = window.location
     if (!location?.search) {
+      if (documentState.documentOnEdit.id === null) {
+        dispatch(selectLatestDocument())
+      }
       return
     }
     const searchParams = new URLSearchParams(location.search)
