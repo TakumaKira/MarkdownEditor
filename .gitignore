@@ -5,3 +5,4 @@ command-memo.txt
 docker-compose-*-secrets.env
 todo.txt
 cypress/screenshots/
+yarn-error.log

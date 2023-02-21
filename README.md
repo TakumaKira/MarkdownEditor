@@ -195,5 +195,12 @@ When you get frontend/api/database ready, then you can open up E2E testing tool 
 *When you run this for the first time, you need to run ``yarn install`` first to install dependencies.*
 
 ```sh
-CYPRESS_BASE_URL=<frontend-url> yarn cypress:open
+CYPRESS_BASE_URL=<frontend-url> \
+CYPRESS_MAILOSAUR_API_KEY=<your-mailosaur-api-key> \
+DATABASE_HOST=localhost \
+MYSQL_DATABASE=markdown_editor \
+MYSQL_USER=markdown_editor_app \
+MYSQL_PASSWORD=<your-password-for-app> \
+yarn cypress:open \
+--env MAILOSAUR_SERVER_ID=<your-mailosaur-server-id>
 ```

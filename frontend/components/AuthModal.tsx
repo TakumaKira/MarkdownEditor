@@ -282,6 +282,7 @@ const AuthModal = () => {
                         setInput={setEmailInput}
                         errorMessage={authState.emailValidationErrorMessage}
                         style={[i > 0 ? styles.marginTop : undefined]}
+                        testID="auth-modal-email-input"
                       />
                   case ContentTypes.PASSWORD_INPUT:
                     return 'passwordValidationErrorMessage' in authState &&
@@ -293,6 +294,7 @@ const AuthModal = () => {
                         errorMessage={authState.passwordValidationErrorMessage}
                         style={[i > 0 ? styles.marginTop : undefined]}
                         secureTextEntry
+                        testID="auth-modal-password-input"
                       />
                   case ContentTypes.PASSWORD_CONFIRM_INPUT:
                     return 'passwordConfirmValidationErrorMessage' in authState &&
@@ -304,6 +306,7 @@ const AuthModal = () => {
                         errorMessage={authState.passwordConfirmValidationErrorMessage}
                         style={[i > 0 ? styles.marginTop : undefined]}
                         secureTextEntry
+                        testID="auth-modal-password-confirm-input"
                       />
                   case ContentTypes.TEXT:
                     return (
@@ -325,6 +328,7 @@ const AuthModal = () => {
                         label={content.label}
                         serverErrorMessage={authState.serverErrorMessage}
                         style={[i > 0 ? styles.marginTop : undefined]}
+                        testID="auth-modal-submit-button"
                       />
                     )
                   case ContentTypes.LINK:
@@ -338,8 +342,19 @@ const AuthModal = () => {
             </View>
           </>
           : <View>
-            <Text style={[styles.marginTop, textStyles.previewParagraph, doneText.isError ? {color: colors.Red} : themeColors[colorScheme].confirmationMessage]}>{doneText.text}</Text>
-            <ButtonWithHoverColorAnimation onPress={() => dispatch(dismissAuthModal())} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.button, styles.marginTop]} childrenWrapperStyle={styles.buttonContents}>
+            <Text
+              style={[styles.marginTop, textStyles.previewParagraph, doneText.isError ? {color: colors.Red} : themeColors[colorScheme].confirmationMessage]}
+            >
+              {doneText.text}
+            </Text>
+            <ButtonWithHoverColorAnimation
+              onPress={() => dispatch(dismissAuthModal())}
+              offBgColorRGB={colors.Orange}
+              onBgColorRGB={colors.OrangeHover}
+              style={[styles.button, styles.marginTop]}
+              childrenWrapperStyle={styles.buttonContents}
+              testID="auth-modal-ok-button"
+            >
               <Text style={[styles.buttonLabel, textStyles.headingM]}>OK</Text>
             </ButtonWithHoverColorAnimation>
           </View>
@@ -350,12 +365,30 @@ const AuthModal = () => {
 }
 export default AuthModal
 
-const Input = (props: {label: string, input: string, setInput: (input: string) => void, errorMessage?: string | null, style?: StyleProp<ViewStyle>, secureTextEntry?: boolean}) => {
-  const {label, input, setInput, errorMessage, style, secureTextEntry} = props
+const Input = (props: {
+  label: string
+  input: string
+  setInput: (input: string) => void
+  errorMessage?: string | null
+  style?: StyleProp<ViewStyle>
+  secureTextEntry?: boolean
+  testID?: string
+}) => {
+  const {
+    label,
+    input,
+    setInput,
+    errorMessage,
+    style,
+    secureTextEntry,
+    testID,
+  } = props
   const colorScheme = useAppSelector(selectColorScheme)
   return (
     <View style={style}>
-      <Text style={[textStyles.bodyM, styles.inputLabel, themeColors[colorScheme].inputUnderLabel]}>{label}</Text>
+      <Text
+        style={[textStyles.bodyM, styles.inputLabel, themeColors[colorScheme].inputUnderLabel]}
+      >{label}</Text>
       <TextInput
         style={[styles.inputField, textStyles.headingM, themeColors[colorScheme].inputText]}
         value={input}
@@ -364,6 +397,7 @@ const Input = (props: {label: string, input: string, setInput: (input: string) =
         secureTextEntry={secureTextEntry}
         autoCapitalize="none"
         autoCorrect={false}
+        testID={testID}
       />
       <View style={[styles.inputUnderline, themeColors[colorScheme].modalBackgroundColor]} />
       {errorMessage && <Text style={[styles.errorMessage, styles.inputErrorMessage]}>{errorMessage}</Text>}
@@ -379,6 +413,7 @@ const SubmitButton = (props: {
   label: string
   serverErrorMessage: string | null
   style?: StyleProp<ViewStyle>
+  testID?: string
 }) => {
   const {
     onPress,
@@ -388,6 +423,7 @@ const SubmitButton = (props: {
     label,
     serverErrorMessage,
     style,
+    testID,
   } = props
 
   return (
@@ -399,6 +435,7 @@ const SubmitButton = (props: {
         style={[styles.button, style]}
         childrenWrapperStyle={styles.buttonContents}
         disabled={isLoading}
+        testID={testID}
       >
         {isLoading
           ? <View style={styles.loaderContainer}>

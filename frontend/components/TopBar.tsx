@@ -155,7 +155,15 @@ const MenuButton = (props: {toggle: () => void, isOpen: boolean}) => {
   } = props
 
   return (
-    <ButtonWithHoverColorAnimation onPress={toggle} offBgColorRGB={colors[700]} onBgColorRGB={colors.Orange} duration={0} style={styles.menuButton} childrenWrapperStyle={styles.menuButtonContents}>
+    <ButtonWithHoverColorAnimation
+      onPress={toggle}
+      offBgColorRGB={colors[700]}
+      onBgColorRGB={colors.Orange}
+      duration={0}
+      style={styles.menuButton}
+      childrenWrapperStyle={styles.menuButtonContents}
+      testID="topbar-menu-button"
+    >
       <SvgWrapper>
         {isOpen ? <CloseIcon /> : <HamburgerIcon />}
       </SvgWrapper>
