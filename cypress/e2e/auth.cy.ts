@@ -17,9 +17,8 @@ describe('auth' , () => {
       cy.saveLocalStorage()
     })
 
-    const testStart = new Date()
-    let linkInHtml: string
-    let linkInText: string
+    const signupTestStart = new Date()
+    let linkInSignupMail: string
 
     it('sends confirmation email with url including token', () => {
       cy.visit('/')
@@ -33,24 +32,15 @@ describe('auth' , () => {
       cy.mailosaurGetMessage(
         Cypress.env('MAILOSAUR_SERVER_ID'),
         {sentTo: testEmail},
-        {receivedAfter: testStart}
+        {receivedAfter: signupTestStart}
       ).then(message => {
-        linkInHtml = message.html.links[0].href
-        linkInText = message.text.links[0].href
+        expect(message.html.links[0].href).to.equal(message.text.links[0].href)
+        linkInSignupMail = message.html.links[0].href
       })
     })
 
     it('shows success message and gets logged in when accessing sent url in html', () => {
-      cy.visit(linkInHtml)
-      cy.contains('Your email is confirmed successfully.')
-      cy.getBySel('auth-modal-ok-button').click()
-      cy.getBySel('topbar-menu-button').click()
-      cy.contains(testEmail)
-      cy.task('deactivateUser', testEmail)
-    })
-
-    it('shows success message and gets logged in when accessing sent url in text', () => {
-      cy.visit(linkInText)
+      cy.visit(linkInSignupMail)
       cy.contains('Your email is confirmed successfully.')
       cy.getBySel('auth-modal-ok-button').click()
       cy.getBySel('topbar-menu-button').click()
@@ -125,9 +115,8 @@ describe('auth' , () => {
       cy.contains('Successfully logged in.')
     })
 
-    const testStart2 = new Date()
-    let linkInHtml2: string
-    let linkInText2: string
+    const mailChangeTestStart = new Date()
+    let linkInMailChangeMail: string
 
     it('sends confirmation email with url including token if email is changed', () => {
       cy.visit('/')
@@ -139,15 +128,15 @@ describe('auth' , () => {
       cy.mailosaurGetMessage(
         Cypress.env('MAILOSAUR_SERVER_ID'),
         {sentTo: testEmail2},
-        {receivedAfter: testStart2}
+        {receivedAfter: mailChangeTestStart}
       ).then(message => {
-        linkInHtml2 = message.html.links[0].href
-        linkInText2 = message.text.links[0].href
+        expect(message.html.links[0].href).to.equal(message.text.links[0].href)
+        linkInMailChangeMail = message.html.links[0].href
       })
     })
 
     it('shows success message and gets logged in with new email when accessing sent url in html', () => {
-      cy.visit(linkInHtml2)
+      cy.visit(linkInMailChangeMail)
       cy.contains('Please enter your password to confirm new email.')
       cy.getBySel('auth-modal-password-input').type(testPassword)
       cy.getBySel('auth-modal-submit-button').click()
@@ -162,25 +151,8 @@ describe('auth' , () => {
       cy.task('changeEmail', {from: testEmail2, to: testEmail})
     })
 
-    it('shows success message and gets logged in with new email when accessing sent url in text', () => {
-      cy.visit(linkInText2)
-      cy.contains('Please enter your password to confirm new email.')
-      cy.getBySel('auth-modal-password-input').type(testPassword)
-      cy.getBySel('auth-modal-submit-button').click()
-      cy.contains('Password is incorrect.')
-      cy.getBySel('auth-modal-password-input').clear()
-      cy.getBySel('auth-modal-password-input').type(testPassword2)
-      cy.getBySel('auth-modal-submit-button').click()
-      cy.contains('Successfully confirmed.')
-      cy.getBySel('auth-modal-ok-button').click()
-      cy.getBySel('topbar-menu-button').click()
-      cy.contains(testEmail2)
-      cy.task('changeEmail', {from: testEmail2, to: testEmail})
-    })
-
-    const testStart3 = new Date()
-    let linkInHtml3: string
-    let linkInText3: string
+    const mailWithPasswordChangeTestStart = new Date()
+    let linkInMailWithPasswordChangeMail: string
 
     it('changes password immediately and sends confirmation email with url including token if asked both change at the same time', () => {
       cy.visit('/')
@@ -194,10 +166,10 @@ describe('auth' , () => {
       cy.mailosaurGetMessage(
         Cypress.env('MAILOSAUR_SERVER_ID'),
         {sentTo: testEmail2},
-        {receivedAfter: testStart3}
+        {receivedAfter: mailWithPasswordChangeTestStart}
       ).then(message => {
-        linkInHtml3 = message.html.links[0].href
-        linkInText3 = message.text.links[0].href
+        expect(message.html.links[0].href).to.equal(message.text.links[0].href)
+        linkInMailWithPasswordChangeMail = message.html.links[0].href
       })
       cy.getBySel('auth-modal-ok-button').click()
       cy.contains(testEmail)
@@ -221,23 +193,7 @@ describe('auth' , () => {
     })
 
     it('shows success message and gets logged in with new email when accessing sent url in html', () => {
-      cy.visit(linkInHtml3)
-      cy.contains('Please enter your password to confirm new email.')
-      cy.getBySel('auth-modal-password-input').type(testPassword2)
-      cy.getBySel('auth-modal-submit-button').click()
-      cy.contains('Password is incorrect.')
-      cy.getBySel('auth-modal-password-input').clear()
-      cy.getBySel('auth-modal-password-input').type(testPassword3)
-      cy.getBySel('auth-modal-submit-button').click()
-      cy.contains('Successfully confirmed.')
-      cy.getBySel('auth-modal-ok-button').click()
-      cy.getBySel('topbar-menu-button').click()
-      cy.contains(testEmail2)
-      cy.task('changeEmail', {from: testEmail2, to: testEmail})
-    })
-
-    it('shows success message and gets logged in with new email when accessing sent url in text', () => {
-      cy.visit(linkInText3)
+      cy.visit(linkInMailWithPasswordChangeMail)
       cy.contains('Please enter your password to confirm new email.')
       cy.getBySel('auth-modal-password-input').type(testPassword2)
       cy.getBySel('auth-modal-submit-button').click()
