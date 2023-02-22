@@ -5,8 +5,8 @@ import { asyncStorageMiddleware } from './middlewares/asyncStorage'
 import { authMiddleware } from './middlewares/auth'
 import { storeInitializationDoneMiddleware } from './middlewares/storeInitializationDone'
 import { DocumentState, DocumentStateOnAsyncStorage } from './models/document'
-import { ThemeState, ThemeStateRestore } from './models/theme'
-import { UserState, UserStateRestore } from './models/user'
+import { ThemeState, ThemeStateOnAsyncStorage } from './models/theme'
+import { UserState, UserStateOnAsyncStorage } from './models/user'
 import documentReducer from './slices/document'
 import storeInitializationIsDoneReducer from './slices/storeInitializationIsDone'
 import themeReducer from './slices/theme'
@@ -20,8 +20,8 @@ export type RootState = {
 }
 export type RootStateRestore = {
   document: DocumentStateOnAsyncStorage
-  theme: ThemeStateRestore
-  user: UserStateRestore
+  theme: ThemeStateOnAsyncStorage
+  user: UserStateOnAsyncStorage
 }
 export const reducer = {
   document: documentReducer,

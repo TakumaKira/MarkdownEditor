@@ -24,6 +24,10 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
+import { UserStateOnAsyncStorage } from "../../frontend/store/models/user";
+import * as frontendAppConfig from '../../frontend/app.config';
+import { ManifestExtra } from "../../frontend/app.config.manifestExtra";
+
 export {};
 declare global {
   namespace Cypress {
@@ -33,10 +37,19 @@ declare global {
        * @example cy.dataCy('greeting')
        */
       getBySel(value: string): Chainable<JQuery<HTMLElement>>
+
+      logout(): Chainable<JQuery<HTMLElement>>
     }
   }
 }
 
 Cypress.Commands.add('getBySel', (selector, ...args) => {
   return cy.get(`[data-testid=${selector}]`, ...args)
+})
+
+Cypress.Commands.add('logout', () => {
+  window.localStorage.setItem(
+    (frontendAppConfig.extra as ManifestExtra).STATE_STORAGE_KEY_BASE,
+    JSON.stringify({email: null, token: null} as UserStateOnAsyncStorage)
+  )
 })

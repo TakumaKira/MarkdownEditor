@@ -22,6 +22,5 @@ export declare type ManifestExtra = {
       content: string
     }
   ]
-  STATE_STORAGE_KEY: string
-  LOGIN_TOKEN_KEY: string
+  STATE_STORAGE_KEY_BASE: string
 }

@@ -57,8 +57,25 @@ describe('auth' , () => {
   })
 
   context('login', () => {
-    it('can be logged in with registered email and password', () => {
+    beforeEach(() => {
+      cy.restoreLocalStorage()
+      cy.logout()
+    })
+    afterEach(() => {
+      cy.saveLocalStorage()
+    })
 
+    it('can be logged in with registered email and password', () => {
+      cy.visit('/')
+      cy.getBySel('topbar-menu-button').click()
+      cy.getBySel('sidebar-login-button').click()
+      cy.getBySel('auth-modal-email-input').type(testEmail)
+      cy.getBySel('auth-modal-password-input').type(password)
+      cy.getBySel('auth-modal-submit-button').click()
+      cy.contains('Successfully logged in.')
+      cy.getBySel('auth-modal-ok-button').click()
+      cy.getBySel('topbar-menu-button').click()
+      cy.contains(testEmail)
     })
   })
 
