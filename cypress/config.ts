@@ -27,6 +27,22 @@ const config = defineConfig({
               WHERE email = ${email.from};
           `)
         },
+        getUser(email: string) {
+          return db.query(sql`
+            SELECT *
+              FROM users
+              WHERE email = ${email};
+          `)
+        },
+        getUserDocuments(email: string) {
+          return db.query(sql`
+            SELECT documents.*, users.email
+              FROM documents
+                JOIN users
+                ON documents.user_id = users.id
+                WHERE users.email = ${email};
+          `)
+        },
       })
       require("cypress-localstorage-commands/plugin")(on, config);
       return config

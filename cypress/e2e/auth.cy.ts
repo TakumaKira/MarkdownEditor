@@ -5,8 +5,10 @@ const testPassword2 = 'test5678'
 const testPassword3 = 'test9012'
 const testPassword4 = 'test3456'
 
+// TODO: Make each test free from others.
+
 describe('auth' , () => {
-  context('singup', () => {
+  context('signup', () => {
     before(() => {
       cy.task('clearUser', testEmail1)
       cy.clearLocalStorageSnapshot()
@@ -239,7 +241,6 @@ describe('auth' , () => {
         {sentTo: testEmail1, subject: 'Markdown: You asked to reset your password.'},
         {receivedAfter: passwordResetTestStart}
       ).then(message => {
-        cy.log(message.subject)
         expect(message.html.links[0].href).to.equal(message.text.links[0].href)
         linkInPasswordResetMail = message.html.links[0].href
       })
@@ -277,8 +278,25 @@ describe('auth' , () => {
   })
 
   context('delete account', () => {
-    it('deletes user and its documents', () => {
+    beforeEach(() => {
+      cy.restoreLocalStorage()
+    })
+    afterEach(() => {
+      cy.saveLocalStorage()
+    })
 
+    it('deletes user and its documents', () => {
+      cy.visit('/')
+      cy.getBySel('topbar-menu-button').click()
+      cy.getBySel('sidebar-delete-button').click()
+      cy.task('getUser', testEmail1).should('have.length', 1)
+      cy.task('getUserDocuments', testEmail1).should('have.length.gt', 0)
+      cy.getBySel('auth-modal-submit-button').contains('Delete').click()
+      cy.contains('Successfully delete account.')
+      cy.getBySel('auth-modal-ok-button').click()
+      cy.getBySel('sidebar-login-button')
+      cy.task('getUser', testEmail1).should('have.length', 0)
+      cy.task('getUserDocuments', testEmail1).should('have.length', 0)
     })
   })
 })
