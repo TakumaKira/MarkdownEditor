@@ -27,6 +27,7 @@
 import { UserStateOnAsyncStorage } from "../../frontend/store/models/user";
 import * as frontendAppConfig from '../../frontend/app.config';
 import { ManifestExtra } from "../../frontend/app.config.manifestExtra";
+import { API_PATHS } from "../../frontend/constants";
 
 export {};
 declare global {
@@ -38,6 +39,7 @@ declare global {
        */
       getBySel(value: string): Chainable<JQuery<HTMLElement>>
 
+      login(email: string, password: string): Chainable<JQuery<HTMLElement>>
       logout(): Chainable<JQuery<HTMLElement>>
     }
   }
@@ -47,9 +49,22 @@ Cypress.Commands.add('getBySel', (selector, ...args) => {
   return cy.get(`[data-testid=${selector}]`, ...args)
 })
 
+Cypress.Commands.add('login', (email, password) => {
+  cy.request<{message: string, token: string}>({
+    method: 'POST',
+    url: `${Cypress.env('API_BASE_URL')}${API_PATHS.AUTH.LOGIN.path}`, // TODO: Build this from env vars.
+    body: {email, password}
+  })
+  .then(resp =>
+    window.localStorage.setItem(
+      `${(frontendAppConfig.extra as ManifestExtra).STATE_STORAGE_KEY_BASE}_user`,
+      JSON.stringify({email, token: resp.body.token} as UserStateOnAsyncStorage)
+    )
+  )
+})
 Cypress.Commands.add('logout', () => {
   window.localStorage.setItem(
-    (frontendAppConfig.extra as ManifestExtra).STATE_STORAGE_KEY_BASE,
+    `${(frontendAppConfig.extra as ManifestExtra).STATE_STORAGE_KEY_BASE}_user`,
     JSON.stringify({email: null, token: null} as UserStateOnAsyncStorage)
   )
 })

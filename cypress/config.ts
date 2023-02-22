@@ -19,7 +19,14 @@ const config = defineConfig({
               SET is_activated = FALSE
               WHERE email = ${email};
           `)
-        }
+        },
+        changeEmail(email: {from: string, to: string}) {
+          return db.query(sql`
+            UPDATE users
+              SET email = ${email.to}
+              WHERE email = ${email.from};
+          `)
+        },
       })
       require("cypress-localstorage-commands/plugin")(on, config);
       return config

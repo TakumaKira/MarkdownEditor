@@ -202,5 +202,5 @@ MYSQL_DATABASE=markdown_editor \
 MYSQL_USER=markdown_editor_app \
 MYSQL_PASSWORD=<your-password-for-app> \
 yarn cypress:open \
---env MAILOSAUR_SERVER_ID=<your-mailosaur-server-id>
+--env MAILOSAUR_SERVER_ID=<your-mailosaur-server-id>,API_BASE_URL=<your-api-base-url>
 ```

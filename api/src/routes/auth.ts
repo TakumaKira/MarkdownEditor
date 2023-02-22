@@ -43,7 +43,7 @@ authApiRouter.post(API_PATHS.AUTH.SIGNUP.dir, async (req, res, next) => {
     const {subject, text, html} = getConfirmationEmail('signup', token)
 
     await mailServer.send(email, subject, text, html)
-    res.send({message: 'Confirmation email sent.'})
+    res.send({message: 'Confirmation email was sent.'})
   } catch (e) {
     next(e)
   }
@@ -142,7 +142,7 @@ authApiRouter.post(API_PATHS.AUTH.EDIT.dir, apiAuthMiddleware, async (req, res, 
       const token = generateEmailChangeToken(oldEmail, newEmail, {expiresIn: '30m'})
       const {subject, text, html} = getConfirmationEmail('changeEmail', token)
       await mailServer.send(newEmail, subject, text, html)
-      res.send({message: `Confirmation email sent to ${newEmail}. Please check the inbox and confirm.`})
+      res.send({message: `Confirmation email was sent to ${newEmail}. Please check the inbox and confirm.`})
     } else {
       res.send({message: 'Password update successful.'})
     }
@@ -214,7 +214,7 @@ authApiRouter.post(API_PATHS.AUTH.RESET_PASSWORD.dir, async (req, res, next) => 
     const token = generateEmailConfirmationToken('ResetPasswordToken', email, {expiresIn: '30m'})
     const {subject, text, html} = getConfirmationEmail('resetPassword', token)
     await mailServer.send(email, subject, text, html)
-    res.send({message: `Confirmation email sent to ${email}. Please check the inbox and confirm.`})
+    res.send({message: `Confirmation email was sent to ${email}. Please check the inbox and confirm.`})
   } catch (e) {
     next(e)
   }

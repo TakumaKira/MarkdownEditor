@@ -753,7 +753,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
       .send({email: newEmail})
     expect(mockMailServerSend).toBeCalledWith(newEmail, expect.any(String), expect.any(String), expect.any(String))
     expect(res.status).toBe(200)
-    expect(res.body.message).toBe(`Confirmation email sent to ${newEmail}. Please check the inbox and confirm.`)
+    expect(res.body.message).toBe(`Confirmation email was sent to ${newEmail}. Please check the inbox and confirm.`)
     // Make sure email is not updated yet and password is not updated.
     const result = await db.query(sql`
       SELECT email, password
@@ -850,7 +850,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
       .send({email: newEmail, password: newPassword})
     expect(mockMailServerSend).toBeCalledWith(newEmail, expect.any(String), expect.any(String), expect.any(String))
     expect(res.status).toBe(200)
-    expect(res.body.message).toBe(`Confirmation email sent to ${newEmail}. Please check the inbox and confirm.`)
+    expect(res.body.message).toBe(`Confirmation email was sent to ${newEmail}. Please check the inbox and confirm.`)
     const result = await db.query(sql`
       SELECT email, password
         FROM users
@@ -1391,7 +1391,7 @@ describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
       .post(API_PATHS.AUTH.RESET_PASSWORD.path)
       .send({email})
     expect(res.status).toBe(200)
-    expect(res.body.message).toBe(`Confirmation email sent to ${email}. Please check the inbox and confirm.`)
+    expect(res.body.message).toBe(`Confirmation email was sent to ${email}. Please check the inbox and confirm.`)
     expect(mockMailServerSend).toBeCalledWith(email, expect.any(String), expect.any(String), expect.any(String))
   })
 })

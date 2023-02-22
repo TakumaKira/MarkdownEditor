@@ -267,6 +267,7 @@ const Auth = () => {
           onBgColorRGB={colors.OrangeHover}
           style={[styles.authButton, styles.twoButtons]}
           childrenWrapperStyle={styles.authButtonContents}
+          testID="sidebar-edit-button"
         >
           <Text style={[styles.authButtonLabel]}>Edit</Text>
         </ButtonWithHoverColorAnimation>
@@ -277,6 +278,7 @@ const Auth = () => {
           onBgColorRGB={colors.RedHover}
           style={[styles.authButton, styles.twoButtons]}
           childrenWrapperStyle={styles.authButtonContents}
+          testID="sidebar-delete-button"
         >
           <Text style={[styles.authButtonLabel]}>Delete</Text>
         </ButtonWithHoverColorAnimation>
@@ -287,6 +289,7 @@ const Auth = () => {
         onBgColorRGB={colors.OrangeHover}
         style={[styles.authButton]}
         childrenWrapperStyle={styles.authButtonContents}
+        testID="sidebar-logout-button"
       >
         <Text style={[styles.authButtonLabel]}>Logout</Text>
       </ButtonWithHoverColorAnimation>

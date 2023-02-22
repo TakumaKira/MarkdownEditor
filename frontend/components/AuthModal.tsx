@@ -245,7 +245,7 @@ const AuthModal = () => {
       case AuthStateTypes.CONFIRM_SIGNUP_EMAIL:
         return settings.getDoneText(authState.serverErrorMessage ?? undefined)
       case AuthStateTypes.EDIT:
-        const message = emailInput ? `Confirmation email sent to ${emailInput}. Please confirm.` : 'Password successfully changed.'
+        const message = emailInput ? `Confirmation email was sent to ${emailInput}. Please confirm.` : 'Password successfully changed.'
         return settings.getDoneText(message)
       case AuthStateTypes.CONFIRM_CHANGE_EMAIL:
         return settings.getDoneText(authState.serverErrorMessage ?? undefined)
