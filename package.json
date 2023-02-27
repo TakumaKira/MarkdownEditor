@@ -9,10 +9,14 @@
   "author": "Takuma Kira <takuma@kirakiraworx.com>",
   "license": "MIT",
   "devDependencies": {
+    "@databases/mysql": "^5.2.1",
+    "@types/bcrypt": "^5.0.0",
+    "@types/uuid": "^9.0.1",
+    "bcrypt": "^5.1.0",
     "cypress": "^11.1.0",
+    "cypress-localstorage-commands": "^2.2.2",
     "cypress-mailosaur": "^2.13.0",
     "typescript": "^4.9.5",
-    "@databases/mysql": "^5.2.1",
-    "cypress-localstorage-commands": "^2.2.2"
+    "uuid": "^9.0.0"
   }
 }

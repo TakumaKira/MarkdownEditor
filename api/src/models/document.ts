@@ -8,12 +8,12 @@ export type DocumentFromDB = {
   name: string | null
   /** This is null only when deleted. */
   content: string | null
-  /** 2000-01-01T00:00:00.000Z / Never changed. */
-  created_at: Date
-  /** 2000-01-01T00:00:00.000Z */
-  updated_at: Date
-  /** 2000-01-01T00:00:00.000Z */
-  saved_on_db_at: Date
+  /** unix timestamp / Never changed. */
+  created_at: number
+  /** unix timestamp */
+  updated_at: number
+  /** unix timestamp */
+  saved_on_db_at: number
   is_deleted: 0 | 1
 }
 type DocumentBase = {

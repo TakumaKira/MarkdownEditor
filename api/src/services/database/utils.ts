@@ -1,6 +1,7 @@
 import { Document, DocumentFromDB } from "../../models/document"
 
-export function fromISOStringToTimeStamp(isoString: string): string {
+export function fromISOStringToDatetimeString(isoString: string): string {
+  // TODO: Validation
   return isoString.slice(0, -5).replace('T', ' ')
 }
 
@@ -9,9 +10,18 @@ export function normalizeDocument(document: DocumentFromDB): Document {
     id: document.id,
     name: document.name,
     content: document.content,
-    createdAt: document.created_at.toISOString(),
-    updatedAt: document.updated_at.toISOString(),
-    savedOnDBAt: document.saved_on_db_at.toISOString(),
+    createdAt: fromUnixTimestampToISOString(document.created_at),
+    updatedAt: fromUnixTimestampToISOString(document.updated_at),
+    savedOnDBAt: fromUnixTimestampToISOString(document.saved_on_db_at),
     isDeleted: document.is_deleted === 1
   }
+}
+
+export function fromUnixTimestampToISOString(timestamp: number): string {
+  return new Date(timestamp * 1000).toISOString()
+}
+
+export function trimMilliseconds(isoString: string): string {
+  // TODO: Validation
+  return isoString.replace(/\.\d{3}Z$/, '.000Z')
 }

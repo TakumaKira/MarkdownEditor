@@ -1,4 +1,4 @@
-import { fromISOStringToTimeStamp, sql, SQLQuery } from "."
+import { fromISOStringToDatetimeString, sql, SQLQuery } from "."
 import { Document, DocumentFromDB } from "../../models/document"
 import db from "./connector"
 import { v4 as uuidv4 } from 'uuid'
@@ -51,9 +51,9 @@ function buildUpdateDocumentQuery(document: Document, userId: number): SQLQuery 
       ${userId},
       ${document.name !== null ? document.name : null},
       ${document.content !== null ? document.content : null},
-      ${fromISOStringToTimeStamp(document.createdAt)},
-      ${fromISOStringToTimeStamp(document.updatedAt)},
-      ${fromISOStringToTimeStamp(document.savedOnDBAt)},
+      ${fromISOStringToDatetimeString(document.createdAt)},
+      ${fromISOStringToDatetimeString(document.updatedAt)},
+      ${fromISOStringToDatetimeString(document.savedOnDBAt)},
       ${document.isDeleted}
     );
   `

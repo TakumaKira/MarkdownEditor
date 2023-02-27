@@ -142,12 +142,23 @@ const styles = StyleSheet.create({
   },
 })
 
-const SideBar = () => {
+const SideBar = (props: {
+  setShowSidebar: React.Dispatch<React.SetStateAction<boolean>>
+}) => {
+  const {
+    setShowSidebar,
+  } = props
+
   const dispatch = useAppDispatch()
   const documentList = useAppSelector(selectLiveDocumentList)
   const selectedDocumentOnEditId = useAppSelector(selectSelectedDocumentOnEdit).id
   const hasEdit = useAppSelector(selectSelectedDocumentHasEdit)
   const mediaType = useMediaquery()
+
+  const handlePressAddButton = () => {
+    dispatch(newDocument())
+    setShowSidebar(false)
+  }
 
   const handlePressDocument = (id: string) => {
     if (hasEdit) {
@@ -161,8 +172,8 @@ const SideBar = () => {
     <View style={styles.container}>
       {mediaType !== MediaType.DESKTOP && <Title style={styles.title} />}
       <Text style={[styles.myDocuments, textStyles.headingS]}>MY DOCUMENTS</Text>
-      <AddButton onPress={() => dispatch(newDocument())} />
-      <ScrollView style={styles.documentCardsContainer}>
+      <AddButton onPress={handlePressAddButton} />
+      <ScrollView style={styles.documentCardsContainer} testID="sidebar-documents-list">
         {sortDocumentsFromNewest(documentList).map(({updatedAt, name, id}, i) =>
           <DocumentCard
             key={id}

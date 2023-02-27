@@ -117,7 +117,12 @@ const styles = StyleSheet.create({
   },
 })
 
-const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showSidebar: boolean, checkLayout?: boolean, mockWindowWidth?: number}) => {
+const TopBar = (props: {
+  setShowSidebar: React.Dispatch<React.SetStateAction<boolean>>
+  showSidebar: boolean
+  checkLayout?: boolean
+  mockWindowWidth?: number
+}) => {
   const {
     setShowSidebar,
     showSidebar,
@@ -252,6 +257,7 @@ const DocumentTitle = (props: {checkLayout?: boolean, mockWindowWidth?: number})
           onChangeText={text => dispatch(updateTitleInput(text))}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          testID="topbar-title-input"
         />
         <Animated.View style={[styles.documentTitleInputUnderline, {width: borderBottomWidthAnim}]} />
       </View>

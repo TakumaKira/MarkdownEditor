@@ -47,7 +47,7 @@ const Frame = (props: {sidebar: typeof SideBar, main: typeof MainView}) => {
   return (
     <View style={[styles.container, {height: windowHeight - iosStatusbarHeight - androidStatusbarHeight}]}>
       <Animated.View style={[styles.sidebarContainer, {width: sidebarWidthAnim}]}>
-        {sidebar()}
+        {sidebar({setShowSidebar})}
       </Animated.View>
       <View style={[styles.mainContainer, {width: windowWidth}]}>
         {main({setShowSidebar, showSidebar})}

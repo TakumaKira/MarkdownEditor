@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken'
 import request from 'supertest'
 import { v4 as uuidv4 } from 'uuid'
 import apiApp from '../../src/servers/apiServer/apiApp'
-import db, { fromISOStringToTimeStamp, normalizeDocument, sql } from '../../src/services/database'
+import db, { fromISOStringToDatetimeString, normalizeDocument, sql } from '../../src/services/database'
 import { API_PATHS, AUTH_TOKEN_KEY, DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT, DOCUMENT_UPDATED_WS_EVENT } from "../../src/constants"
 import { DocumentFromDevice, DocumentFromDB, DocumentsUpdateRequest, DocumentsUpdateResponse, Document, DocumentUpdatedWsMessage } from '../../src/models/document'
 import { JWT_SECRET_KEY, WS_PORT } from '../../src/getEnvs'
@@ -143,9 +143,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${mainUser.id},
         ${newDocumentFromDatabase.name},
         ${newDocumentFromDatabase.content},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(newDocumentFromDatabase.createdAt)},
+        ${fromISOStringToDatetimeString(newDocumentFromDatabase.updatedAt)},
+        ${fromISOStringToDatetimeString(newDocumentFromDatabase.savedOnDBAt)},
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
@@ -223,9 +223,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${mainUser.id},
         ${newDocumentFromDatabase.name},
         ${newDocumentFromDatabase.content},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(newDocumentFromDatabase.createdAt)},
+        ${fromISOStringToDatetimeString(newDocumentFromDatabase.updatedAt)},
+        ${fromISOStringToDatetimeString(newDocumentFromDatabase.savedOnDBAt)},
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
@@ -307,9 +307,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${mainUser.id},
         ${newDocumentFromDatabase.name},
         ${newDocumentFromDatabase.content},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(newDocumentFromDatabase.createdAt)},
+        ${fromISOStringToDatetimeString(newDocumentFromDatabase.updatedAt)},
+        ${fromISOStringToDatetimeString(newDocumentFromDatabase.savedOnDBAt)},
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
@@ -394,9 +394,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${mainUser.id},
         ${newDocumentFromDatabase.name},
         ${newDocumentFromDatabase.content},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(newDocumentFromDatabase.createdAt)},
+        ${fromISOStringToDatetimeString(newDocumentFromDatabase.updatedAt)},
+        ${fromISOStringToDatetimeString(newDocumentFromDatabase.savedOnDBAt)},
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
@@ -671,9 +671,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${otherUser.id},
         ${otherUserDocument.name},
         ${otherUserDocument.content},
-        ${fromISOStringToTimeStamp(otherUserDocument.createdAt)},
-        ${fromISOStringToTimeStamp(otherUserDocument.updatedAt)},
-        ${fromISOStringToTimeStamp(otherUserDocument.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(otherUserDocument.createdAt)},
+        ${fromISOStringToDatetimeString(otherUserDocument.updatedAt)},
+        ${fromISOStringToDatetimeString(otherUserDocument.savedOnDBAt)},
         ${otherUserDocument.isDeleted}
       );
     `)
@@ -767,9 +767,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${mainUser.id},
         ${oldDocument.name},
         ${oldDocument.content},
-        ${fromISOStringToTimeStamp(oldDocument.createdAt)},
-        ${fromISOStringToTimeStamp(oldDocument.updatedAt)},
-        ${fromISOStringToTimeStamp(oldDocument.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(oldDocument.createdAt)},
+        ${fromISOStringToDatetimeString(oldDocument.updatedAt)},
+        ${fromISOStringToDatetimeString(oldDocument.savedOnDBAt)},
         ${oldDocument.isDeleted}
       );
     `)
@@ -938,9 +938,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${mainUser.id},
         ${oldDocumentFromDatabase.name},
         ${oldDocumentFromDatabase.content},
-        ${fromISOStringToTimeStamp(oldDocumentFromDatabase.createdAt)},
-        ${fromISOStringToTimeStamp(oldDocumentFromDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(oldDocumentFromDatabase.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(oldDocumentFromDatabase.createdAt)},
+        ${fromISOStringToDatetimeString(oldDocumentFromDatabase.updatedAt)},
+        ${fromISOStringToDatetimeString(oldDocumentFromDatabase.savedOnDBAt)},
         ${oldDocumentFromDatabase.isDeleted}
       );
     `)
@@ -960,9 +960,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${mainUser.id},
         ${newDocumentFromDatabase.name},
         ${newDocumentFromDatabase.content},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.createdAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(newDocumentFromDatabase.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(newDocumentFromDatabase.createdAt)},
+        ${fromISOStringToDatetimeString(newDocumentFromDatabase.updatedAt)},
+        ${fromISOStringToDatetimeString(newDocumentFromDatabase.savedOnDBAt)},
         ${newDocumentFromDatabase.isDeleted}
       );
     `)
@@ -1044,9 +1044,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${mainUser.id},
         ${oldDocumentFromDatabase.name},
         ${oldDocumentFromDatabase.content},
-        ${fromISOStringToTimeStamp(oldDocumentFromDatabase.createdAt)},
-        ${fromISOStringToTimeStamp(oldDocumentFromDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(oldDocumentFromDatabase.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(oldDocumentFromDatabase.createdAt)},
+        ${fromISOStringToDatetimeString(oldDocumentFromDatabase.updatedAt)},
+        ${fromISOStringToDatetimeString(oldDocumentFromDatabase.savedOnDBAt)},
         ${oldDocumentFromDatabase.isDeleted}
       );
     `)
@@ -1127,9 +1127,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${mainUser.id},
         ${updatedOnDatabase.name},
         ${updatedOnDatabase.content},
-        ${fromISOStringToTimeStamp(updatedOnDatabase.createdAt)},
-        ${fromISOStringToTimeStamp(updatedOnDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(updatedOnDatabase.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(updatedOnDatabase.createdAt)},
+        ${fromISOStringToDatetimeString(updatedOnDatabase.updatedAt)},
+        ${fromISOStringToDatetimeString(updatedOnDatabase.savedOnDBAt)},
         ${updatedOnDatabase.isDeleted}
       );
     `)
@@ -1289,9 +1289,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${mainUser.id},
         ${alreadySynched.name},
         ${alreadySynched.content},
-        ${fromISOStringToTimeStamp(alreadySynched.createdAt)},
-        ${fromISOStringToTimeStamp(alreadySynched.updatedAt)},
-        ${fromISOStringToTimeStamp(alreadySynched.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(alreadySynched.createdAt)},
+        ${fromISOStringToDatetimeString(alreadySynched.updatedAt)},
+        ${fromISOStringToDatetimeString(alreadySynched.savedOnDBAt)},
         false
       );
     `)
@@ -1311,9 +1311,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${mainUser.id},
         ${toBeDeletedOnDevice.name},
         ${toBeDeletedOnDevice.content},
-        ${fromISOStringToTimeStamp(toBeDeletedOnDevice.createdAt)},
-        ${fromISOStringToTimeStamp(toBeDeletedOnDevice.updatedAt)},
-        ${fromISOStringToTimeStamp(toBeDeletedOnDevice.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(toBeDeletedOnDevice.createdAt)},
+        ${fromISOStringToDatetimeString(toBeDeletedOnDevice.updatedAt)},
+        ${fromISOStringToDatetimeString(toBeDeletedOnDevice.savedOnDBAt)},
         false
       );
     `)
@@ -1334,9 +1334,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${mainUser.id},
         ${deletedOnDatabase.name},
         ${deletedOnDatabase.content},
-        ${fromISOStringToTimeStamp(deletedOnDatabase.createdAt)},
-        ${fromISOStringToTimeStamp(deletedOnDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(deletedOnDatabase.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(deletedOnDatabase.createdAt)},
+        ${fromISOStringToDatetimeString(deletedOnDatabase.updatedAt)},
+        ${fromISOStringToDatetimeString(deletedOnDatabase.savedOnDBAt)},
         true
       );
     `)
@@ -1357,9 +1357,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${mainUser.id},
         ${conflictedAsBeingModifiedOnDatabase.name},
         ${conflictedAsBeingModifiedOnDatabase.content},
-        ${fromISOStringToTimeStamp(conflictedAsBeingModifiedOnDatabase.createdAt)},
-        ${fromISOStringToTimeStamp(conflictedAsBeingModifiedOnDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(conflictedAsBeingModifiedOnDatabase.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(conflictedAsBeingModifiedOnDatabase.createdAt)},
+        ${fromISOStringToDatetimeString(conflictedAsBeingModifiedOnDatabase.updatedAt)},
+        ${fromISOStringToDatetimeString(conflictedAsBeingModifiedOnDatabase.savedOnDBAt)},
         false
       );
     `)
@@ -1380,9 +1380,9 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ${mainUser.id},
         ${addedOnDatabase.name},
         ${addedOnDatabase.content},
-        ${fromISOStringToTimeStamp(addedOnDatabase.createdAt)},
-        ${fromISOStringToTimeStamp(addedOnDatabase.updatedAt)},
-        ${fromISOStringToTimeStamp(addedOnDatabase.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(addedOnDatabase.createdAt)},
+        ${fromISOStringToDatetimeString(addedOnDatabase.updatedAt)},
+        ${fromISOStringToDatetimeString(addedOnDatabase.savedOnDBAt)},
         false
       );
     `)
@@ -1449,10 +1449,14 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     expect(copiedOnConflictDuplication.id).not.toBe(conflictedAsBeingModifiedOnDevice.id)
     expect(conflictedAsBeingModifiedOnDevice.updatedAt < copiedOnConflictDuplication.updatedAt).toBe(true)
     const onDatabase = (await db.query(sql`
-      SELECT *
-        FROM documents
-        WHERE user_id = ${mainUser.id}
-        ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
+      SELECT
+        *,
+        UNIX_TIMESTAMP(created_at) AS created_at,
+        UNIX_TIMESTAMP(updated_at) AS updated_at,
+        UNIX_TIMESTAMP(saved_on_db_at) AS saved_on_db_at
+      FROM documents
+      WHERE user_id = ${mainUser.id}
+      ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
     `)) as DocumentFromDB[]
     expect(onDatabase.map(document => normalizeDocument(document))).toEqual(documentsUploadResponse.allDocuments)
     await new Promise<void>(resolve => setTimeout(resolve, 100))

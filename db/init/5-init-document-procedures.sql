@@ -16,9 +16,14 @@ CREATE PROCEDURE get_document (
 	p_id CHAR(36) CHARACTER SET ascii
 )
 BEGIN
-	SELECT *
-		FROM documents
-		WHERE id = p_id;
+	SET time_zone = '+00:00';
+	SELECT
+		*,
+		UNIX_TIMESTAMP(created_at) AS created_at,
+		UNIX_TIMESTAMP(updated_at) AS updated_at,
+		UNIX_TIMESTAMP(saved_on_db_at) AS saved_on_db_at
+	FROM documents
+	WHERE id = p_id;
 END $$
 DELIMITER ;
 
@@ -28,10 +33,15 @@ CREATE PROCEDURE get_user_documents (
 	p_user_id INT
 )
 BEGIN
-	SELECT *
-		FROM documents
-		WHERE user_id = p_user_id
-		ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
+	SET time_zone = '+00:00';
+	SELECT
+		*,
+		UNIX_TIMESTAMP(created_at) AS created_at,
+		UNIX_TIMESTAMP(updated_at) AS updated_at,
+		UNIX_TIMESTAMP(saved_on_db_at) AS saved_on_db_at
+	FROM documents
+	WHERE user_id = p_user_id
+	ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
 END $$
 DELIMITER ;
 

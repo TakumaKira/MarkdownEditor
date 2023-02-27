@@ -53,7 +53,7 @@ describe('auth' , () => {
 
   context('login and logout', () => {
     before(() => {
-      cy.logout()
+      cy.removeLoginTokenFromAsyncStorage()
     })
     beforeEach(() => {
       cy.restoreLocalStorage()
@@ -87,7 +87,7 @@ describe('auth' , () => {
     before(() => {
       cy.task('clearUser', testEmail2)
       cy.restoreLocalStorage()
-      cy.login(testEmail1, testPassword1)
+      cy.setLoginTokenOnAsyncStorage(testEmail1, testPassword1)
       cy.saveLocalStorage()
     })
     beforeEach(() => {
@@ -215,7 +215,7 @@ describe('auth' , () => {
   context('reset password', () => {
     before(() => {
       cy.restoreLocalStorage()
-      cy.logout()
+      cy.removeLoginTokenFromAsyncStorage()
       cy.saveLocalStorage()
     })
     beforeEach(() => {
@@ -295,8 +295,8 @@ describe('auth' , () => {
       cy.contains('Successfully delete account.')
       cy.getBySel('auth-modal-ok-button').click()
       cy.getBySel('sidebar-login-button')
-      cy.task('getUser', testEmail1).should('have.length', 0)
-      cy.task('getUserDocuments', testEmail1).should('have.length', 0)
+      cy.task('getUser', testEmail1).should('be.empty')
+      cy.task('getUserDocuments', testEmail1).should('be.empty')
     })
   })
 })

@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import * as uuid from 'uuid'
 import { v4 as uuidv4 } from 'uuid'
-import db, { fromISOStringToTimeStamp, getDocuments, getNewSafeId, normalizeDocument, sql, updateDocuments } from '../../../../src/services/database'
+import db, { fromISOStringToDatetimeString, getDocuments, getNewSafeId, normalizeDocument, sql, updateDocuments } from '../../../../src/services/database'
 import { JWT_SECRET_KEY } from '../../../../src/getEnvs'
 import { Document, DocumentFromDB } from '../../../../src/models/document'
 import { DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT } from '../../../../src/constants'
@@ -71,6 +71,10 @@ beforeEach(() => {
 afterEach(() => {
 })
 
+function fromUnixTimestampToISOString(unixTimestamp: number): string {
+  return new Date(unixTimestamp * 1000).toISOString()
+}
+
 describe('getDocuments', () => {
   test('gets all documents with given id', async () => {
     // Prepare documents.
@@ -79,9 +83,9 @@ describe('getDocuments', () => {
       user_id: mainUser.id,
       name: "Main user's Document #1",
       content: "This is main user's Document #1.",
-      created_at: new Date('2000-01-01T01:00:00.000Z'),
-      updated_at: new Date('2000-01-01T01:00:00.000Z'),
-      saved_on_db_at: new Date('2000-01-01T01:00:01.000Z'),
+      created_at: new Date('2000-01-01T01:00:00.000Z').getTime() / 1000,
+      updated_at: new Date('2000-01-01T01:00:00.000Z').getTime() / 1000,
+      saved_on_db_at: new Date('2000-01-01T01:00:01.000Z').getTime() / 1000,
       is_deleted: 0
     }
     const mainUserDocument2: DocumentFromDB = {
@@ -89,9 +93,9 @@ describe('getDocuments', () => {
       user_id: mainUser.id,
       name: "Main user's Document #2",
       content: "This is main user's Document #2.",
-      created_at: new Date('2000-01-01T02:00:00.000Z'),
-      updated_at: new Date('2000-01-01T02:00:00.000Z'),
-      saved_on_db_at: new Date('2000-01-01T02:00:01.000Z'),
+      created_at: new Date('2000-01-01T02:00:00.000Z').getTime() / 1000,
+      updated_at: new Date('2000-01-01T02:00:00.000Z').getTime() / 1000,
+      saved_on_db_at: new Date('2000-01-01T02:00:01.000Z').getTime() / 1000,
       is_deleted: 0
     }
     const otherUserDocument1: DocumentFromDB = {
@@ -99,9 +103,9 @@ describe('getDocuments', () => {
       user_id: otherUser.id,
       name: "Other user's Document #1",
       content: "This is other user's Document #1.",
-      created_at: new Date('2000-01-02T01:00:00.000Z'),
-      updated_at: new Date('2000-01-02T01:00:00.000Z'),
-      saved_on_db_at: new Date('2000-01-02T01:00:01.000Z'),
+      created_at: new Date('2000-01-02T01:00:00.000Z').getTime() / 1000,
+      updated_at: new Date('2000-01-02T01:00:00.000Z').getTime() / 1000,
+      saved_on_db_at: new Date('2000-01-02T01:00:01.000Z').getTime() / 1000,
       is_deleted: 0
     }
     // Add to database.
@@ -121,9 +125,9 @@ describe('getDocuments', () => {
         ${mainUserDocument1.user_id},
         ${mainUserDocument1.name},
         ${mainUserDocument1.content},
-        ${fromISOStringToTimeStamp(mainUserDocument1.created_at.toISOString())},
-        ${fromISOStringToTimeStamp(mainUserDocument1.updated_at.toISOString())},
-        ${fromISOStringToTimeStamp(mainUserDocument1.saved_on_db_at.toISOString())},
+        ${fromISOStringToDatetimeString(fromUnixTimestampToISOString(mainUserDocument1.created_at))},
+        ${fromISOStringToDatetimeString(fromUnixTimestampToISOString(mainUserDocument1.updated_at))},
+        ${fromISOStringToDatetimeString(fromUnixTimestampToISOString(mainUserDocument1.saved_on_db_at))},
         false
       );
       INSERT INTO documents (
@@ -141,9 +145,9 @@ describe('getDocuments', () => {
         ${mainUserDocument2.user_id},
         ${mainUserDocument2.name},
         ${mainUserDocument2.content},
-        ${fromISOStringToTimeStamp(mainUserDocument2.created_at.toISOString())},
-        ${fromISOStringToTimeStamp(mainUserDocument2.updated_at.toISOString())},
-        ${fromISOStringToTimeStamp(mainUserDocument2.saved_on_db_at.toISOString())},
+        ${fromISOStringToDatetimeString(fromUnixTimestampToISOString(mainUserDocument2.created_at))},
+        ${fromISOStringToDatetimeString(fromUnixTimestampToISOString(mainUserDocument2.updated_at))},
+        ${fromISOStringToDatetimeString(fromUnixTimestampToISOString(mainUserDocument2.saved_on_db_at))},
         false
       );
       INSERT INTO documents (
@@ -161,9 +165,9 @@ describe('getDocuments', () => {
         ${otherUserDocument1.user_id},
         ${otherUserDocument1.name},
         ${otherUserDocument1.content},
-        ${fromISOStringToTimeStamp(otherUserDocument1.created_at.toISOString())},
-        ${fromISOStringToTimeStamp(otherUserDocument1.updated_at.toISOString())},
-        ${fromISOStringToTimeStamp(otherUserDocument1.saved_on_db_at.toISOString())},
+        ${fromISOStringToDatetimeString(fromUnixTimestampToISOString(otherUserDocument1.created_at))},
+        ${fromISOStringToDatetimeString(fromUnixTimestampToISOString(otherUserDocument1.updated_at))},
+        ${fromISOStringToDatetimeString(fromUnixTimestampToISOString(otherUserDocument1.saved_on_db_at))},
         false
       );
     `)
@@ -206,10 +210,14 @@ describe('updateDocuments', () => {
     ]
     await updateDocuments(documents, mainUser.id)
     const result = (await db.query(sql`
-      SELECT *
-        FROM documents
-        WHERE user_id = ${mainUser.id}
-        ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
+      SELECT
+        *,
+        UNIX_TIMESTAMP(created_at) AS created_at,
+        UNIX_TIMESTAMP(updated_at) AS updated_at,
+        UNIX_TIMESTAMP(saved_on_db_at) AS saved_on_db_at
+      FROM documents
+      WHERE user_id = ${mainUser.id}
+      ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
     `)) as DocumentFromDB[]
     expect(result.map(document => normalizeDocument(document))).toEqual([
       document2,
@@ -243,9 +251,9 @@ describe('updateDocuments', () => {
         ${otherUser.id},
         ${otherUsersDocument.name},
         ${otherUsersDocument.content},
-        ${fromISOStringToTimeStamp(otherUsersDocument.createdAt)},
-        ${fromISOStringToTimeStamp(otherUsersDocument.updatedAt)},
-        ${fromISOStringToTimeStamp(otherUsersDocument.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(otherUsersDocument.createdAt)},
+        ${fromISOStringToDatetimeString(otherUsersDocument.updatedAt)},
+        ${fromISOStringToDatetimeString(otherUsersDocument.savedOnDBAt)},
         ${otherUsersDocument.isDeleted}
       );
     `)
@@ -281,10 +289,14 @@ describe('updateDocuments', () => {
       expect(e.message).toBe("Another user's document is using the same id.")
     }
     const result = (await db.query(sql`
-      SELECT *
-        FROM documents
-        WHERE user_id = ${mainUser.id}
-        ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
+      SELECT
+        *,
+        UNIX_TIMESTAMP(created_at) AS created_at,
+        UNIX_TIMESTAMP(updated_at) AS updated_at,
+        UNIX_TIMESTAMP(saved_on_db_at) AS saved_on_db_at
+      FROM documents
+      WHERE user_id = ${mainUser.id}
+      ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
     `)) as DocumentFromDB[]
     expect(result.map(document => normalizeDocument(document))).toEqual([])
   })
@@ -315,9 +327,9 @@ describe('updateDocuments', () => {
         ${mainUser.id},
         ${alreadySynchedDocument.name},
         ${alreadySynchedDocument.content},
-        ${fromISOStringToTimeStamp(alreadySynchedDocument.createdAt)},
-        ${fromISOStringToTimeStamp(alreadySynchedDocument.updatedAt)},
-        ${fromISOStringToTimeStamp(alreadySynchedDocument.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(alreadySynchedDocument.createdAt)},
+        ${fromISOStringToDatetimeString(alreadySynchedDocument.updatedAt)},
+        ${fromISOStringToDatetimeString(alreadySynchedDocument.savedOnDBAt)},
         ${alreadySynchedDocument.isDeleted}
       );
     `)
@@ -353,10 +365,14 @@ describe('updateDocuments', () => {
       expect(e.message).toBe("Data too long for column 'p_name' at row 1")
     }
     const result = (await db.query(sql`
-      SELECT *
-        FROM documents
-        WHERE user_id = ${mainUser.id}
-        ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
+      SELECT
+        *,
+        UNIX_TIMESTAMP(created_at) AS created_at,
+        UNIX_TIMESTAMP(updated_at) AS updated_at,
+        UNIX_TIMESTAMP(saved_on_db_at) AS saved_on_db_at
+      FROM documents
+      WHERE user_id = ${mainUser.id}
+      ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
     `)) as DocumentFromDB[]
     expect(result.map(document => normalizeDocument(document))).toEqual([
       alreadySynchedDocument,
@@ -389,9 +405,9 @@ describe('updateDocuments', () => {
         ${mainUser.id},
         ${alreadySynchedDocument.name},
         ${alreadySynchedDocument.content},
-        ${fromISOStringToTimeStamp(alreadySynchedDocument.createdAt)},
-        ${fromISOStringToTimeStamp(alreadySynchedDocument.updatedAt)},
-        ${fromISOStringToTimeStamp(alreadySynchedDocument.savedOnDBAt)},
+        ${fromISOStringToDatetimeString(alreadySynchedDocument.createdAt)},
+        ${fromISOStringToDatetimeString(alreadySynchedDocument.updatedAt)},
+        ${fromISOStringToDatetimeString(alreadySynchedDocument.savedOnDBAt)},
         ${alreadySynchedDocument.isDeleted}
       );
     `)
@@ -427,10 +443,14 @@ describe('updateDocuments', () => {
       expect(e.message).toBe("Data too long for column 'p_content' at row 1")
     }
     const result = (await db.query(sql`
-      SELECT *
-        FROM documents
-        WHERE user_id = ${mainUser.id}
-        ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
+      SELECT
+        *,
+        UNIX_TIMESTAMP(created_at) AS created_at,
+        UNIX_TIMESTAMP(updated_at) AS updated_at,
+        UNIX_TIMESTAMP(saved_on_db_at) AS saved_on_db_at
+      FROM documents
+      WHERE user_id = ${mainUser.id}
+      ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
     `)) as DocumentFromDB[]
     expect(result.map(document => normalizeDocument(document))).toEqual([
       alreadySynchedDocument,
@@ -462,9 +482,9 @@ describe('getNewSafeId', () => {
             ${mainUser.id},
             ${'Document #' + j},
             ${'This is document #' + j +  '.'},
-            ${fromISOStringToTimeStamp('2000-01-01T00:00:0' + j + '.000Z')},
-            ${fromISOStringToTimeStamp('2000-01-01T00:00:0' + j + '.000Z')},
-            ${fromISOStringToTimeStamp('2000-01-01T00:00:0' + j + '.000Z')},
+            ${fromISOStringToDatetimeString('2000-01-01T00:00:0' + j + '.000Z')},
+            ${fromISOStringToDatetimeString('2000-01-01T00:00:0' + j + '.000Z')},
+            ${fromISOStringToDatetimeString('2000-01-01T00:00:0' + j + '.000Z')},
             false
           );
         `)

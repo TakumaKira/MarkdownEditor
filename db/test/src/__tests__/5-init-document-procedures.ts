@@ -63,19 +63,9 @@ let user1Document1: DocumentFromDB
 let user1Document2: DocumentFromDB
 let user2Document1: DocumentFromDB
 let user2Document2: DocumentFromDB
-/** Canceling timezone offset is needed only when inserting DATETIME value on test. */
-const timezoneOffsetStr = (() => {
-  const rowOffset = new Date().getTimezoneOffset()
-  const offsetMinutes = rowOffset % 60
-  const offsetHour = (rowOffset - offsetMinutes) / 60
-  const offsetIsPositive = offsetHour >= 0
-  const offsetHourAbs = Math.abs(offsetHour)
-  const makeTwoDigits = (value: number): string => String(value).padStart(2, '0')
-  return `${offsetIsPositive ? '+' : '-'}${makeTwoDigits(offsetHourAbs)}:${makeTwoDigits(offsetMinutes)}`
-})()
-/** @returns {string} YYYY-MM-DD HH:MM:SS.SSS+00:00 */
-const buildDatetimeStrForTest = (datetime: Date): string => {
-  return `${datetime.toISOString().slice(0, -1).replace('T', ' ')}${timezoneOffsetStr}`
+/** @returns {string} YYYY-MM-DD HH:MM:SS.SSS */
+const buildDatetimeStrForTest = (unixTimestamp: number): string => {
+  return `${new Date(unixTimestamp * 1000).toISOString().slice(0, -1).replace('T', ' ')}`
 }
 const initializeDocuments = async () => {
   // Reset documents table.
@@ -88,9 +78,9 @@ const initializeDocuments = async () => {
     user_id: user1Id,
     name: "User 1's document #1",
     content: "This is user 1's document #1.",
-    created_at: new Date("2000-01-01T01:00:00.000Z"),
-    updated_at: new Date("2000-01-02T01:00:00.000Z"),
-    saved_on_db_at: new Date("2000-01-02T01:00:01.000Z"),
+    created_at: new Date("2000-01-01T01:00:00.000Z").getTime() / 1000,
+    updated_at: new Date("2000-01-02T01:00:00.000Z").getTime() / 1000,
+    saved_on_db_at: new Date("2000-01-02T01:00:01.000Z").getTime() / 1000,
     is_deleted: 0
   }
   await db.query(sql`
@@ -120,9 +110,9 @@ const initializeDocuments = async () => {
     user_id: user1Id,
     name: "User 1's document #2",
     content: "This is user 1's document #2.",
-    created_at: new Date("2000-01-01T02:00:00.000Z"),
-    updated_at: new Date("2000-01-02T02:00:00.000Z"),
-    saved_on_db_at: new Date("2000-01-02T02:00:01.000Z"),
+    created_at: new Date("2000-01-01T02:00:00.000Z").getTime() / 1000,
+    updated_at: new Date("2000-01-02T02:00:00.000Z").getTime() / 1000,
+    saved_on_db_at: new Date("2000-01-02T02:00:01.000Z").getTime() / 1000,
     is_deleted: 0
   }
   await db.query(sql`
@@ -152,9 +142,9 @@ const initializeDocuments = async () => {
     user_id: user2Id,
     name: "User 2's document #1",
     content: "This is user 2's document #1.",
-    created_at: new Date("2000-01-01T01:30:00.000Z"),
-    updated_at: new Date("2000-01-02T01:30:00.000Z"),
-    saved_on_db_at: new Date("2000-01-02T01:30:01.000Z"),
+    created_at: new Date("2000-01-01T01:30:00.000Z").getTime() / 1000,
+    updated_at: new Date("2000-01-02T01:30:00.000Z").getTime() / 1000,
+    saved_on_db_at: new Date("2000-01-02T01:30:01.000Z").getTime() / 1000,
     is_deleted: 0
   }
   await db.query(sql`
@@ -184,9 +174,9 @@ const initializeDocuments = async () => {
     user_id: user2Id,
     name: "User 2's document #2",
     content: "This is user 2's document #2.",
-    created_at: new Date("2000-01-01T02:30:00.000Z"),
-    updated_at: new Date("2000-01-02T02:30:00.000Z"),
-    saved_on_db_at: new Date("2000-01-02T02:30:01.000Z"),
+    created_at: new Date("2000-01-01T02:30:00.000Z").getTime() / 1000,
+    updated_at: new Date("2000-01-02T02:30:00.000Z").getTime() / 1000,
+    saved_on_db_at: new Date("2000-01-02T02:30:01.000Z").getTime() / 1000,
     is_deleted: 0
   }
   await db.query(sql`
@@ -246,15 +236,19 @@ describe('get_document', () => {
   test('returns every existing document if used multiple times in single query', async () => {
     // TESTED PROCEDURE
     const result = (await db.query(sql`
-      SELECT *
-        FROM documents
-        WHERE id in (
-          ${user1Document1.id},
-          ${user1Document2.id},
-          ${user2Document1.id},
-          ${user2Document2.id}
-        )
-        ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
+      SELECT
+        *,
+        UNIX_TIMESTAMP(created_at) AS created_at,
+        UNIX_TIMESTAMP(updated_at) AS updated_at,
+        UNIX_TIMESTAMP(saved_on_db_at) AS saved_on_db_at
+      FROM documents
+      WHERE id in (
+        ${user1Document1.id},
+        ${user1Document2.id},
+        ${user2Document1.id},
+        ${user2Document2.id}
+      )
+      ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
     `))
     // EXPECTED RESULT
     expect(result).toEqual([
@@ -281,8 +275,8 @@ describe('update_document', () => {
   test('updates an existing document if a document with given id and user_id exists', async () => {
     const newName = "User 1's document #1 UPDATED"
     const newContent = "This is user 1's document #1 UPDATED."
-    const newUpdatedAt = new Date("2000-01-03T01:00:00.000Z")
-    const newSavedOnDBAt = new Date("2000-01-03T01:00:01.000Z")
+    const newUpdatedAt = new Date("2000-01-03T01:00:00.000Z").getTime() / 1000
+    const newSavedOnDBAt = new Date("2000-01-03T01:00:01.000Z").getTime() / 1000
     // TESTED PROCEDURE
     await db.query(sql`
       CALL update_document(
@@ -298,9 +292,13 @@ describe('update_document', () => {
     `)
     // EXPECTED RESULT
     const result = (await db.query(sql`
-      SELECT *
-        FROM documents
-        WHERE id = ${user1Document1.id};
+      SELECT
+        *,
+        UNIX_TIMESTAMP(created_at) AS created_at,
+        UNIX_TIMESTAMP(updated_at) AS updated_at,
+        UNIX_TIMESTAMP(saved_on_db_at) AS saved_on_db_at
+      FROM documents
+      WHERE id = ${user1Document1.id};
     `))[0]
     expect(result).toEqual({
       id: user1Document1.id,
@@ -320,9 +318,9 @@ describe('update_document', () => {
       user_id: user1Id,
       name: "New document",
       content: "This is a new document.",
-      created_at: new Date("2000-01-03T01:00:00.000Z"),
-      updated_at: new Date("2000-01-03T01:00:00.000Z"),
-      saved_on_db_at: new Date("2000-01-03T01:00:01.000Z"),
+      created_at: new Date("2000-01-03T01:00:00.000Z").getTime() / 1000,
+      updated_at: new Date("2000-01-03T01:00:00.000Z").getTime() / 1000,
+      saved_on_db_at: new Date("2000-01-03T01:00:01.000Z").getTime() / 1000,
       is_deleted: 0
     }
     // TESTED PROCEDURE
@@ -340,9 +338,13 @@ describe('update_document', () => {
     `)
     // EXPECTED RESULT
     const result = (await db.query(sql`
-      SELECT *
-        FROM documents
-        WHERE id = ${newDocument.id};
+      SELECT
+        *,
+        UNIX_TIMESTAMP(created_at) AS created_at,
+        UNIX_TIMESTAMP(updated_at) AS updated_at,
+        UNIX_TIMESTAMP(saved_on_db_at) AS saved_on_db_at
+      FROM documents
+      WHERE id = ${newDocument.id};
     `))[0]
     expect(result).toEqual(newDocument)
   })
@@ -355,9 +357,9 @@ describe('update_document', () => {
         ${deletedUserId},
         "New document",
         "This is a new document.",
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z"))},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z").getTime() / 1000)},
         false
       );
     `)).rejects.toEqual(new Error('User does not exist.'))
@@ -371,16 +373,16 @@ describe('update_document', () => {
         ${user2Document1.user_id},
         "New document",
         "This is a new document.",
-        ${user1Document1.created_at},
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z"))},
+        ${buildDatetimeStrForTest(user1Document1.created_at)},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z").getTime() / 1000)},
         false
       );
     `)).rejects.toEqual(new Error("Another user's document is using the same id."))
   })
 
   test('returns error if a document with given id exists but it has created_at different from the given one', async () => {
-    const newCreatedAt = buildDatetimeStrForTest(new Date("2001-01-03T01:00:00.000Z"))
+    const newCreatedAt = new Date("2001-01-03T01:00:00.000Z").getTime() / 1000
     expect(newCreatedAt).not.toBe(user1Document1.created_at)
     // TESTED PROCEDURE/EXPECTED RESULT
     await expect(db.query(sql`
@@ -389,17 +391,17 @@ describe('update_document', () => {
         ${user1Document1.user_id},
         "New document",
         "This is a new document.",
-        ${newCreatedAt},
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z"))},
+        ${buildDatetimeStrForTest(newCreatedAt)},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z").getTime() / 1000)},
         false
       );
     `)).rejects.toEqual(new Error("Another document of this user is using the same id."))
   })
 
   test('sets null to every column other than created_at and updated_at if given is_deleted is true', async () => {
-    const updatedAt = new Date("2000-01-03T01:00:00.000Z")
-    const savedOnDBAt = new Date("2000-01-03T01:00:01.000Z")
+    const updatedAt = new Date("2000-01-03T01:00:00.000Z").getTime() / 1000
+    const savedOnDBAt = new Date("2000-01-03T01:00:01.000Z").getTime() / 1000
     // TESTED PROCEDURE
     await db.query(sql`
       CALL update_document(
@@ -415,9 +417,13 @@ describe('update_document', () => {
     `)
     // EXPECTED RESULT
     const result = (await db.query(sql`
-      SELECT *
-        FROM documents
-        WHERE id = ${user1Document1.id};
+      SELECT
+        *,
+        UNIX_TIMESTAMP(created_at) AS created_at,
+        UNIX_TIMESTAMP(updated_at) AS updated_at,
+        UNIX_TIMESTAMP(saved_on_db_at) AS saved_on_db_at
+      FROM documents
+      WHERE id = ${user1Document1.id};
     `))[0]
     expect(result).toEqual({
       id: user1Document1.id,
@@ -441,9 +447,9 @@ describe('update_document', () => {
         ${user1Id},
         ${lessThanTooLongName},
         "This is a new document.",
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z"))},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z").getTime() / 1000)},
         false
       );
     `))).not.toThrow()
@@ -466,9 +472,9 @@ describe('update_document', () => {
           ${user1Id},
           ${tooLongName},
           "This is a new document.",
-          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z"))},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z").getTime() / 1000)},
           false
         );
       `)
@@ -498,9 +504,9 @@ describe('update_document', () => {
         ${user1Id},
         "New document",
         ${lessThanTooLongContent},
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z"))},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z").getTime() / 1000)},
         false
       );
     `))).not.toThrow()
@@ -524,9 +530,9 @@ describe('update_document', () => {
           ${user1Id},
           "New document",
           ${tooLongContent},
-          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z"))},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z").getTime() / 1000)},
           false
         );
       `)
@@ -555,9 +561,9 @@ describe('update_document', () => {
         ${user1Id},
         ${lessThanTooLongName},
         "This is a new document.",
-        ${user1Document1.created_at},
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z"))},
+        ${buildDatetimeStrForTest(user1Document1.created_at)},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z").getTime() / 1000)},
         false
       );
     `))).not.toThrow()
@@ -579,9 +585,9 @@ describe('update_document', () => {
           ${user1Id},
           ${tooLongName},
           "This is a new document.",
-          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z"))},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z").getTime() / 1000)},
           false
         );
       `)
@@ -611,8 +617,8 @@ describe('update_document', () => {
         "New document",
         ${lessThanTooLongContent},
         ${buildDatetimeStrForTest(user1Document1.created_at)},
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z"))},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+        ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z").getTime() / 1000)},
         false
       );
     `))).not.toThrow()
@@ -635,9 +641,9 @@ describe('update_document', () => {
           ${user1Id},
           "New document",
           ${tooLongContent},
-          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z"))},
-          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z"))},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:00.000Z").getTime() / 1000)},
+          ${buildDatetimeStrForTest(new Date("2000-01-03T01:00:01.000Z").getTime() / 1000)},
           false
         );
       `)
@@ -658,19 +664,19 @@ describe('update_document', () => {
   })
 
   test('updates every document if used multiple times in a transaction', async () => {
-    const newSaveTime = new Date("2000-01-03T02:00:01.000Z")
+    const newSaveTime = new Date("2000-01-03T02:00:01.000Z").getTime() / 1000
     const user1Document1Updated: DocumentFromDB = {
       ...user1Document1,
       name: user1Document1.name + ' UPDATED',
       content: user1Document1.content + ' UPDATED',
-      updated_at: new Date("2000-01-03T01:00:00.000Z"),
+      updated_at: new Date("2000-01-03T01:00:00.000Z").getTime() / 1000,
       saved_on_db_at: newSaveTime
     }
     const user1Document2Updated: DocumentFromDB = {
       ...user1Document2,
       name: user1Document2.name + ' UPDATED',
       content: user1Document2.content + ' UPDATED',
-      updated_at: new Date("2000-01-03T02:00:00.000Z"),
+      updated_at: new Date("2000-01-03T02:00:00.000Z").getTime() / 1000,
       saved_on_db_at: newSaveTime
     }
     // TESTED PROCEDURE
@@ -700,10 +706,14 @@ describe('update_document', () => {
     `)
     // EXPECTED RESULT
     const result = await db.query(sql`
-      SELECT *
-        FROM documents
-        WHERE user_id = ${user1Id}
-        ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
+      SELECT
+        *,
+        UNIX_TIMESTAMP(created_at) AS created_at,
+        UNIX_TIMESTAMP(updated_at) AS updated_at,
+        UNIX_TIMESTAMP(saved_on_db_at) AS saved_on_db_at
+      FROM documents
+      WHERE user_id = ${user1Id}
+      ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
     `)
     expect(result).toEqual([
       user1Document2Updated,
@@ -712,19 +722,19 @@ describe('update_document', () => {
   })
 
   test('returns error and does not update any document if it got an error in a transaction', async () => {
-    const newSaveTime = new Date("2000-01-03T02:00:01.000Z")
+    const newSaveTime = new Date("2000-01-03T02:00:01.000Z").getTime() / 1000
     const user1Document1Updated: DocumentFromDB = {
       ...user1Document1,
       name: user1Document1.name + ' UPDATED',
       content: user1Document1.content + ' UPDATED',
-      updated_at: new Date("2000-01-03T01:00:00.000Z"),
+      updated_at: new Date("2000-01-03T01:00:00.000Z").getTime() / 1000,
       saved_on_db_at: newSaveTime
     }
     const user1Document2Updated: DocumentFromDB = {
       ...user1Document2,
       name: user1Document2.name + ' UPDATED',
       content: user1Document2.content + ' UPDATED',
-      updated_at: new Date("2000-01-03T02:00:00.000Z"),
+      updated_at: new Date("2000-01-03T02:00:00.000Z").getTime() / 1000,
       saved_on_db_at: newSaveTime
     }
     const user1Document3AddedWithNotAvailableId: DocumentFromDB = {
@@ -732,9 +742,9 @@ describe('update_document', () => {
       user_id: user1Id,
       name: "New Document with User 2 document #1 ID",
       content: "This is new document with User 2 document #1 ID",
-      created_at: new Date("2000-01-04T00:00:00.000Z"),
-      updated_at: new Date("2000-01-04T00:00:00.000Z"),
-      saved_on_db_at: new Date("2000-01-04T00:00:01.000Z"),
+      created_at: new Date("2000-01-04T00:00:00.000Z").getTime() / 1000,
+      updated_at: new Date("2000-01-04T00:00:00.000Z").getTime() / 1000,
+      saved_on_db_at: new Date("2000-01-04T00:00:01.000Z").getTime() / 1000,
       is_deleted: 0
     }
     // TESTED PROCEDURE
@@ -782,10 +792,14 @@ describe('update_document', () => {
     }
     // EXPECTED RESULT
     const result = await db.query(sql`
-      SELECT *
-        FROM documents
-        WHERE user_id = ${user1Id}
-        ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
+      SELECT
+        *,
+        UNIX_TIMESTAMP(created_at) AS created_at,
+        UNIX_TIMESTAMP(updated_at) AS updated_at,
+        UNIX_TIMESTAMP(saved_on_db_at) AS saved_on_db_at
+      FROM documents
+      WHERE user_id = ${user1Id}
+      ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
     `)
     expect(result).toEqual([
       user1Document2,

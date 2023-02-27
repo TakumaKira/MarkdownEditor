@@ -5,6 +5,7 @@ import { documentsRequestValidatorMiddleware } from '../middlewares/validator'
 import { DocumentsUpdateResponse, Document, DocumentUpdatedWsMessage } from '../models/document'
 import { getDocuments, getNewSafeId, getUserDocuments, normalizeDocument, updateDocuments } from '../services/database'
 import wsServer from '../servers/wsServer'
+import { fromUnixTimestampToISOString, trimMilliseconds } from '../services/database/utils'
 
 const documentsRouter = Router()
 
@@ -45,10 +46,14 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
        */
 
       // If a document is needed to be resolve conflict, resolve and push it to update list.
+      // TODO: Make if statement more clear.
       if (documentFromDB && (
         documentFromDB.user_id === req.user.id
-        && documentFromDB.created_at.toISOString() === updateFromDevice.createdAt
-        && documentFromDB.saved_on_db_at.toISOString() !== updateFromDevice.savedOnDBAt
+        && fromUnixTimestampToISOString(documentFromDB.created_at) === trimMilliseconds(updateFromDevice.createdAt)
+        && (
+          updateFromDevice.savedOnDBAt !== null
+          && fromUnixTimestampToISOString(documentFromDB.saved_on_db_at) !== trimMilliseconds(updateFromDevice.savedOnDBAt)
+        )
       )) {
         const updateToDB: Document = {
           ...updateFromDevice,
@@ -61,10 +66,15 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
         duplicatedIdsAsConflicted.push({original: updateFromDevice.id, duplicated: updateToDB.id})
       // If a document is needed the id to be changed, find new id and assign it as new id(this operation looks fairly costly, but this won't happen so many times so just leave log), then push it to update list.
       } else if (documentFromDB && (
-        documentFromDB.user_id !== req.user.id
-        || (
+        (documentFromDB.user_id !== req.user.id
+          || (
+            documentFromDB.user_id === req.user.id
+            && fromUnixTimestampToISOString(documentFromDB.created_at) !== trimMilliseconds(updateFromDevice.createdAt)
+          )
+        ) || (
           documentFromDB.user_id === req.user.id
-          && documentFromDB.created_at.toISOString() !== updateFromDevice.createdAt
+          && fromUnixTimestampToISOString(documentFromDB.created_at) === trimMilliseconds(updateFromDevice.createdAt)
+          && updateFromDevice.savedOnDBAt === null
         )
       )) {
         const updateToDB: Document = {

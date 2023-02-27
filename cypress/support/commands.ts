@@ -27,7 +27,9 @@
 import { UserStateOnAsyncStorage } from "../../frontend/store/models/user";
 import * as frontendAppConfig from '../../frontend/app.config';
 import { ManifestExtra } from "../../frontend/app.config.manifestExtra";
-import { API_PATHS } from "../../frontend/constants";
+import { API_PATHS, AUTH_TOKEN_KEY } from "../../frontend/constants";
+import { DocumentStateOnAsyncStorage } from "../../frontend/store/models/document";
+import { DocumentsUpdateRequest, DocumentsUpdateResponse } from '@api/document';
 
 export {};
 declare global {
@@ -39,8 +41,12 @@ declare global {
        */
       getBySel(value: string): Chainable<JQuery<HTMLElement>>
 
-      login(email: string, password: string): Chainable<JQuery<HTMLElement>>
-      logout(): Chainable<JQuery<HTMLElement>>
+      setLoginTokenOnAsyncStorage(email: string, password: string): Chainable<JQuery<HTMLElement>>
+      removeLoginTokenFromAsyncStorage(): Chainable<JQuery<HTMLElement>>
+
+      setDocumentStateOnAsyncStorage(documentStateOnAsyncStorage: DocumentStateOnAsyncStorage): Chainable<JQuery<HTMLElement>>
+
+      updateDocuments(email: string, password: string, documentsUpdateRequest: DocumentsUpdateRequest): Chainable<JQuery<HTMLElement>>
     }
   }
 }
@@ -49,10 +55,10 @@ Cypress.Commands.add('getBySel', (selector, ...args) => {
   return cy.get(`[data-testid=${selector}]`, ...args)
 })
 
-Cypress.Commands.add('login', (email, password) => {
+Cypress.Commands.add('setLoginTokenOnAsyncStorage', (email, password) => {
   cy.request<{message: string, token: string}>({
     method: 'POST',
-    url: `${Cypress.env('API_BASE_URL')}${API_PATHS.AUTH.LOGIN.path}`, // TODO: Build this from env vars.
+    url: `${Cypress.env('API_BASE_URL')}${API_PATHS.AUTH.LOGIN.path}`,
     body: {email, password}
   })
   .then(resp =>
@@ -62,9 +68,34 @@ Cypress.Commands.add('login', (email, password) => {
     )
   )
 })
-Cypress.Commands.add('logout', () => {
+Cypress.Commands.add('removeLoginTokenFromAsyncStorage', () => {
   window.localStorage.setItem(
     `${(frontendAppConfig.extra as ManifestExtra).STATE_STORAGE_KEY_BASE}_user`,
     JSON.stringify({email: null, token: null} as UserStateOnAsyncStorage)
+  )
+})
+
+Cypress.Commands.add('setDocumentStateOnAsyncStorage', (documentStateOnAsyncStorage: DocumentStateOnAsyncStorage) => {
+  window.localStorage.setItem(
+    `${(frontendAppConfig.extra as ManifestExtra).STATE_STORAGE_KEY_BASE}_document`,
+    JSON.stringify(documentStateOnAsyncStorage)
+  )
+})
+
+Cypress.Commands.add('updateDocuments', (email, password, documentsUpdateRequest) => {
+  cy.request<{message: string, token: string}>({
+    method: 'POST',
+    url: `${Cypress.env('API_BASE_URL')}${API_PATHS.AUTH.LOGIN.path}`,
+    body: {email, password}
+  })
+  .then(resp =>
+    cy.request<DocumentsUpdateResponse>({
+      method: 'POST',
+      url: `${Cypress.env('API_BASE_URL')}${API_PATHS.DOCUMENTS.path}`,
+      headers: {
+        [AUTH_TOKEN_KEY]: resp.body.token,
+      },
+      body: documentsUpdateRequest
+    })
   )
 })

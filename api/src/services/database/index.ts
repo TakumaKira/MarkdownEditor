@@ -2,7 +2,7 @@ import { ConnectionPool, sql, SQLQuery } from '@databases/mysql'
 import db from './connector'
 import { getDocuments, getNewSafeId, getUserDocuments, updateDocuments } from './queryDocuments'
 import { activateUser, createUser, deleteUser, getUser, updateUserEmail, updateUserPassword } from './queryUsers'
-import { fromISOStringToTimeStamp, normalizeDocument } from './utils'
+import { fromISOStringToDatetimeString, normalizeDocument } from './utils'
 
 export default db
 export {
@@ -22,6 +22,6 @@ export {
   getDocuments,
   getNewSafeId,
 
-  fromISOStringToTimeStamp,
+  fromISOStringToDatetimeString,
   normalizeDocument,
 }

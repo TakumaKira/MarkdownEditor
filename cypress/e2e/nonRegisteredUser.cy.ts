@@ -1,4 +1,5 @@
-import { DocumentStateOnAsyncStorage } from "../../frontend/store/models/document"
+import { v4 as uuidv4 } from 'uuid'
+import { DocumentOnDevice, DocumentStateOnAsyncStorage } from "../../frontend/store/models/document"
 
 describe('non registered user', () => {
   context('new non registered user without any params', () => {
@@ -17,35 +18,37 @@ describe('non registered user', () => {
 
   context('non registered user with local storage data and without any params', () => {
     it('shows former selected document on load', () => {
+      const document1: DocumentOnDevice = {
+        id: uuidv4(),
+        name: "Test document #1.md",
+        content: "This is a test document #1.",
+        createdAt: "2000-01-01T00:00:00.000Z",
+        updatedAt: "2000-01-01T00:00:00.000Z",
+        savedOnDBAt: null,
+        isDeleted: false,
+        isUploaded: false
+      }
+      const document2: DocumentOnDevice = {
+        id: uuidv4(),
+        name: "Test document #2.md",
+        content: "This is a test document #2.",
+        createdAt: "2000-01-02T00:00:00.000Z",
+        updatedAt: "2000-01-02T00:00:00.000Z",
+        savedOnDBAt: null,
+        isDeleted: false,
+        isUploaded: false
+      }
       const documentStateOnAsyncStorage: DocumentStateOnAsyncStorage = {
         documentList: [
-          {
-            id: "test-id-2",
-            name: "Test document #2.md",
-            content: "This is a test document #2.",
-            createdAt: "2000-01-02T00:00:00.000Z",
-            updatedAt: "2000-01-02T00:00:00.000Z",
-            savedOnDBAt: null,
-            isDeleted: false,
-            isUploaded: false
-          },
-          {
-            id: "test-id-1",
-            name: "Test document #1.md",
-            content: "This is a test document #1.",
-            createdAt: "2000-01-01T00:00:00.000Z",
-            updatedAt: "2000-01-01T00:00:00.000Z",
-            savedOnDBAt: null,
-            isDeleted: false,
-            isUploaded: false
-          },
+          document2,
+          document1,
         ],
         documentOnEdit: {
-          id: "test-id-1"
+          id: document1.id
         },
         lastSyncWithDBAt: null
       }
-      window.localStorage.setItem('MARKDOWN_EDITOR_STATE_document', JSON.stringify(documentStateOnAsyncStorage))
+      cy.setDocumentStateOnAsyncStorage(documentStateOnAsyncStorage)
       cy.visit('/')
       cy.contains('This is a test document #1.')
     })
