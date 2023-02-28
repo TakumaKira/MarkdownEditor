@@ -41,6 +41,8 @@ describe('auth' , () => {
       })
       cy.getBySel('auth-modal-ok-button').click()
       cy.getBySel('sidebar-login-button').click()
+
+      // oldEmail / oldPassword
       cy.getBySel('auth-modal-email-input').type(testEmail1)
       cy.getBySel('auth-modal-password-input').type(testPassword1)
       cy.getBySel('auth-modal-submit-button').click()
@@ -82,10 +84,13 @@ describe('auth' , () => {
       cy.visit('/')
       cy.getBySel('topbar-menu-button').click()
       cy.getBySel('sidebar-login-button').click()
+
+      // oldEmail / oldPassword
       cy.getBySel('auth-modal-email-input').type(testEmail1)
       cy.getBySel('auth-modal-password-input').type(testPassword1)
       cy.getBySel('auth-modal-submit-button').click()
       cy.contains('Successfully logged in.')
+
       cy.getBySel('auth-modal-ok-button').click()
       cy.contains(testEmail1)
     })
@@ -197,11 +202,13 @@ describe('auth' , () => {
         cy.getBySel('sidebar-logout-button').click()
         cy.getBySel('sidebar-login-button').click()
 
+        // oldEmail / oldPassword
         cy.getBySel('auth-modal-email-input').type(testEmail1)
         cy.getBySel('auth-modal-password-input').type(testPassword1)
         cy.getBySel('auth-modal-submit-button').click()
         cy.contains('Email/Password is incorrect.')
 
+        // newEmail / oldPassword
         cy.getBySel('auth-modal-email-input').clear()
         cy.getBySel('auth-modal-email-input').type(testEmail2)
         cy.getBySel('auth-modal-submit-button').click()
