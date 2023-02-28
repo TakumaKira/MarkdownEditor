@@ -9,6 +9,10 @@ const testPassword2 = 'test5678'
 
 describe('auth' , () => {
   context('signup', () => {
+    afterEach(() => {
+      cy.task('clearUser', testEmail1)
+    })
+
     it('sends confirmation email with url including token', () => {
       cy.visit('/')
       cy.getBySel('topbar-menu-button').click()
@@ -35,8 +39,13 @@ describe('auth' , () => {
         expect(payload.email).to.equal(testEmail1)
         expect(dayjs(new Date(payload.iat * 1000)).isAfter(dayjs().subtract(30, 'minutes')))
       })
-      cy.task('clearUser', testEmail1)
-    })
+      cy.getBySel('auth-modal-ok-button').click()
+      cy.getBySel('sidebar-login-button').click()
+      cy.getBySel('auth-modal-email-input').type(testEmail1)
+      cy.getBySel('auth-modal-password-input').type(testPassword1)
+      cy.getBySel('auth-modal-submit-button').click()
+      cy.contains('This user is not activated.')
+  })
 
     it('shows success message and gets logged in when accessing sent url in html', () => {
       cy.task('createUser', {email: testEmail1, password: testPassword1, isActivated: false})
@@ -46,7 +55,17 @@ describe('auth' , () => {
         cy.getBySel('auth-modal-ok-button').click()
         cy.getBySel('topbar-menu-button').click()
         cy.contains(testEmail1)
-        cy.task('clearUser', testEmail1)
+        cy.getBySel('sidebar-logout-button').click()
+        cy.getBySel('sidebar-login-button').click()
+
+        // oldEmail / oldPassword
+        cy.getBySel('auth-modal-email-input').type(testEmail1)
+        cy.getBySel('auth-modal-password-input').type(testPassword1)
+        cy.getBySel('auth-modal-submit-button').click()
+        cy.contains('Successfully logged in.')
+
+        cy.getBySel('auth-modal-ok-button').click()
+        cy.contains(testEmail1)
       })
     })
   })
@@ -68,7 +87,6 @@ describe('auth' , () => {
       cy.getBySel('auth-modal-submit-button').click()
       cy.contains('Successfully logged in.')
       cy.getBySel('auth-modal-ok-button').click()
-      cy.getBySel('topbar-menu-button').click()
       cy.contains(testEmail1)
     })
 
@@ -114,7 +132,6 @@ describe('auth' , () => {
       cy.contains('Successfully logged in.')
 
       cy.getBySel('auth-modal-ok-button').click()
-      cy.getBySel('topbar-menu-button').click()
       cy.contains(testEmail1)
     })
 
@@ -162,7 +179,6 @@ describe('auth' , () => {
       cy.contains('Successfully logged in.')
 
       cy.getBySel('auth-modal-ok-button').click()
-      cy.getBySel('topbar-menu-button').click()
       cy.contains(testEmail1)
     })
 
@@ -192,7 +208,6 @@ describe('auth' , () => {
         cy.contains('Successfully logged in.')
 
         cy.getBySel('auth-modal-ok-button').click()
-        cy.getBySel('topbar-menu-button').click()
         cy.contains(testEmail2)
       })
     })
@@ -254,7 +269,6 @@ describe('auth' , () => {
       cy.contains('Successfully logged in.')
 
       cy.getBySel('auth-modal-ok-button').click()
-      cy.getBySel('topbar-menu-button').click()
       cy.contains(testEmail1)
     })
 
@@ -304,7 +318,6 @@ describe('auth' , () => {
         cy.contains('Successfully logged in.')
 
         cy.getBySel('auth-modal-ok-button').click()
-        cy.getBySel('topbar-menu-button').click()
         cy.contains(testEmail2)
       })
     })
