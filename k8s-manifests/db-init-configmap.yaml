@@ -4,6 +4,7 @@ metadata:
   name: db-init-config
 data:
   1-init-database.sql: |
+    SET @@global.time_zone = '+00:00';
     CREATE DATABASE markdown_editor;
 
   2-init-user.sh: |
@@ -32,8 +33,9 @@ data:
       user_id INT NOT NULL,
       name VARCHAR(50),
       content VARCHAR(20000) CHARACTER SET UTF8MB3,
-      created_at DATETIME,
+      created_at DATETIME NOT NULL,
       updated_at DATETIME NOT NULL,
+      saved_on_db_at DATETIME NOT NULL,
       is_deleted BOOL NOT NULL DEFAULT FALSE,
       FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
     );
@@ -53,7 +55,7 @@ data:
           FROM users
           WHERE email = p_email
       ) IS TRUE THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "Activated user already exists.";
+        SIGNAL SQLSTATE '45012' SET MESSAGE_TEXT = "Activated user with given email already exists.";
       ELSE
         INSERT INTO users (
           email,
@@ -79,13 +81,13 @@ data:
           FROM users
           WHERE email = p_email
       ) IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User does not exist.";
+        SIGNAL SQLSTATE '45011' SET MESSAGE_TEXT = "User does not exist.";
       ELSEIF (
         SELECT is_activated
           FROM users
           WHERE email = p_email
       ) IS TRUE THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User already activated.";
+        SIGNAL SQLSTATE '45013' SET MESSAGE_TEXT = "User already activated.";
       ELSE
         UPDATE users
           SET is_activated = TRUE
@@ -141,7 +143,7 @@ data:
           FROM users
           WHERE id = p_id
       ) IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User does not exist.";
+        SIGNAL SQLSTATE '45011' SET MESSAGE_TEXT = "User does not exist.";
       ELSE
         DELETE
           FROM users
@@ -153,24 +155,38 @@ data:
   5-init-document-procedures.sql: |
     USE markdown_editor;
 
-    DROP PROCEDURE IF EXISTS get_documents;
+    DROP PROCEDURE IF EXISTS get_document;
     DELIMITER $$
-    CREATE PROCEDURE get_documents (
-      p_user_id INT,
-      p_after DATETIME
+    CREATE PROCEDURE get_document (
+      p_id CHAR(36) CHARACTER SET ascii
     )
     BEGIN
-      IF p_after IS NULL THEN
-        SELECT *
-          FROM documents
-          WHERE user_id = p_user_id
-          ORDER BY updated_at DESC, created_at DESC;
-      ELSE
-        SELECT *
-          FROM documents
-          WHERE user_id = p_user_id AND updated_at > p_after
-          ORDER BY updated_at DESC, created_at DESC;
-      END IF;
+      SET time_zone = '+00:00';
+      SELECT
+        *,
+        UNIX_TIMESTAMP(created_at) AS created_at,
+        UNIX_TIMESTAMP(updated_at) AS updated_at,
+        UNIX_TIMESTAMP(saved_on_db_at) AS saved_on_db_at
+      FROM documents
+      WHERE id = p_id;
+    END $$
+    DELIMITER ;
+
+    DROP PROCEDURE IF EXISTS get_user_documents;
+    DELIMITER $$
+    CREATE PROCEDURE get_user_documents (
+      p_user_id INT
+    )
+    BEGIN
+      SET time_zone = '+00:00';
+      SELECT
+        *,
+        UNIX_TIMESTAMP(created_at) AS created_at,
+        UNIX_TIMESTAMP(updated_at) AS updated_at,
+        UNIX_TIMESTAMP(saved_on_db_at) AS saved_on_db_at
+      FROM documents
+      WHERE user_id = p_user_id
+      ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
     END $$
     DELIMITER ;
 
@@ -183,6 +199,7 @@ data:
       p_content VARCHAR(20000) CHARACTER SET UTF8MB3,
       p_created_at DATETIME,
       p_updated_at DATETIME,
+      p_saved_on_db_at DATETIME,
       p_is_deleted BOOL
     )
     BEGIN
@@ -193,14 +210,19 @@ data:
             WHERE id = p_user_id
         )
       ) THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User does not exist.";
+        SIGNAL SQLSTATE '45011' SET MESSAGE_TEXT = "User does not exist.";
       ELSEIF (
         SELECT user_id
           FROM documents
           WHERE id = p_id
       ) != p_user_id THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "Another user's document is using the same id.";
-          -- TODO: What if this happens?
+        SIGNAL SQLSTATE '45021' SET MESSAGE_TEXT = "Another user's document is using the same id.";
+      ELSEIF (
+        SELECT created_at
+          FROM documents
+          WHERE id = p_id
+      ) != p_created_at THEN
+        SIGNAL SQLSTATE '45022' SET MESSAGE_TEXT = "Another document of this user is using the same id.";
       ELSE
         INSERT INTO documents (
           id,
@@ -209,6 +231,7 @@ data:
           content,
           created_at,
           updated_at,
+          saved_on_db_at,
           is_deleted
         )
         VALUES (
@@ -218,38 +241,15 @@ data:
           p_content,
           p_created_at,
           p_updated_at,
+          p_saved_on_db_at,
           p_is_deleted
         ) AS new_document
         ON DUPLICATE KEY UPDATE
           name = IF(new_document.is_deleted = FALSE, new_document.name, NULL),
           content = IF(new_document.is_deleted = FALSE, new_document.content, NULL),
-          created_at = IF(new_document.is_deleted = FALSE, new_document.created_at, NULL),
           updated_at = new_document.updated_at,
+          saved_on_db_at = new_document.saved_on_db_at,
           is_deleted = new_document.is_deleted;
-      END IF;
-    END $$
-    DELIMITER ;
-
-    DROP PROCEDURE IF EXISTS get_latest_update_time;
-    DELIMITER $$
-    CREATE PROCEDURE get_latest_update_time (
-      p_user_id INT
-    )
-    BEGIN
-      IF (
-        NOT EXISTS (
-          SELECT TRUE
-            FROM users
-            WHERE id = p_user_id
-        )
-      ) THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = "User does not exist.";
-      ELSE
-        SELECT updated_at
-          FROM documents
-          WHERE user_id = p_user_id
-          ORDER BY updated_at DESC
-          LIMIT 1;
       END IF;
     END $$
     DELIMITER ;
