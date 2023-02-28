@@ -3,8 +3,8 @@ import { DocumentOnDevice, DocumentStateOnAsyncStorage } from "../../frontend/st
 import { Document, DocumentsUpdateRequest } from '@api/document';
 
 describe('documents sync', () => {
-  const user1 = {email: 'user1@test.com', password: 'user1password'}
-  const user2 = {email: 'user2@test.com', password: 'user2password'}
+  const user1 = {email: 'user1@test.com', password: 'user1password', isActivated: true}
+  const user2 = {email: 'user2@test.com', password: 'user2password', isActivated: true}
   before(() => {
     cy.task('createUser', user1)
     cy.task('createUser', user2)

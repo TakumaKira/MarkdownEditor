@@ -1,5 +1,6 @@
 import { defineConfig } from 'cypress'
 import * as bcrypt from 'bcrypt'
+import * as jwt from 'jsonwebtoken'
 import db, { sql } from './support/database'
 import { Document } from '../api/src/models/document'
 import { fromISOStringToTimestamp } from './support/utils';
@@ -10,7 +11,7 @@ const config = defineConfig({
     setupNodeEvents(on, config) {
       // implement node event listeners here
       on('task', {
-        createUser(credentials: {email: string, password: string}) {
+        createUser(credentials: {email: string, password: string, isActivated: boolean}) {
           const salt = bcrypt.genSaltSync(10)
           const hashedPassword = bcrypt.hashSync(credentials.password, salt)
           return db.query(sql`
@@ -22,7 +23,7 @@ const config = defineConfig({
             VALUES (
               ${credentials.email},
               ${hashedPassword},
-              true
+              ${credentials.isActivated}
             )
           `)
         },
@@ -101,6 +102,26 @@ const config = defineConfig({
             }
             return null
           })
+        },
+        generateSignupToken(email: string) {
+          return jwt.sign(
+            {is: 'SignupToken', email},
+            process.env.API_JWT_SECRET_KEY
+          )
+        },
+        generateEmailChangeToken(payload: {oldEmail: string, newEmail: string}) {
+          return jwt.sign(
+            {is: 'EmailChangeToken', oldEmail: payload.oldEmail, newEmail: payload.newEmail},
+            process.env.API_JWT_SECRET_KEY,
+            {expiresIn: '30m'}
+          )
+        },
+        generateResetPasswordToken(email: string) {
+          return jwt.sign(
+            {is: 'ResetPasswordToken', email},
+            process.env.API_JWT_SECRET_KEY,
+            {expiresIn: '30m'}
+          )
         },
       }),
       require("cypress-localstorage-commands/plugin")(on, config);
