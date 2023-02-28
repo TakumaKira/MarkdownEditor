@@ -11,4 +11,5 @@ ENV USE_SECURE_PROTOCOL=$USE_SECURE_PROTOCOL API_DOMAIN=$API_DOMAIN API_PORT=$AP
 RUN yarn build:web
 
 FROM nginx
+COPY ./nginx/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/web-build /usr/share/nginx/html

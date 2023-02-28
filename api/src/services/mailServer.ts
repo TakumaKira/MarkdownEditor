@@ -29,7 +29,6 @@ export class MailServerSendGrid extends MailServer<AuthSettingSendGrid> {
       to, from: this.senderEmail, subject, text, html
     }
     const result = await this.sgMail.send(mail)
-    console.log(result)
   }
   private setupSgMail(): typeof sgMail {
     const {API_KEY} = this.authSetting
@@ -57,7 +56,6 @@ export class MailServerStandardMailServer extends MailServer<AuthSettingStandard
     }
     const transport = await this.getTransport()
     const result = await transport.sendMail(mail)
-    console.log(result)
   }
   private async getTransport(): Promise<nodemailer.Transporter<SMTPTransport.SentMessageInfo>> {
     const {HOST, USER, PASS} = this.authSetting
@@ -99,7 +97,6 @@ export class MailServerGmail extends MailServer<AuthSettingGmail> {
     }
     const transport = await this.getTransport()
     const result = await transport.sendMail(mail)
-    console.log(result)
   }
   private async getTransport(): Promise<nodemailer.Transporter<SMTPTransport.SentMessageInfo>> {
     const {token: accessToken} = await this.OAuth2Client.getAccessToken()

@@ -247,7 +247,6 @@ export default documentSlice.reducer
 
 // TODO: Refactor and check if work below.
 function isEqual(documentOnDevice: DocumentOnDevice, documentFromDB: Document): boolean {
-  console.log(documentOnDevice, documentFromDB)
   return documentOnDevice.id === documentFromDB.id
     && documentOnDevice.name === documentFromDB.name
     && documentOnDevice.content === documentFromDB.content
