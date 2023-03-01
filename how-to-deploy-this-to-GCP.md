@@ -75,31 +75,29 @@ See [this document](https://cloud.google.com/sql/docs/mysql/connect-admin-proxy)
 When you are connecting to the Cloud SQL instance, run following commands in order:
 
 ```sh
-mysql> source ./db/init/1-init-database.sql
+mysql -uroot -p<your-database-root-password> -h0.0.0.0 < ./db/init/1-init-database.sql
 ```
 
 ```sql
-mysql> CREATE USER markdown_editor_app IDENTIFIED BY '<password-for-app-as-a-database-user>';
+mysql -uroot -p<your-database-root-password> -h0.0.0.0 -e "CREATE USER markdown_editor_app IDENTIFIED BY 'password-for-app';"
 ```
 
 ```sql
-mysql> GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE \
-  ON markdown_editor.* \
-  TO markdown_editor_app;
+mysql -uroot -p<your-database-root-password> -h0.0.0.0 -e "GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON markdown_editor.* TO markdown_editor_app;"
 ```
 
 *This is granting required privileges to the app as a database user.*
 
 ```sh
-mysql> source ./db/init/3-init-tables.sql
+mysql -uroot -p<your-database-root-password> -h0.0.0.0 < ./db/init/3-init-tables.sql
 ```
 
 ```sh
-mysql> source ./db/init/4-init-user-procedures.sql
+mysql -uroot -p<your-database-root-password> -h0.0.0.0 < ./db/init/4-init-user-procedures.sql
 ```
 
 ```sh
-mysql> source ./db/init/5-init-document-procedures.sql
+mysql -uroot -p<your-database-root-password> -h0.0.0.0 < ./db/init/5-init-document-procedures.sql
 ```
 
 ### Setup image builders
@@ -128,7 +126,6 @@ Then create 2 triggers like `build-frontend` for frontend and `build-api` for ap
 Set Substitution variables below.
 
 - `_API_DOMAIN`: Your domain like `markdown.com`.(This is required by frontend app to work. You need to get this with the service like [Google Domains](https://domains.google/).)
-- `_REPOSITORY_PATH`: Your repository path like `github.com/yourusername/markdowneditor`(This will be used as store path of built images to container registry).
 - `_WEB_VERSION_URL`: Your web frontend URL like `https://markdown.com`(This is required by frontend app to work).
 
 #### Create trigger for api
@@ -138,8 +135,6 @@ Set Substitution variables below.
 - Use `/api/cloudbuild.yaml` in this repository as Cloud Build configuration file.
 
 Set Substitution variables below.
-
-- `_REPOSITORY_PATH`: Your repository path like `github.com/yourusername/markdowneditor`(This will be used as store path of built images to container registry).
 
 #### Try first run
 
