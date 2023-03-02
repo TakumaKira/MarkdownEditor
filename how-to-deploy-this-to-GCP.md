@@ -155,7 +155,7 @@ If everything goes well, you can see built images inside `gcr.io` directory on `
 - Go to Kubernetes Engine/Workloads.
 - Create new deployment.
 - Select built frontend image from your artifact registry.
-- Set `frontend` as `Application name` and `Value` for `Key: app` for `Label`.
+- Set Deployment name: `frontend` / Key: `app` / Value: `frontend`.
 - Leave name space as `default`.
 - Select `app-cluster` for `Cluster`.
 
@@ -170,7 +170,7 @@ Deploy with settings above.
 Set environment variables below.
 
 - `USE_SECURE_PROTOCOL`: Just set `true`.
-- `FRONTEND_DOMAIN`: Just set `localhost`.
+- `FRONTEND_DOMAIN`: Just set `<your-domain>`.
 - `API_PORT`: Just set `3000`.
 - `WS_PORT`: Just set `3001`.
 - `DATABASE_HOST`: Just set `127.0.0.1`.
@@ -181,7 +181,7 @@ Set environment variables below.
 
 *We will set secrets later.*
 
-- Set `api` as `Application name` and `Value` for `Key: app` for `Label`.
+- Set Deployment name: `api` / Key: `app` / Value: `api`.
 - Leave name space as `default`.
 - Select `app-cluster` for `Cluster`.
 
@@ -430,13 +430,13 @@ We are exposing the apps by applying the services with the following command:
 
 ```sh
 kubectl apply \
--f ./gke-manifests/ingress-static-ip.yaml \
--f ./gke-manifests/backend-service-frontend-app.yaml \
--f ./gke-manifests/backend-service-api-app.yaml \
+-f ./gke-manifests/managed-cert.yaml \
 -f ./gke-manifests/http-backend-config-frontend.yaml \
 -f ./gke-manifests/http-backend-config-api.yaml \
 -f ./gke-manifests/http-backend-config-ws.yaml \
--f ./gke-manifests/managed-cert.yaml
+-f ./gke-manifests/backend-service-frontend-app.yaml \
+-f ./gke-manifests/backend-service-api-app.yaml \
+-f ./gke-manifests/ingress-static-ip.yaml
 ```
 
 At this point, you should be able to access our frontend app from your browser with the address like `https://<YOUR-DOMAIN>` and you can see Signup/Login feature is working as API also works publicly.

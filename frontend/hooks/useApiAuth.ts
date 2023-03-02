@@ -15,7 +15,7 @@ const useApiAuth = (): void => {
   const userState = useAppSelector(state => state.user)
   const dispatch = useAppDispatch()
 
-  const [socket, setSocket] = React.useState<Socket>()
+  const [socket, setSocket] = React.useState<Socket | null>(null)
 
   React.useEffect(() => {
     if (!storeInitializationIsDone) {
@@ -26,12 +26,18 @@ const useApiAuth = (): void => {
     if (token) {
       getSocket(token)
       dispatch(askServerUpdate(documentState))
+    } else {
+      disposeSocket()
     }
   }, [storeInitializationIsDone, userState.token])
 
   const getSocket = (token: string) => {
     const socket = io(`${env.WS_PROTOCOL}://${env.API_DOMAIN}:${env.WS_PORT}`, {auth: {token}})
     setSocket(socket)
+  }
+  const disposeSocket = () => {
+    socket?.off(DOCUMENT_UPDATED_WS_EVENT, documentsUpdated)
+    setSocket(null)
   }
 
   const [shouldCheckUpdate, setShouldCheckUpdate] = React.useState<null | DocumentUpdatedWsMessage>(null)
