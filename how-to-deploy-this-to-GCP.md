@@ -128,7 +128,6 @@ Then create 2 triggers like `build-frontend` for frontend and `build-api` for ap
 Set Substitution variables below.
 
 - `_API_DOMAIN`: Your domain like `markdown.com`.(This is required by frontend app to work. You need to get this with the service like [Google Domains](https://domains.google/).)
-- `_WEB_VERSION_URL`: Your web frontend URL like `https://markdown.com`(This is required by frontend app to work).
 
 #### Create trigger for api
 

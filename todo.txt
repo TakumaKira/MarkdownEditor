@@ -22,7 +22,6 @@ Fix
 - [x] Should exit building if frontend has missing env vars
 
 Refactor
-- [ ] Should remove WEB_VERSION_URL from web build
 - [ ] Make api document route conflict resolver if statement more clear.
 - [ ] Refactor and add unit/E2E tests for acceptServerResponse conflict resolver if statement and its dependency isEqual function.
 - [ ] Frontend Layout component should not know too much detail of confirmationState.
@@ -52,10 +51,14 @@ Refactor
 - [ ] Want better type conversion for Text/TextInput inside TextWithCustomFont/TextInputWithCustomFont.
 - [ ] Want a way to test if children doesn't do extra rendering for Preview and its children component.
 - [ ] Want to cancel image load when Preview/Image component is unmounted to put new one.
+- [x] Should remove WEB_VERSION_URL from web build
 - [x] Add integration tests?
 - [x] Check if every auth route works
 - [x] Change api token
 - [x] Refactor/prepare stories/prepare unit and E2E tests
+
+Check
+- [ ] Can deploy frontend to GCP without WEB_VERSION_URL
 
 Others
 - [ ] Contribute to https://github.com/storybookjs/react-native/issues/323 to make initStoryshots test work?
