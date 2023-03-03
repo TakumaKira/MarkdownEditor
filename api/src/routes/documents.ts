@@ -1,122 +1,127 @@
 import { Router } from 'express'
-import { RowDataPacket } from 'mysql2/promise'
-import { v4 as uuidv4 } from 'uuid'
-import getConnection from '../db/getConnection'
-import { authApiMiddleware } from '../middleware/auth'
-import { Document, DocumentFromDB, DocumentsRequest, DocumentsUploadResponse } from '../models/document'
-import { wsServer } from '../servers/api'
+import { DOCUMENT_UPDATED_WS_EVENT } from '../constants'
+import { apiAuthMiddleware } from '../middlewares/auth'
+import { documentsRequestValidatorMiddleware } from '../middlewares/validator'
+import { DocumentsUpdateResponse, Document, DocumentUpdatedWsMessage } from '../models/document'
+import { getDocuments, getNewSafeId, getUserDocuments, normalizeDocument, updateDocuments } from '../services/database'
+import wsServer from '../servers/wsServer'
+import { fromUnixTimestampToISOString, trimMilliseconds } from '../services/database/utils'
 
 const documentsRouter = Router()
 
-documentsRouter.post('/', authApiMiddleware, async (req, res) => {
+documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware, async (req, res, next) => {
   try {
-    const requestBody: DocumentsRequest = req.body
-    // TODO: Validate request data do not have extra property, especially "isUploaded".
-    const updateFromDevice = requestBody.updated
+    const { documentsRequest } = req
+    const updatesFromDevice = documentsRequest.updates
 
-    const connection = await getConnection()
-    let after: string | null = requestBody.latestUpdatedDocumentFromDBAt ? fromISOStringToTimeStamp(requestBody.latestUpdatedDocumentFromDBAt) : null
-    after = after ? `"${after}"` : null
-    const [rows, fields] = await connection.execute<RowDataPacket[][]>(`
-      CALL get_documents('${req.user.id}', ${after ?? 'NULL'});
-    `)
-    const updateFromDatabase = (rows[0] as DocumentFromDB[]).map(fromDB => normalize(fromDB))
+    /**
+     * Reflect every update from device to database.
+     * If any error happens, revert every change.
+     * If every update reflected without error, return every document of the user.
+     */
 
-    const updateToDevice: Document[] = []
-    const updateToDatabase: Document[] = []
+    // Get every document by id of updated from device.
+    const documentsOnDBToBeUpdated = await getDocuments(updatesFromDevice.map(({id}) => id))
 
-    // Update newer document of conflicted documents with new id and name, and push to send-back que
-    const conflictedDocumentsId: string[] = []
-    for (const fromDevice of updateFromDevice) {
-      for (const fromDatabase of updateFromDatabase) {
-        if (fromDevice.id === fromDatabase.id) {
-          fromDevice.id = uuidv4()
-          fromDevice.name = `[Conflicted]: ${fromDevice.name}`
-          fromDevice.updatedAt = new Date().toISOString()
-          updateToDevice.push(fromDevice)
-          conflictedDocumentsId.push(fromDevice.id)
-          break
+    /**
+     * Get now here and store it as saved_on_db_at.
+     * If stored saved_on_db_at is different,
+     * it means the one from database has been updated from other device but device sent update based on older saved_on_db version,
+     * so the conflict should be resolved.
+     */
+
+    /** The time at which sent updates are reflected to database. 2000-01-01T00:00:00.000Z */
+    const savedOnDBAt = new Date().toISOString()
+
+    const updatedIdsAsUnavailable: DocumentsUpdateResponse['updatedIdsAsUnavailable'] = []
+    const duplicatedIdsAsConflicted: DocumentsUpdateResponse['duplicatedIdsAsConflicted'] = []
+
+    // Check if these documents are ok to be inserted or updated, needed to be resolved conflict, or needed the id to be changed.
+    const updatesToDB: Document[] = []
+    for (const updateFromDevice of updatesFromDevice) {
+      const documentFromDB = documentsOnDBToBeUpdated.find(({id}) => id === updateFromDevice.id)
+
+      /**
+       * id, user_id and created_at should be matched, otherwise new one should be given other id.
+       */
+
+      // If a document is needed to be resolve conflict, resolve and push it to update list.
+      if (documentFromDB && (
+        // userId did match
+        documentFromDB.user_id === req.user.id
+        // createAt did match
+        && fromUnixTimestampToISOString(documentFromDB.created_at) === trimMilliseconds(updateFromDevice.createdAt)
+        // savedOnDBAt did not match
+        && (
+          updateFromDevice.savedOnDBAt !== null // This should always be true if this is actually the conflict case.
+          && fromUnixTimestampToISOString(documentFromDB.saved_on_db_at) !== trimMilliseconds(updateFromDevice.savedOnDBAt) // If these two matched, it means updateFromDevice can be safely updated to database.
+        )
+      )) {
+        // duplicate conflicted one as new document
+        const updateToDB: Document = {
+          ...updateFromDevice,
+          id: await getNewSafeId(),
+          name: `[Conflicted]: ${updateFromDevice.name}`,
+          updatedAt: savedOnDBAt,
+          savedOnDBAt
         }
+        updatesToDB.push(updateToDB)
+        duplicatedIdsAsConflicted.push({original: updateFromDevice.id, duplicated: updateToDB.id})
+      // If a document is needed the id to be changed, find new id and assign it as new id(this operation looks fairly costly, but this won't happen so many times so just leave log), then push it to update list.
+      } else if (documentFromDB && (
+        // userId did not match
+        documentFromDB.user_id !== req.user.id
+        // userId did match and createdAt did not match
+        || (
+          documentFromDB.user_id === req.user.id
+          && fromUnixTimestampToISOString(documentFromDB.created_at) !== trimMilliseconds(updateFromDevice.createdAt)
+        )
+        // userId did match and createdAt did match aånd one from device did not have savedOnDBAt
+        || (
+          // Notice this is really close case to the conflict case above.
+          documentFromDB.user_id === req.user.id
+          && fromUnixTimestampToISOString(documentFromDB.created_at) === trimMilliseconds(updateFromDevice.createdAt)
+          && updateFromDevice.savedOnDBAt === null // documentFromDB.saved_on_db_at is always not null
+        )
+      )) {
+        // Change id to new one
+        const updateToDB: Document = {
+          ...updateFromDevice,
+          id: await getNewSafeId(),
+          savedOnDBAt
+        }
+        updatesToDB.push(updateToDB)
+        updatedIdsAsUnavailable.push({from: updateFromDevice.id, to: updateToDB.id})
+      // If a document is ok to be inserted or updated, just push it to update list.
+      } else {
+        // updateFromDevice.id is safe anyway here.
+        const updateToDB: Document = {
+          ...updateFromDevice,
+          savedOnDBAt
+        }
+        updatesToDB.push(updateToDB)
       }
     }
 
-    // Push every document to send pool for counterpart.
-    updateToDevice.push(...updateFromDatabase)
-    updateToDatabase.push(...updateFromDevice)
+    // Now all of updateFromDevice should be safe to update to database.
 
-    const uploadedDocumentsIdWithoutConflict: string[] = []
+    await updateDocuments(updatesToDB, req.user.id)
+    // If the transaction was unsuccessful, above will throw and errorMiddleware will handled it.
 
-    // Push to server.
-    for (const toDatabase of updateToDatabase) {
-      const query = buildUpdateDocumentQuery(toDatabase, req.user.id)
-      // TODO: Test that every document except the one causing an error will be updated.
-      try {
-        await connection.execute<RowDataPacket[][]>(query)
-        if (!conflictedDocumentsId.includes(toDatabase.id)) {
-          uploadedDocumentsIdWithoutConflict.push(toDatabase.id)
-        }
-      } catch (err) {
-        console.error(err)
-        // TODO: What if "Another user's document is using the same id." error returned?
-        console.error('The query might cause the error.', query)
-      }
+    // If the transaction was successful, get every document of the user and return it and emit update event to the user to make other devices start update. No need to send updated document's id, just make them save editing document and start sync.
+    const allDocumentsOnDB = await getUserDocuments(req.user.id)
+
+    const allDocuments: Document[] = allDocumentsOnDB.map(doc => normalizeDocument(doc))
+
+    res.send({allDocuments, updatedIdsAsUnavailable, duplicatedIdsAsConflicted, savedOnDBAt} as DocumentsUpdateResponse)
+
+    // If there's update to database, send update notification.
+    if (updatesFromDevice.length > 0) {
+      // Device may ignore the notification if updatedAt has been already accepted as response.
+      wsServer.to(req.user.id.toString()).emit(DOCUMENT_UPDATED_WS_EVENT, {savedOnDBAt} as DocumentUpdatedWsMessage)
     }
-
-    // Push to device.
-    const documentsUploadResponse: DocumentsUploadResponse = {fromDB: updateToDevice, uploadedDocumentsId: uploadedDocumentsIdWithoutConflict}
-    res.send(documentsUploadResponse)
-
-    // If any error occurs, update time would not be updated, so it will be updated next time.
-
-    // If there's no update, do not send update notification.
-    if (updateToDevice.length === 0 && uploadedDocumentsIdWithoutConflict.length === 0) {
-      return
-    }
-    // Get user's latest update time from DB.
-    const [rows2, fields2] = await connection.execute<RowDataPacket[][]>(`
-      CALL get_latest_update_time('${req.user.id}');
-    `)
-    const latestUpdatedAt = (rows2[0][0].updated_at as Date).toISOString()
-    wsServer.to(req.user.id.toString()).emit('documents_updated', latestUpdatedAt)
-  } catch (error) {
-    console.error(error)
-    res.status(500).send('Something went wrong.')
+  } catch (e) {
+    next(e)
   }
 })
-
 export default documentsRouter
-
-function fromISOStringToTimeStamp(isoString: string): string {
-  return isoString.slice(0, -5).replace('T', ' ')
-}
-
-function escapeSingleQuote(string: string): string {
-  // TODO: Test succeeding single quotes cases
-  return string.replace(/\'/g, '\'\'')
-}
-
-function normalize(document: DocumentFromDB): Document {
-  return {
-    id: document.id,
-    name: document.name,
-    content: document.content,
-    createdAt: document.created_at?.toISOString() ?? null,
-    updatedAt: document.updated_at.toISOString(),
-    isDeleted: !!document.is_deleted
-  }
-}
-
-/** TODO: Make name and content encrypted with user's password? */
-function buildUpdateDocumentQuery(document: Document, userId: number) {
-  return `
-    CALL update_document (
-      '${document.id}',
-      ${userId},
-      ${document.name !== null ? `'${document.name}'` : `NULL`},
-      ${document.content !== null ? `'${escapeSingleQuote(document.content)}'` : `NULL`},
-      ${document.createdAt !== null ? `'${fromISOStringToTimeStamp(document.createdAt)}'` : `NULL`},
-      '${fromISOStringToTimeStamp(document.updatedAt)}',
-      ${document.isDeleted}
-    );
-  `
-}

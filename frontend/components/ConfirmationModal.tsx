@@ -1,6 +1,9 @@
 import React from 'react'
 import { StyleSheet, View } from 'react-native'
-import { useAppSelector } from '../store/hooks'
+import { confirmationMessages, ConfirmationStateTypes } from '../constants/confirmationMessages'
+import { useAppDispatch, useAppSelector } from '../store/hooks'
+import { ConfirmationState, ConfirmationStateWithNextId } from '../store/models/document'
+import { confirmationStateChanged, deleteSelectedDocument, selectDocument, selectSelectedDocumentOnEdit } from '../store/slices/document'
 import { selectColorScheme } from '../store/slices/theme'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
@@ -35,23 +38,43 @@ const styles = StyleSheet.create({
   },
 })
 
-const ConfirmationModal = (props: {title: string, message: string, buttonLabel: string, onPressButton: () => void, onPressBackground: () => void}) => {
-  const {
-    title,
-    message,
-    buttonLabel,
-    onPressButton,
-    onPressBackground,
-  } = props
+const ConfirmationModal = (props: {
+  confirmationState: ConfirmationState | ConfirmationStateWithNextId
+}) => {
+  const {confirmationState} = props
 
   const colorScheme = useAppSelector(selectColorScheme)
 
+  const dispatch = useAppDispatch()
+
+  const {title, getMessage, buttonLabel} = confirmationMessages[confirmationState.type]
+  const {titleInput} = useAppSelector(selectSelectedDocumentOnEdit)
+  const message = getMessage(titleInput)
+
+  const handleConfirm = () => {
+    if (confirmationState.type === ConfirmationStateTypes.DELETE) {
+      dispatch(deleteSelectedDocument())
+    } else if (confirmationState.type === ConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT) {
+      dispatch(selectDocument((confirmationState as ConfirmationStateWithNextId).nextId))
+    }
+    dispatch(confirmationStateChanged(null))
+  }
+  const handleCancel = () => {
+    dispatch(confirmationStateChanged(null))
+  }
+
   return (
-    <Modal onPressBackground={onPressBackground}>
+    <Modal onPressBackground={handleCancel}>
       <View style={[styles.modalContentContainer, themeColors[colorScheme].modalContentContainerBg]}>
         <Text style={[textStyles.previewH4, themeColors[colorScheme].confirmationTitle]}>{title}</Text>
         <Text style={[styles.message, textStyles.previewParagraph, themeColors[colorScheme].confirmationMessage]}>{message}</Text>
-        <ButtonWithHoverColorAnimation onPress={onPressButton} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={styles.button} childrenWrapperStyle={styles.buttonContents}>
+        <ButtonWithHoverColorAnimation
+          onPress={handleConfirm}
+          offBgColorRGB={colors.Orange}
+          onBgColorRGB={colors.OrangeHover}
+          style={styles.button}
+          childrenWrapperStyle={styles.buttonContents}
+        >
           <Text style={[styles.buttonLabel, textStyles.headingM]}>{buttonLabel}</Text>
         </ButtonWithHoverColorAnimation>
       </View>

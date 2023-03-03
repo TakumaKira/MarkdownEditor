@@ -3,7 +3,7 @@ export interface ThemeState {
   selectedColorSchemeIsDark: boolean | null
   restoreIsDone: boolean
 }
-export interface ThemeStateRestore {
+export interface ThemeStateOnAsyncStorage {
   deviceColorSchemeIsDark: boolean
   selectedColorSchemeIsDark: boolean | null
 }

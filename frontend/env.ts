@@ -17,7 +17,7 @@ if (Constants.manifest?.extra?.NODE_ENV !== 'test' && (
   if (Constants.manifest?.extra?.WS_PORT === undefined) {
     console.error('WS_PORT is not defined.')
   }
-  if (Constants.manifest?.extra?.WEB_VERSION_URL === undefined) {
+  if (Platform.OS !== 'web' && Constants.manifest?.extra?.WEB_VERSION_URL === undefined) {
     console.error('WEB_VERSION_URL is not defined.')
   }
   throw new Error('Missing environment variables.')

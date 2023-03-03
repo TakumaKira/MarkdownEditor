@@ -32,7 +32,14 @@ storiesOf('ButtonWithHover', module)
     const showSaveIcon = boolean('show save icon', true)
     return (
       <View style={styles.container}>
-        <ButtonWithHoverColorAnimation onPress={action('onPress')} offBgColorRGB={text('offColorRGB', colors.Orange as string)} onBgColorRGB={text('onColorRGB', colors.OrangeHover as string)} duration={number('duration', 100)} style={styles.button} childrenWrapperStyle={styles.buttonContents}>
+        <ButtonWithHoverColorAnimation
+          onPress={action('onPress')}
+          offBgColorRGB={text('offColorRGB', colors.Orange as string)}
+          onBgColorRGB={text('onColorRGB', colors.OrangeHover as string)}
+          duration={number('duration', 100)}
+          style={styles.button}
+          childrenWrapperStyle={styles.buttonContents}
+        >
           {showSaveIcon &&
             <SvgWrapper>
               <SaveIcon />

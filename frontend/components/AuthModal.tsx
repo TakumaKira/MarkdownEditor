@@ -5,7 +5,7 @@ import { RootState } from '../store'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { NEEDS_AT_LEAST_EMAIL_OR_PASSWORD } from '../store/middlewares/auth'
 import { selectColorScheme } from '../store/slices/theme'
-import { askServerDeleteAccount, callAuthModal, dismissAuthModal, resetErrorMessage, submitConfirmNewEmail, submitEdit, submitLogin, submitNewPassword, submitResetPassword, submitSignup } from '../store/slices/user'
+import { askServerDeleteAccount, AuthStateTypes, callAuthModal, dismissAuthModal, resetErrorMessage, submitConfirmNewEmail, submitEdit, submitLogin, submitNewPassword, submitResetPassword, submitSignup } from '../store/slices/user'
 import colors from '../theme/colors'
 import fonts from '../theme/fonts'
 import textStyles from '../theme/textStyles'
@@ -14,17 +14,6 @@ import ButtonWithHoverColorAnimation from './common/ButtonWithHoverColorAnimatio
 import LoadingCircles from './common/LoadingCircles'
 import Modal from './common/Modal'
 import { Text, TextInput } from './common/withCustomFont'
-
-export enum AuthStateTypes {
-  SIGNUP = 'signup',
-  CONFIRM_SIGNUP_EMAIL = 'confirmSignupEmail',
-  LOGIN = 'login,',
-  EDIT = 'edit,',
-  CONFIRM_CHANGE_EMAIL = 'confirmChangeEmail',
-  RESET_PASSWORD = 'resetPassword',
-  CONFIRM_RESET_PASSWORD = 'confirmResetPassword',
-  DELETE = 'delete,',
-}
 
 const styles = StyleSheet.create({
   modalContentContainer: {
@@ -256,7 +245,7 @@ const AuthModal = () => {
       case AuthStateTypes.CONFIRM_SIGNUP_EMAIL:
         return settings.getDoneText(authState.serverErrorMessage ?? undefined)
       case AuthStateTypes.EDIT:
-        const message = emailInput ? `Confirmation email sent to ${emailInput}. Please confirm.` : 'Password successfully changed.'
+        const message = emailInput ? `Confirmation email was sent to ${emailInput}. Please confirm.` : 'Password successfully changed.'
         return settings.getDoneText(message)
       case AuthStateTypes.CONFIRM_CHANGE_EMAIL:
         return settings.getDoneText(authState.serverErrorMessage ?? undefined)
@@ -293,6 +282,7 @@ const AuthModal = () => {
                         setInput={setEmailInput}
                         errorMessage={authState.emailValidationErrorMessage}
                         style={[i > 0 ? styles.marginTop : undefined]}
+                        testID="auth-modal-email-input"
                       />
                   case ContentTypes.PASSWORD_INPUT:
                     return 'passwordValidationErrorMessage' in authState &&
@@ -304,6 +294,7 @@ const AuthModal = () => {
                         errorMessage={authState.passwordValidationErrorMessage}
                         style={[i > 0 ? styles.marginTop : undefined]}
                         secureTextEntry
+                        testID="auth-modal-password-input"
                       />
                   case ContentTypes.PASSWORD_CONFIRM_INPUT:
                     return 'passwordConfirmValidationErrorMessage' in authState &&
@@ -315,6 +306,7 @@ const AuthModal = () => {
                         errorMessage={authState.passwordConfirmValidationErrorMessage}
                         style={[i > 0 ? styles.marginTop : undefined]}
                         secureTextEntry
+                        testID="auth-modal-password-confirm-input"
                       />
                   case ContentTypes.TEXT:
                     return (
@@ -336,19 +328,33 @@ const AuthModal = () => {
                         label={content.label}
                         serverErrorMessage={authState.serverErrorMessage}
                         style={[i > 0 ? styles.marginTop : undefined]}
+                        testID="auth-modal-submit-button"
                       />
                     )
                   case ContentTypes.LINK:
-                    return <TouchableOpacity onPress={() => dispatch(content.createAction())}>
-                      <Text style={[styles.link, textStyles.link, themeColors[colorScheme].link, i > 0 ? styles.marginTop : undefined]}>{content.label}</Text>
-                    </TouchableOpacity>
+                    return (
+                      <TouchableOpacity key={i} onPress={() => dispatch(content.createAction())}>
+                        <Text style={[styles.link, textStyles.link, themeColors[colorScheme].link, i > 0 ? styles.marginTop : undefined]}>{content.label}</Text>
+                      </TouchableOpacity>
+                    )
                 }
               })}
             </View>
           </>
           : <View>
-            <Text style={[styles.marginTop, textStyles.previewParagraph, doneText.isError ? {color: colors.Red} : themeColors[colorScheme].confirmationMessage]}>{doneText.text}</Text>
-            <ButtonWithHoverColorAnimation onPress={() => dispatch(dismissAuthModal())} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.button, styles.marginTop]} childrenWrapperStyle={styles.buttonContents}>
+            <Text
+              style={[styles.marginTop, textStyles.previewParagraph, doneText.isError ? {color: colors.Red} : themeColors[colorScheme].confirmationMessage]}
+            >
+              {doneText.text}
+            </Text>
+            <ButtonWithHoverColorAnimation
+              onPress={() => dispatch(dismissAuthModal())}
+              offBgColorRGB={colors.Orange}
+              onBgColorRGB={colors.OrangeHover}
+              style={[styles.button, styles.marginTop]}
+              childrenWrapperStyle={styles.buttonContents}
+              testID="auth-modal-ok-button"
+            >
               <Text style={[styles.buttonLabel, textStyles.headingM]}>OK</Text>
             </ButtonWithHoverColorAnimation>
           </View>
@@ -359,18 +365,39 @@ const AuthModal = () => {
 }
 export default AuthModal
 
-const Input = (props: {label: string, input: string, setInput: (input: string) => void, errorMessage?: string | null, style?: StyleProp<ViewStyle>, secureTextEntry?: boolean}) => {
-  const {label, input, setInput, errorMessage, style, secureTextEntry} = props
+const Input = (props: {
+  label: string
+  input: string
+  setInput: (input: string) => void
+  errorMessage?: string | null
+  style?: StyleProp<ViewStyle>
+  secureTextEntry?: boolean
+  testID?: string
+}) => {
+  const {
+    label,
+    input,
+    setInput,
+    errorMessage,
+    style,
+    secureTextEntry,
+    testID,
+  } = props
   const colorScheme = useAppSelector(selectColorScheme)
   return (
     <View style={style}>
-      <Text style={[textStyles.bodyM, styles.inputLabel, themeColors[colorScheme].inputUnderLabel]}>{label}</Text>
+      <Text
+        style={[textStyles.bodyM, styles.inputLabel, themeColors[colorScheme].inputUnderLabel]}
+      >{label}</Text>
       <TextInput
         style={[styles.inputField, textStyles.headingM, themeColors[colorScheme].inputText]}
         value={input}
         onChangeText={setInput}
         selectionColor={colors.Orange}
         secureTextEntry={secureTextEntry}
+        autoCapitalize="none"
+        autoCorrect={false}
+        testID={testID}
       />
       <View style={[styles.inputUnderline, themeColors[colorScheme].modalBackgroundColor]} />
       {errorMessage && <Text style={[styles.errorMessage, styles.inputErrorMessage]}>{errorMessage}</Text>}
@@ -386,6 +413,7 @@ const SubmitButton = (props: {
   label: string
   serverErrorMessage: string | null
   style?: StyleProp<ViewStyle>
+  testID?: string
 }) => {
   const {
     onPress,
@@ -395,6 +423,7 @@ const SubmitButton = (props: {
     label,
     serverErrorMessage,
     style,
+    testID,
   } = props
 
   return (
@@ -406,6 +435,7 @@ const SubmitButton = (props: {
         style={[styles.button, style]}
         childrenWrapperStyle={styles.buttonContents}
         disabled={isLoading}
+        testID={testID}
       >
         {isLoading
           ? <View style={styles.loaderContainer}>

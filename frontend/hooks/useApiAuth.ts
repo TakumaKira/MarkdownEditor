@@ -1,5 +1,7 @@
+import { DocumentUpdatedWsMessage } from "@api/document"
 import React from "react"
 import { io, Socket } from 'socket.io-client'
+import { DOCUMENT_UPDATED_WS_EVENT } from "../constants"
 import env from '../env'
 import { setTokenToRequestHeader } from '../services/api'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
@@ -13,7 +15,7 @@ const useApiAuth = (): void => {
   const userState = useAppSelector(state => state.user)
   const dispatch = useAppDispatch()
 
-  const [socket, setSocket] = React.useState<Socket>()
+  const [socket, setSocket] = React.useState<Socket | null>(null)
 
   React.useEffect(() => {
     if (!storeInitializationIsDone) {
@@ -23,6 +25,9 @@ const useApiAuth = (): void => {
     setTokenToRequestHeader(token)
     if (token) {
       getSocket(token)
+      dispatch(askServerUpdate(documentState))
+    } else {
+      disposeSocket()
     }
   }, [storeInitializationIsDone, userState.token])
 
@@ -30,16 +35,30 @@ const useApiAuth = (): void => {
     const socket = io(`${env.WS_PROTOCOL}://${env.API_DOMAIN}:${env.WS_PORT}`, {auth: {token}})
     setSocket(socket)
   }
+  const disposeSocket = () => {
+    socket?.off(DOCUMENT_UPDATED_WS_EVENT, documentsUpdated)
+    setSocket(null)
+  }
 
-  const documentsUpdated = React.useCallback((updatedAt: string) => {
-    if (isLoggedIn && documentState.latestUpdatedDocumentFromDBAt! < updatedAt) {
-      dispatch(askServerUpdate(documentState))
+  const [shouldCheckUpdate, setShouldCheckUpdate] = React.useState<null | DocumentUpdatedWsMessage>(null)
+
+  const documentsUpdated = React.useCallback((message: DocumentUpdatedWsMessage) => {
+    // Wait until finishing asking update to avoid to call api if this very device is causing the ws message.
+    if (isLoggedIn) {
+      setShouldCheckUpdate(message)
     }
   }, [documentState, isLoggedIn])
 
   React.useEffect(() => {
-    socket?.on('documents_updated', documentsUpdated)
-    return () => {socket?.off('documents_updated', documentsUpdated)}
+    if (shouldCheckUpdate && !documentState.isAskingUpdate && (documentState.lastSyncWithDBAt !== null && documentState.lastSyncWithDBAt !== shouldCheckUpdate.savedOnDBAt)) {
+      dispatch(askServerUpdate(documentState))
+      setShouldCheckUpdate(null)
+    }
+  }, [shouldCheckUpdate, documentState.isAskingUpdate, shouldCheckUpdate])
+
+  React.useEffect(() => {
+    socket?.on(DOCUMENT_UPDATED_WS_EVENT, documentsUpdated)
+    return () => {socket?.off(DOCUMENT_UPDATED_WS_EVENT, documentsUpdated)}
   }, [socket, documentsUpdated])
 }
 export default useApiAuth

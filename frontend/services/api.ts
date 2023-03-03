@@ -1,4 +1,4 @@
-import { DocumentsRequest, DocumentsUploadResponse } from '@api/document';
+import { DocumentsUpdateRequest, DocumentsUpdateResponse } from '@api/document';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import env from '../env';
 import { API_PATHS, AUTH_TOKEN_KEY } from '../constants';
@@ -25,7 +25,7 @@ axios.interceptors.response.use(
       // API server respond with error message.
       return Promise.reject(error.response.data.message)
     }
-    if (error.request.status === 0) {
+    if (error.request?.status === 0) {
       // Network error(Server not respond).
       return Promise.reject('Server not respond. Please check internet connection and try again later.')
     }
@@ -66,11 +66,10 @@ export const deleteUser = async (): Promise<AxiosResponse<{message: string}>> =>
   return await axios.post<never>(API_PATHS.AUTH.DELETE.path)
 }
 
-export const upload = async (documentState: DocumentState): Promise<DocumentsUploadResponse> => {
-  const requestBody: DocumentsRequest = {
-    updated: documentState.documentList.filter(({isUploaded}) => !isUploaded).map(({isUploaded, ...rest}) => rest),
-    latestUpdatedDocumentFromDBAt: documentState.latestUpdatedDocumentFromDBAt
+export const upload = async (documentState: DocumentState): Promise<DocumentsUpdateResponse> => {
+  const requestBody: DocumentsUpdateRequest = {
+    updates: documentState.documentList.filter(({isUploaded}) => !isUploaded).map(({isUploaded, ...rest}) => rest),
   }
-  const response = await axios.post<DocumentsUploadResponse>(API_PATHS.DOCUMENTS.path, requestBody)
+  const response = await axios.post<DocumentsUpdateResponse>(API_PATHS.DOCUMENTS.path, requestBody)
   return response.data
 }

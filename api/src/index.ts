@@ -1,4 +1,4 @@
-import { API_PORT } from './getEnvs'
-import { startApi } from './servers/api'
+import apiServer from './servers/apiServer'
+import wsServer from './servers/wsServer'
 
-startApi(API_PORT)
+export { apiServer, wsServer }

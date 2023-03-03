@@ -186,6 +186,7 @@ const MarkdownView = (props: {showPreview: boolean, input: string, setInput: (in
         onChangeText={setInput}
         autoCapitalize='none'
         autoCorrect={false}
+        testID="main-editor-input"
       />
     </View>
   )

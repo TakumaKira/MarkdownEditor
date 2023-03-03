@@ -73,9 +73,21 @@ You should pass initialization scripts tests every time you make changes.
 To run test, from `/db/test/` directory, run:
 
 ```sh
-yarn run mysql-test start
+yarn test
 ```
 
 *When you run this for the first time, you need to run ``yarn install`` first to install dependencies.*
+
+If you just want to check testing MySQL server with migrated database, run:
+
+```sh
+yarn mysql-test start
+```
+
+Then stop with the following command:
+
+```sh
+yarn mysql-test stop
+```
 
 This command uses [Docker](https://docs.docker.com/) and [MySQL Shell](https://dev.mysql.com/downloads/shell/), so make you install and get ready to run them beforehand.

@@ -11,11 +11,10 @@ import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { confirmationStateChanged, newDocument, selectDocument, selectLiveDocumentList, selectSelectedDocumentHasEdit, selectSelectedDocumentOnEdit } from '../store/slices/document'
 import { toggleTheme } from '../store/slices/theme'
-import { callAuthModal, removeLoginToken } from '../store/slices/user'
+import { AuthStateTypes, callAuthModal, removeLoginToken } from '../store/slices/user'
 import colors from '../theme/colors'
 import fonts from '../theme/fonts'
 import textStyles from '../theme/textStyles'
-import { AuthStateTypes } from './AuthModal'
 import ButtonWithHoverColorAnimation from './common/ButtonWithHoverColorAnimation'
 import SvgWrapper from './common/SvgWrapper'
 import { Text } from './common/withCustomFont'
@@ -143,12 +142,23 @@ const styles = StyleSheet.create({
   },
 })
 
-const SideBar = () => {
+const SideBar = (props: {
+  setShowSidebar: React.Dispatch<React.SetStateAction<boolean>>
+}) => {
+  const {
+    setShowSidebar,
+  } = props
+
   const dispatch = useAppDispatch()
   const documentList = useAppSelector(selectLiveDocumentList)
   const selectedDocumentOnEditId = useAppSelector(selectSelectedDocumentOnEdit).id
   const hasEdit = useAppSelector(selectSelectedDocumentHasEdit)
   const mediaType = useMediaquery()
+
+  const handlePressAddButton = () => {
+    dispatch(newDocument())
+    setShowSidebar(false)
+  }
 
   const handlePressDocument = (id: string) => {
     if (hasEdit) {
@@ -162,8 +172,8 @@ const SideBar = () => {
     <View style={styles.container}>
       {mediaType !== MediaType.DESKTOP && <Title style={styles.title} />}
       <Text style={[styles.myDocuments, textStyles.headingS]}>MY DOCUMENTS</Text>
-      <AddButton onPress={() => dispatch(newDocument())} />
-      <ScrollView style={styles.documentCardsContainer}>
+      <AddButton onPress={handlePressAddButton} />
+      <ScrollView style={styles.documentCardsContainer} testID="sidebar-documents-list">
         {sortDocumentsFromNewest(documentList).map(({updatedAt, name, id}, i) =>
           <DocumentCard
             key={id}
@@ -236,11 +246,25 @@ const Auth = () => {
 
   return (userEmail === null
     ? <View style={styles.twoButtonsContainer}>
-      <ButtonWithHoverColorAnimation onPress={() => dispatch(callAuthModal({authStateType: AuthStateTypes.SIGNUP}))} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton, styles.twoButtons]} childrenWrapperStyle={styles.authButtonContents}>
+      <ButtonWithHoverColorAnimation
+        onPress={() => dispatch(callAuthModal({authStateType: AuthStateTypes.SIGNUP}))}
+        offBgColorRGB={colors.Orange}
+        onBgColorRGB={colors.OrangeHover}
+        style={[styles.authButton, styles.twoButtons]}
+        childrenWrapperStyle={styles.authButtonContents}
+        testID="sidebar-signup-button"
+      >
         <Text style={[styles.authButtonLabel]}>Signup</Text>
       </ButtonWithHoverColorAnimation>
       <View style={styles.buttonsGap} />
-      <ButtonWithHoverColorAnimation onPress={() => dispatch(callAuthModal({authStateType: AuthStateTypes.LOGIN}))} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton, styles.twoButtons]} childrenWrapperStyle={styles.authButtonContents}>
+      <ButtonWithHoverColorAnimation
+        onPress={() => dispatch(callAuthModal({authStateType: AuthStateTypes.LOGIN}))}
+        offBgColorRGB={colors.Orange}
+        onBgColorRGB={colors.OrangeHover}
+        style={[styles.authButton, styles.twoButtons]}
+        childrenWrapperStyle={styles.authButtonContents}
+        testID="sidebar-login-button"
+      >
         <Text style={[styles.authButtonLabel]}>Login</Text>
       </ButtonWithHoverColorAnimation>
     </View>
@@ -248,15 +272,36 @@ const Auth = () => {
       <Text style={[textStyles.bodyM, styles.loggedInAs]}>Logged in as</Text>
       <Text style={styles.userEmail}>{userEmail}</Text>
       <View style={styles.twoButtonsContainer}>
-        <ButtonWithHoverColorAnimation onPress={() => dispatch(callAuthModal({authStateType: AuthStateTypes.EDIT}))} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton, styles.twoButtons]} childrenWrapperStyle={styles.authButtonContents}>
+        <ButtonWithHoverColorAnimation
+          onPress={() => dispatch(callAuthModal({authStateType: AuthStateTypes.EDIT}))}
+          offBgColorRGB={colors.Orange}
+          onBgColorRGB={colors.OrangeHover}
+          style={[styles.authButton, styles.twoButtons]}
+          childrenWrapperStyle={styles.authButtonContents}
+          testID="sidebar-edit-button"
+        >
           <Text style={[styles.authButtonLabel]}>Edit</Text>
         </ButtonWithHoverColorAnimation>
         <View style={styles.buttonsGap} />
-        <ButtonWithHoverColorAnimation onPress={() => dispatch(callAuthModal({authStateType: AuthStateTypes.DELETE}))} offBgColorRGB={colors.Red} onBgColorRGB={colors.RedHover} style={[styles.authButton, styles.twoButtons]} childrenWrapperStyle={styles.authButtonContents}>
+        <ButtonWithHoverColorAnimation
+          onPress={() => dispatch(callAuthModal({authStateType: AuthStateTypes.DELETE}))}
+          offBgColorRGB={colors.Red}
+          onBgColorRGB={colors.RedHover}
+          style={[styles.authButton, styles.twoButtons]}
+          childrenWrapperStyle={styles.authButtonContents}
+          testID="sidebar-delete-button"
+        >
           <Text style={[styles.authButtonLabel]}>Delete</Text>
         </ButtonWithHoverColorAnimation>
       </View>
-      <ButtonWithHoverColorAnimation onPress={() => dispatch(removeLoginToken())} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={[styles.authButton]} childrenWrapperStyle={styles.authButtonContents}>
+      <ButtonWithHoverColorAnimation
+        onPress={() => dispatch(removeLoginToken())}
+        offBgColorRGB={colors.Orange}
+        onBgColorRGB={colors.OrangeHover}
+        style={[styles.authButton]}
+        childrenWrapperStyle={styles.authButtonContents}
+        testID="sidebar-logout-button"
+      >
         <Text style={[styles.authButtonLabel]}>Logout</Text>
       </ButtonWithHoverColorAnimation>
     </View>

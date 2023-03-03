@@ -16,15 +16,22 @@ const customFonts = {
 } as Record<FontValues, FontSource>
 
 const withCustomFont = (Component: React.ComponentFactory<TextProps, Text> | React.ComponentFactory<TextInputProps, TextInput>) => {
-  return (props?: TextProps | TextInputProps) => { // TODO: Better type annotation
+  return (props?: TextProps | TextInputProps) => {
     const [fontsLoaded, setFontsLoaded] = React.useState(false)
+    const isMounted = React.useRef(false)
 
     React.useEffect(() => {
-      let isMounted = true
-      loadAsync(customFonts).then(() => {
-        if (isMounted) setFontsLoaded(true)
-      })
-      return () => {isMounted = false}
+      if (!isMounted.current) {
+        loadAsync(customFonts)
+          .then(() => {
+            setFontsLoaded(true)
+            isMounted.current = true
+          })
+          .catch(() => {
+            isMounted.current = true
+          })
+      }
+      return () => {isMounted.current = false}
     }, [])
 
     if (!fontsLoaded) {

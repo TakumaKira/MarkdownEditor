@@ -1,334 +1,279 @@
 import bcrypt from 'bcrypt'
 import { Router } from 'express'
-import jwt, { TokenExpiredError } from 'jsonwebtoken'
-import { RowDataPacket } from 'mysql2/promise'
-import { API_PATHS } from '../constants'
-import getConnection from '../db/getConnection'
-import getConfirmationEmail from '../emailTemplates'
+import { TokenExpiredError } from 'jsonwebtoken'
+import { API_PATHS, EMAIL_LENGTH_MAX, MIN_PASSWORD_LENGTH } from '../constants'
+import getConfirmationEmail from '../services/emailTemplates'
 import { JWT_SECRET_KEY, mailServer } from '../getEnvs'
-import decode from '../helper/decode'
-import { authApiMiddleware } from '../middleware/auth'
-import { UserInfoOnDB } from '../models/user'
+import decodeToken from '../services/decodeToken'
+import { generateEmailConfirmationToken, generateAuthToken, generateEmailChangeToken } from '../services/encodeToken'
+import { apiAuthMiddleware } from '../middlewares/auth'
+import Joi from 'joi'
+import { createUser, activateUser, getUser, updateUserPassword, updateUserEmail, deleteUser } from '../services/database';
 
 const authApiRouter = Router()
 
-// TODO: If something went wrong on the process, operation should be reverted.
+const emailSchema = Joi.string().email().max(EMAIL_LENGTH_MAX)
+const passwordSchema = Joi.string().min(MIN_PASSWORD_LENGTH)
+const signupRequestSchema = Joi.object<{email: string, password: string}>({
+  email: emailSchema.required(),
+  password: passwordSchema.required(),
+})
 
 authApiRouter.post(API_PATHS.AUTH.SIGNUP.dir, async (req, res, next) => {
-  const {email, password} = req.body as {email?: string, password?: string}
-  if (!email || !password) {
-    // TODO: Define res type.
-    return res.status(400).send({message: 'Missing email or password.'})
-  }
-
-  const salt = await bcrypt.genSalt(10)
-  const hashedPassword = await bcrypt.hash(password, salt)
   try {
-    const connection = await getConnection()
-    await connection.execute<RowDataPacket[][]>(`
-      CALL create_user('${email}', '${hashedPassword}')
-    `)
-  } catch (error: any) {
-    // TODO: What should happen if passed token activated already?
-    if (error?.code === 'ER_DUP_ENTRY') {
-      return res.status(409).send({message: 'Email is already registered.'})
+    const result = signupRequestSchema.validate(req.body)
+    if (result.error) {
+      return res.status(400).send({message: result.error.message})
     }
-    console.error(error)
-    return res.status(500).send({message: 'Something went wrong.'})
-  }
+    const {email, password} = result.value
 
-  const token = generateEmailConfirmationToken(email)
-  const {subject, text, html} = getConfirmationEmail('signup', token)
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    try {
+      await createUser(email, hashedPassword)
+    } catch (error: any) {
+      if (error?.sqlState === '45012') {
+        return res.status(409).send({message: 'Email is already registered and activated.'})
+      }
+      console.error(error)
+      return res.status(500).send({message: 'Something went wrong.'})
+    }
 
-  try {
+    const token = generateEmailConfirmationToken('SignupToken', email)
+    const {subject, text, html} = getConfirmationEmail('signup', token)
+
     await mailServer.send(email, subject, text, html)
-    res.send({message: 'Confirmation email sent.'})
-  } catch (error: any) {
-    console.error(error)
-    console.error(JSON.stringify(error.response.body.errors))
-    res.status(500).send({message: 'Something went wrong.'})
+    res.send({message: 'Confirmation email was sent.'})
+  } catch (e) {
+    next(e)
   }
 })
 
+const confirmSignupEmailRequestSchema = Joi.object<{token: string}>({
+  token: Joi.string().required(),
+})
 authApiRouter.post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir, async (req, res, next) => {
-  const {token} = req.body as {token?: string}
-  if (!token) {
-    return res.status(400).send({message: 'Missing token.'})
-  }
-
   try {
-    var {email} = decode<{email?: string}>(token, JWT_SECRET_KEY)
-    if (!email) {
-      throw new Error('email is not defined in the token.')
+    const result = confirmSignupEmailRequestSchema.validate(req.body)
+    if (result.error) {
+      return res.status(400).send({message: result.error.message})
+    }
+    const {token} = result.value
+
+    try {
+      var {is, email} = decodeToken<{is?: string, email?: string}>(token, JWT_SECRET_KEY)
+      if (is !== 'SignupToken') {
+        throw new Error('token is not SignupToken.')
+      }
+      if (!email) {
+        throw new Error('email is not defined in the token.')
+      }
+    } catch {
+      return res.status(400).send({message: 'Invalid token.'})
+    }
+
+    try {
+      const {id, is_activated} = await activateUser(email)
+      if (!is_activated) {
+        throw new Error(`User with email ${email} is not activated successfully. Please try again.`)
+      }
+      const token = await generateAuthToken(id, email)
+      return res.send({message: 'Confirmation successful.', token})
+    } catch (error: any) {
+      if (error?.sqlState === '45011') {
+        return res.status(400).send({message: 'The email you are trying to confirm does not exist on database.'})
+      }
+      if (error?.sqlState === '45013') {
+        return res.status(409).send({message: 'User already activated.'})
+      }
+      throw error
     }
   } catch (e) {
-    console.error(e)
-    return res.status(400).send({message: 'Invalid token.'})
-  }
-
-  try {
-    const connection = await getConnection()
-    const [rows, fields] = await connection.execute<RowDataPacket[][]>(`
-      CALL activate_user('${email}');
-    `)
-    const {id, is_activated} = rows[0][0] as unknown as {id: number, is_activated: boolean}
-    const token = generateAuthToken(id, email, is_activated)
-    return res.send({message: 'Confirmation successful.', token})
-  } catch (e: any) {
-    if (e.sqlMessage === 'User already activated.') {
-      return res.status(500).send({message: e.sqlMessage})
-    }
-    console.error(e)
-    // TODO: Return appropriate error message for its reasons like already-activated/id-not-exists.
-    return res.status(500).send({message: 'Something went wrong.'})
+    next(e)
   }
 })
 
+const loginRequestSchema = Joi.object<{email: string, password: string}>({
+  email: emailSchema.required(),
+  password: passwordSchema.required(),
+})
 authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
-  const {email, password} = req.body as {email?: string, password?: string}
-  if (!email || !password) {
-    return res.status(400).send({message: 'Missing email or password.'})
-  }
-
   try {
-    const connection = await getConnection()
-    const [rows, fields] = await connection.execute<RowDataPacket[][]>(`
-      CALL get_user('${email}');
-    `)
+    const result = loginRequestSchema.validate(req.body)
+    if (result.error) {
+      return res.status(400).send({message: result.error.message})
+    }
+    const {email, password} = result.value
 
-    const user = rows[0][0] as unknown as UserInfoOnDB
+    const user = await getUser(email)
     if (!user) return res.status(400).send({message: 'Email/Password is incorrect.'})
 
-    if (!user.is_activated) return res.status(401).send({message: 'This user is not activated.'})
+    if (!user.is_activated) return res.status(400).send({message: 'This user is not activated.'})
 
     const isValidPassword = await bcrypt.compare(password, user.password)
-    // TODO: Test incorrect password.
     if (!isValidPassword) return res.status(400).send({message: 'Email/Password is incorrect.'})
 
-    const token = generateAuthToken(user.id, user.email, user.is_activated)
+    const token = await generateAuthToken(user.id, user.email)
     res.send({message: 'Login successful.', token})
-  } catch (error) {
-    console.error(error)
-    res.status(500).send({message: 'Something went wrong.'})
+  } catch (e) {
+    next(e)
   }
 })
 
-authApiRouter.post(API_PATHS.AUTH.EDIT.dir, authApiMiddleware, async (req, res, next) => {
-  const {email: newEmail, password: newPassword} = req.body as {email?: string, password?: string}
-  const {user: {id, email: oldEmail}} = req
-  if (!newEmail && !newPassword) {
-    return res.status(400).send({message: 'Missing email and password.'})
-  }
-
+const editRequestSchema = Joi.object<{email?: string, password?: string}>({
+  email: emailSchema,
+  password: passwordSchema,
+}).min(1)
+authApiRouter.post(API_PATHS.AUTH.EDIT.dir, apiAuthMiddleware, async (req, res, next) => {
   try {
+    const result = editRequestSchema.validate(req.body)
+    if (result.error) {
+      return res.status(400).send({message: result.error.message})
+    }
+    const {email: newEmail, password: newPassword} = result.value
+    const {user: {id, email: oldEmail}} = req
+
     if (newPassword) {
       const salt = await bcrypt.genSalt(10)
       const hashedPassword = await bcrypt.hash(newPassword, salt)
-
-      const connection = await getConnection()
-      await connection.execute<RowDataPacket[][]>(`
-        CALL update_user(
-          ${id},
-          NULL,
-          '${hashedPassword}'
-        );
-      `)
+      await updateUserPassword(id, hashedPassword)
     }
     if (newEmail) {
       const token = generateEmailChangeToken(oldEmail, newEmail, {expiresIn: '30m'})
       const {subject, text, html} = getConfirmationEmail('changeEmail', token)
       await mailServer.send(newEmail, subject, text, html)
-      res.send({message: 'Confirmation email sent.'})
+      res.send({message: `Confirmation email was sent to ${newEmail}. Please check the inbox and confirm.`})
     } else {
-      return res.send({message: 'Password update successful.'})
+      res.send({message: 'Password update successful.'})
     }
   } catch (e) {
-    console.error(e)
-    // TODO: Return appropriate error message for its reasons like already-activated/id-not-exists.
-    return res.status(500).send({message: 'Something went wrong.'})
+    next(e)
   }
 })
 
+const confirmChangeEmailRequestSchema = Joi.object<{token: string, password: string}>({
+  token: Joi.string().required(),
+  password: passwordSchema.required(),
+})
 authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, next) => {
-  const {token, password} = req.body as {token?: string, password?: string}
-  if (!token || !password) {
-    return res.status(400).send({message: 'Missing token or password.'})
-  }
-
   try {
-    var {oldEmail, newEmail} = decode<{oldEmail?: string, newEmail?: string}>(token, JWT_SECRET_KEY)
-    if (!oldEmail || !newEmail) {
-      console.error('oldEmail or newEmail is not defined on the token.', token)
-      throw new Error('oldEmail or newEmail is not defined on the token.')
+    const result = confirmChangeEmailRequestSchema.validate(req.body)
+    if (result.error) {
+      return res.status(400).send({message: result.error.message})
     }
-  } catch (e) {
-    if (e instanceof TokenExpiredError) {
-      return res.status(400).send({message: 'Token expired. Please try again.'})
+    const {token, password} = result.value
+
+    try {
+      var {is ,oldEmail, newEmail} = decodeToken<{is?: string, oldEmail?: string, newEmail?: string}>(token, JWT_SECRET_KEY)
+      if (is !== 'EmailChangeToken') {
+        throw new Error('token is not EmailChangeToken.')
+      }
+      if (!oldEmail || !newEmail) {
+        throw new Error('oldEmail or newEmail is not defined on the token.')
+      }
+    } catch (e) {
+      if (e instanceof TokenExpiredError) {
+        return res.status(400).send({message: 'Token expired. Please try again.'})
+      }
+      return res.status(400).send({message: 'Invalid token.'})
     }
-    console.error(e)
-    return res.status(400).send({message: 'Invalid token.'})
-  }
 
-  try {
-    const connection = await getConnection()
-    const [rows, fields] = await connection.execute<RowDataPacket[][]>(`
-      CALL get_user('${oldEmail}');
-    `)
-
-    var user = rows[0][0] as unknown as UserInfoOnDB
+    const user = await getUser(oldEmail)
     if (!user) return res.status(400).send({message: `User with email: ${oldEmail} does not exist.`})
+    if (!user.is_activated) {
+      return res.status(400).send({message: `User with email ${oldEmail} is not activated yet. Please activate then retry.`})
+    }
 
     const isValidPassword = await bcrypt.compare(password, user.password)
-    // TODO: Test incorrect password.
     if (!isValidPassword) return res.status(400).send({message: 'Password is incorrect.'})
-  } catch (error) {
-    console.error(error)
-    return res.status(500).send({message: 'Something went wrong.'})
-  }
 
-  try {
-    const connection = await getConnection()
-    await connection.execute<RowDataPacket[][]>(`
-      CALL update_user(
-        ${user.id},
-        '${newEmail}',
-        NULL
-      );
-    `)
-    const token = generateAuthToken(user.id, newEmail, user.is_activated)
-    return res.send({message: 'Email change successful.', token})
+    await updateUserEmail(user.id, newEmail)
+    const authToken = await generateAuthToken(user.id, newEmail)
+    return res.send({message: 'Email change successful.', token: authToken})
   } catch (e) {
-    console.error(e)
-    // TODO: Return appropriate error message for its reasons like already-activated/id-not-exists.
-    return res.status(500).send({message: 'Something went wrong.'})
+    next(e)
   }
 })
 
+const resetPasswordRequestSchema = Joi.object<{email: string}>({
+  email: emailSchema.required(),
+})
 authApiRouter.post(API_PATHS.AUTH.RESET_PASSWORD.dir, async (req, res, next) => {
-  const {email} = req.body as {email?: string}
-  if (!email) {
-    return res.status(400).send({message: 'Missing email.'})
-  }
-
   try {
-    const connection = await getConnection()
-    const [rows, fields] = await connection.execute<RowDataPacket[][]>(`
-      CALL get_user('${email}');
-    `)
+    const result = resetPasswordRequestSchema.validate(req.body)
+    if (result.error) {
+      return res.status(400).send({message: result.error.message})
+    }
+    const {email} = result.value
 
-    const user = rows[0][0] as unknown as UserInfoOnDB
+    const user = await getUser(email)
     if (!user) return res.status(400).send({message: `There is no user with email: ${email}`})
 
-    if (!user.is_activated) return res.status(401).send({message: 'This user is not activated.'})
+    if (!user.is_activated) return res.status(400).send({message: 'This user is not activated.'})
 
-    const token = generateEmailConfirmationToken(user.email, {expiresIn: '30m'})
+    const token = generateEmailConfirmationToken('ResetPasswordToken', email, {expiresIn: '30m'})
     const {subject, text, html} = getConfirmationEmail('resetPassword', token)
-    await mailServer.send(user.email, subject, text, html)
-    res.send({message: 'Confirmation email sent.'})
-  } catch (error) {
-    console.error(error)
-    res.status(500).send({message: 'Something went wrong.'})
+    await mailServer.send(email, subject, text, html)
+    res.send({message: `Confirmation email was sent to ${email}. Please check the inbox and confirm.`})
+  } catch (e) {
+    next(e)
   }
 })
 
+const confirmResetPasswordRequestSchema = Joi.object<{token: string, password: string}>({
+  token: Joi.string().required(),
+  password: passwordSchema.required(),
+})
 authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, next) => {
-  const {token, password} = req.body as {token?: string, password?: string}
-  if (!token || !password) {
-    return res.status(400).send({message: 'Missing token or password.'})
-  }
-
   try {
-    var {email} = decode<{email?: string}>(token, JWT_SECRET_KEY)
-    if (!email) {
-      console.error('email is not defined on the token.', token)
-      throw new Error('email is not defined on the token.')
+    const result = confirmResetPasswordRequestSchema.validate(req.body)
+    if (result.error) {
+      return res.status(400).send({message: result.error.message})
     }
-  } catch (e) {
-    console.error(e)
-    return res.status(400).send({message: 'Invalid token.'})
-  }
+    const {token, password} = result.value
 
-  try {
-    const connection = await getConnection()
-    const [rows, fields] = await connection.execute<RowDataPacket[][]>(`
-      CALL get_user('${email}');
-    `)
+    try {
+      var {is, email} = decodeToken<{is?: string, email?: string}>(token, JWT_SECRET_KEY)
+      if (is !== 'ResetPasswordToken') {
+        throw new Error('token is not ResetPasswordToken.')
+      }
+      if (!email) {
+        throw new Error('email is not defined on the token.')
+      }
+    } catch {
+      return res.status(400).send({message: 'Invalid token.'})
+    }
 
-    var user = rows[0][0] as unknown as UserInfoOnDB
+    const user = await getUser(email)
     if (!user) return res.status(400).send({message: `User with email: ${email} does not exist.`})
-  } catch (error) {
-    console.error(error)
-    return res.status(500).send({message: 'Something went wrong.'})
-  }
+    if (!user.is_activated) {
+      return res.status(400).send({message: `User with email ${email} is not activated yet. Please activate then retry.`})
+    }
 
-  try {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
-
-    const connection = await getConnection()
-    await connection.execute<RowDataPacket[][]>(`
-      CALL update_user(
-        ${user.id},
-        NULL,
-        '${hashedPassword}'
-      );
-    `)
-    const token = generateAuthToken(user.id, email, user.is_activated)
-    return res.send({message: 'Password reset successful.', token})
+    await updateUserPassword(user.id, hashedPassword)
+    const authToken = await generateAuthToken(user.id, email)
+    return res.send({message: 'Password reset successful.', token: authToken})
   } catch (e) {
-    console.error(e)
-    // TODO: Return appropriate error message for its reasons like already-activated/id-not-exists.
-    return res.status(500).send({message: 'Something went wrong.'})
+    next(e)
   }
 })
 
-authApiRouter.post(API_PATHS.AUTH.DELETE.dir, authApiMiddleware, async (req, res, next) => {
+authApiRouter.post(API_PATHS.AUTH.DELETE.dir, apiAuthMiddleware, async (req, res, next) => {
   try {
-    const connection = await getConnection()
-    await connection.execute<RowDataPacket[][]>(`
-      CALL delete_user(
-        ${req.user.id}
-      );
-    `)
-    return res.send({message: 'Delete successful.'})
+    try {
+      await deleteUser(req.user.id)
+      return res.send({message: 'User deleted successfully.'})
+    } catch (error: any) {
+      if (error?.sqlState === '45011') {
+        return res.status(400).send({message: 'The email you are trying to delete does not exist on database.'})
+      }
+      throw error
+    }
   } catch (e) {
-    console.error(e)
-    // TODO: Return appropriate error message for its reasons like already-activated/id-not-exists.
-    return res.status(500).send({message: 'Something went wrong.'})
+    next(e)
   }
 })
 
 export default authApiRouter
-
-// TODO: Modify frontend
-
-// Add message saying confirmation is successful and logged in.
-
-// If the activation was successful, frontend login by accepting the token.
-
-// Token should be updated when payload changed.
-
-// If stored token is invalid, just ask login again.
-
-function generateEmailConfirmationToken(email: string, options?: jwt.SignOptions): string {
-  return jwt.sign(
-    {email},
-    JWT_SECRET_KEY!,
-    options
-  )
-}
-
-function generateAuthToken(id: number, email: string, isActivated: boolean): string {
-  return jwt.sign(
-    {id, email, isValidAuthToken: isActivated},
-    JWT_SECRET_KEY!
-  )
-}
-
-function generateEmailChangeToken(oldEmail: string, newEmail: string, options?: jwt.SignOptions): string {
-  return jwt.sign(
-    {oldEmail, newEmail},
-    JWT_SECRET_KEY!,
-    options
-  )
-}

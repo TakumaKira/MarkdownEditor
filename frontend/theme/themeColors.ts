@@ -1,7 +1,6 @@
 import { StyleSheet } from 'react-native'
 import colors from './colors';
 
-// TODO: Make sure every property is on each theme.
 const themeColors = {
   light: StyleSheet.create({
     editorHeaderBg: {

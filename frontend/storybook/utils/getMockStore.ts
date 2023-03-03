@@ -13,7 +13,7 @@ const defaultPreloadedState: RootState = {
     },
     latestUpdatedDocumentFromDBAt: null,
     confirmationState: null,
-    restoreIsDone: true,
+    restoreFromAsyncStorageIsDone: true,
   },
   theme: {
     deviceColorSchemeIsDark: false,
@@ -38,7 +38,7 @@ export const preloadedStateInDarkScheme: RootState = {
     },
     latestUpdatedDocumentFromDBAt: null,
     confirmationState: null,
-    restoreIsDone: true,
+    restoreFromAsyncStorageIsDone: true,
   },
   theme: {
     deviceColorSchemeIsDark: true, // This will be reset on initialization.
