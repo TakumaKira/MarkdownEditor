@@ -1,7 +1,7 @@
 import initStoryshots from '@storybook/addon-storyshots';
 import ShallowRenderer from 'react-test-renderer/shallow';
 
-// initStoryshots({ // TypeError: Cannot read properties of undefined (reading 'initializationPromise') -> TODO: Contribute to Storybook?(https://githubhot.com/repo/storybookjs/react-native/issues/323)
+// initStoryshots({ // TypeError: Cannot read properties of undefined (reading 'initializationPromise') -> @see https://github.com/storybookjs/react-native/issues/323
 //   renderer: ShallowRenderer.createRenderer().render,
 //   config: ({ configure }) =>
 //     configure(() => {

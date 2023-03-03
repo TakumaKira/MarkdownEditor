@@ -53,7 +53,6 @@ Users should be able to:
 ### Screenshot
 
 ![](./preview.jpg)
-<!-- ![](./screenshot.jpg) TODO: Switch from preview.jpg above to this line when I got my own screenshot.jpg -->
 
 ### Links
 

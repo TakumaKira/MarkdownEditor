@@ -46,7 +46,6 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
        */
 
       // If a document is needed to be resolve conflict, resolve and push it to update list.
-      // TODO: Make if statement more clear.
       if (documentFromDB && (
         documentFromDB.user_id === req.user.id
         && fromUnixTimestampToISOString(documentFromDB.created_at) === trimMilliseconds(updateFromDevice.createdAt)

@@ -127,8 +127,6 @@ const documentSlice = createSlice({
     acceptServerResponse: (state, action: PayloadAction<DocumentsUpdateResponse>) => {
       const response = action.payload
 
-      // TODO: Refactor and check if work below.
-
       // If id of the document on edit is listed on updatedIdsAsUnavailable,
       if (response.updatedIdsAsUnavailable.some(({from}) => from === state.documentOnEdit.id)) {
         // the selected id should be updated.
@@ -180,7 +178,6 @@ const documentSlice = createSlice({
     builder.addCase(restoreDocument.fulfilled, (state, action) => {
       const restored = action.payload
       if (restored) {
-        // TODO: Test automatically check to not miss restoring any property.
         state.documentList = restored.documentList
         state.documentOnEdit.id = restored.documentOnEdit.id
         const selectedDocumentOnList = selectSelectedDocumentOnList({document: state})
@@ -244,7 +241,6 @@ export const selectLiveDocumentList = (state: {document: DocumentState}): Docume
 
 export default documentSlice.reducer
 
-// TODO: Refactor and check if work below.
 function isEqual(documentOnDevice: DocumentOnDevice, documentFromDB: Document): boolean {
   return documentOnDevice.id === documentFromDB.id
     && documentOnDevice.name === documentFromDB.name

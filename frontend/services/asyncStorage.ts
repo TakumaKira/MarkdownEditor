@@ -24,14 +24,12 @@ export const getData = async <Key extends keyof RootStateRestore>(key: Key): Pro
   }
 }
 
-/** TODO: Test automatically check to not miss restoring any property. */
 export function filterUserStateToRestore(user: UserState): UserStateOnAsyncStorage {
   return {
     email: user.email,
     token: user.token,
   }
 }
-/** TODO: Test automatically check to not miss restoring any property. */
 export function filterDocumentStateToRestore(document: DocumentState): DocumentStateOnAsyncStorage {
   return {
     documentList: document.documentList,
@@ -41,7 +39,6 @@ export function filterDocumentStateToRestore(document: DocumentState): DocumentS
     lastSyncWithDBAt: document.lastSyncWithDBAt,
   }
 }
-/** TODO: Test automatically check to not miss restoring any property. */
 export function filterThemeStateToRestore(theme: ThemeState): ThemeStateOnAsyncStorage {
   return {
     deviceColorSchemeIsDark: theme.deviceColorSchemeIsDark,

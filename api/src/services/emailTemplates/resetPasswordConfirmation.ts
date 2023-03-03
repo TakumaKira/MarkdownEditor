@@ -7,7 +7,6 @@ export default function getResetPasswordConfirmation(frontendProtocol: string, f
     html: `
       <div style="height: 100%; width: 100%; background-color: #2B2D31;">
         <div style="padding: 100px 0; text-align: center;">
-          <!-- TODO: Replace to logo image? -->
           <p style="font-family: sans-serif; font-weight: 700; font-size: 36px; color: #ffffff; letter-spacing: 12px;">MARKDOWN</p>
           <p style="font-family: sans-serif; font-weight: 500; font-size: 28px; color: #7C8187; letter-spacing: 3px;">Can't you remember your password?</p>
           <a href="${frontendProtocol}://${frontendDomain}${frontendPort !== undefined ? `:${frontendPort}` : ''}${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir}?token=${token}" style="text-decoration: none; color: #ffffff;">

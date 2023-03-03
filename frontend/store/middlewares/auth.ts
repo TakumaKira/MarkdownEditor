@@ -107,7 +107,6 @@ export const authMiddleware: ThunkMiddleware<RootState, AnyAction> = store => ne
     }
   }
 }
-// TODO: Add email length max.
 function validate(args: {type: SubmitTypes.SIGNUP, params: Parameters<typeof validateSignup>[0]}): ReturnType<typeof validateSignup>
 function validate(args: {type: SubmitTypes.LOGIN, params: Parameters<typeof validateLogin>[0]}): ReturnType<typeof validateLogin>
 function validate(args: {type: SubmitTypes.EDIT, params: Parameters<typeof validateEdit>[0]}): ReturnType<typeof validateEdit>

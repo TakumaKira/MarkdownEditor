@@ -190,12 +190,6 @@ describe('documents sync', () => {
     })
   })
 
-  context('after logged out', () => {
-    it("should not get documents updated event", () => {
-      cy.log('TODO: Want to make sure websocket connection is closed after logged out.')
-    })
-  })
-
   context('switch account', () => {
     it("only new documents are saved as another account's documents if switched accounts", () => {
       const documentStateOnAsyncStorage: DocumentStateOnAsyncStorage = {

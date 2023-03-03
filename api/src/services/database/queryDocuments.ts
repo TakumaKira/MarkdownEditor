@@ -43,7 +43,6 @@ function getUserDocumentsQuery(userId: number): SQLQuery {
   `
 }
 
-/** TODO: Make name and content encrypted with user's password? */
 function buildUpdateDocumentQuery(document: Document, userId: number): SQLQuery {
   return sql`
     CALL update_document (

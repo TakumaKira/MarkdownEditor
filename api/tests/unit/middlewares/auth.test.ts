@@ -1,4 +1,3 @@
-// TODO: Test auth middlewares here and check only the auth middlewares are available in the routes.
 import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import { Socket } from 'socket.io'

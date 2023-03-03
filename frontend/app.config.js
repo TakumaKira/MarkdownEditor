@@ -25,6 +25,5 @@ export default {
       },
     ],
     STATE_STORAGE_KEY_BASE: 'MARKDOWN_EDITOR_STATE',
-    // TODO: Build every key.
   },
 }

@@ -245,7 +245,6 @@ const userSlice = createSlice({
       const restored = action.payload
       if (restored) {
         try {
-          // TODO: Test automatically check to not miss restoring any property.
           state.token = restored.token
           state.email = restored.email
         } catch (err) {

@@ -1,5 +1,3 @@
-// TODO: Want to share this with frontend
-
 export const AUTH_TOKEN_KEY = 'x-auth-token'
 export const DOCUMENT_UPDATED_WS_EVENT = 'documents_updated'
 export const DOCUMENT_NAME_LENGTH_LIMIT = 50

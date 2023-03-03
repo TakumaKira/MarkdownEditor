@@ -18,7 +18,6 @@ const Layout = () => {
   const dispatch = useAppDispatch()
 
   const handleOk = () => {
-    // TODO: This should not know too much detail of confirmation state.
     if (confirmationState!.type === ConfirmationStateTypes.DELETE) {
       dispatch(deleteSelectedDocument())
     } else if (confirmationState!.type === ConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT) {
@@ -36,7 +35,6 @@ const Layout = () => {
         sidebar={SideBar}
         main={MainView}
       />
-      {/* TODO: Unify both modals? */}
       {confirmationState &&
         <ConfirmationModal
           title={confirmationMessages[confirmationState.type].title}

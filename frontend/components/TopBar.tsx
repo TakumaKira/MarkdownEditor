@@ -186,7 +186,6 @@ const DocumentTitle = (props: {checkLayout?: boolean, mockWindowWidth?: number})
 
   const {titleInput} = useAppSelector(selectSelectedDocumentOnEdit)
   const dispatch = useAppDispatch()
-  // TODO: Needs tests
   const addExtension = () => {
     if (titleInput.replace(/\s*/, '') === '') {
       dispatch(updateTitleInput(env.NEW_DOCUMENT_TITLE))

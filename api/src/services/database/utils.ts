@@ -1,7 +1,6 @@
 import { Document, DocumentFromDB } from "../../models/document"
 
 export function fromISOStringToDatetimeString(isoString: string): string {
-  // TODO: Validation
   return isoString.slice(0, -5).replace('T', ' ')
 }
 
@@ -22,6 +21,5 @@ export function fromUnixTimestampToISOString(timestamp: number): string {
 }
 
 export function trimMilliseconds(isoString: string): string {
-  // TODO: Validation
   return isoString.replace(/\.\d{3}Z$/, '.000Z')
 }

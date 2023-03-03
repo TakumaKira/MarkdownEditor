@@ -26,7 +26,6 @@ const themeSlice = createSlice({
     builder.addCase(restoreTheme.fulfilled, (state, action) => {
       const restored = action.payload
       if (restored) {
-        // TODO: Test automatically check to not miss restoring any property.
         if (restored.deviceColorSchemeIsDark === state.deviceColorSchemeIsDark) {
           // If device color scheme is the same as the last time, then restore user selection.
           state.selectedColorSchemeIsDark = restored.selectedColorSchemeIsDark
