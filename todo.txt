@@ -34,6 +34,7 @@ Refactor
 - [ ] Add validation for restoring state from AsyncStorage in case stored state structure is changed.
 - [ ] Make sure by type or test that each property of themeColors.light and themeColors.dark has its counterpart.
 - [ ] Add tests for checking not to miss any property on restoring state from AsyncStorage especially after stored state structure changed.
+- [ ] Add E2E tests for checking web path and params being removed after being used.
 - [ ] Switch preview image on README to actual one of mine.
 - [ ] Use actual font or image on logo in html mail
 - [ ] Add lint.

@@ -1,10 +1,10 @@
 import React from 'react'
-import { useNavigate } from 'react-router-dom'
 import env from '../env'
 import { API_PATHS } from '../constants'
 import { useAppDispatch, useAppSelector } from "../store/hooks"
 import { deselectDocument, selectLatestDocument, updateMainInput, updateTitleInput } from "../store/slices/document"
 import { AuthStateTypes, callAuthModal } from "../store/slices/user"
+import { useNavigate } from './useNavigate'
 
 /** Dependent on redux store. */
 const useLoadPath = () => {
