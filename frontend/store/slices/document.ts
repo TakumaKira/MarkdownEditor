@@ -150,10 +150,10 @@ const documentSlice = createSlice({
     /** Used only for right after loaded and any document not selected yet despite of not loaded from url params. */
     selectLatestDocument: state => {
       const sorted = sortDocumentsFromNewest(state.documentList).filter(({isDeleted}) => !isDeleted)
-      const latestDocument = sorted[0] || generateNewDocument()
-      state.documentOnEdit.id = latestDocument.id
-      state.documentOnEdit.titleInput = latestDocument.name ?? ''
-      state.documentOnEdit.mainInput = latestDocument.content ?? ''
+      const latestDocument = sorted[0] as DocumentOnDevice | undefined // Should not generate new document here.
+      state.documentOnEdit.id = latestDocument?.id ?? null
+      state.documentOnEdit.titleInput = latestDocument?.name ?? ''
+      state.documentOnEdit.mainInput = latestDocument?.content ?? ''
     },
     acceptServerResponse: (state, action: PayloadAction<DocumentsUpdateResponse>) => {
       const response = action.payload
