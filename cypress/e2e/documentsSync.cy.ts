@@ -57,7 +57,7 @@ describe('documents sync', () => {
   })
 
   context('edit from the first device', () => {
-    it.only('uploads newly saved document to database', () => {
+    it('uploads newly saved document to database', () => {
       const document1: DocumentOnDevice = {
         id: uuidv4(),
         name: "Test document #1.md",
