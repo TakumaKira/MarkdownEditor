@@ -47,13 +47,17 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
 
       // If a document is needed to be resolve conflict, resolve and push it to update list.
       if (documentFromDB && (
+        // userId did match
         documentFromDB.user_id === req.user.id
+        // createAt did match
         && fromUnixTimestampToISOString(documentFromDB.created_at) === trimMilliseconds(updateFromDevice.createdAt)
+        // savedOnDBAt did not match
         && (
-          updateFromDevice.savedOnDBAt !== null
-          && fromUnixTimestampToISOString(documentFromDB.saved_on_db_at) !== trimMilliseconds(updateFromDevice.savedOnDBAt)
+          updateFromDevice.savedOnDBAt !== null // This should always be true if this is actually the conflict case.
+          && fromUnixTimestampToISOString(documentFromDB.saved_on_db_at) !== trimMilliseconds(updateFromDevice.savedOnDBAt) // If these two matched, it means updateFromDevice can be safely updated to database.
         )
       )) {
+        // duplicate conflicted one as new document
         const updateToDB: Document = {
           ...updateFromDevice,
           id: await getNewSafeId(),
@@ -65,17 +69,22 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
         duplicatedIdsAsConflicted.push({original: updateFromDevice.id, duplicated: updateToDB.id})
       // If a document is needed the id to be changed, find new id and assign it as new id(this operation looks fairly costly, but this won't happen so many times so just leave log), then push it to update list.
       } else if (documentFromDB && (
-        (documentFromDB.user_id !== req.user.id
-          || (
-            documentFromDB.user_id === req.user.id
-            && fromUnixTimestampToISOString(documentFromDB.created_at) !== trimMilliseconds(updateFromDevice.createdAt)
-          )
-        ) || (
+        // userId did not match
+        documentFromDB.user_id !== req.user.id
+        // userId did match and createdAt did not match
+        || (
+          documentFromDB.user_id === req.user.id
+          && fromUnixTimestampToISOString(documentFromDB.created_at) !== trimMilliseconds(updateFromDevice.createdAt)
+        )
+        // userId did match and createdAt did match aånd one from device did not have savedOnDBAt
+        || (
+          // Notice this is really close case to the conflict case above.
           documentFromDB.user_id === req.user.id
           && fromUnixTimestampToISOString(documentFromDB.created_at) === trimMilliseconds(updateFromDevice.createdAt)
-          && updateFromDevice.savedOnDBAt === null
+          && updateFromDevice.savedOnDBAt === null // documentFromDB.saved_on_db_at is always not null
         )
       )) {
+        // Change id to new one
         const updateToDB: Document = {
           ...updateFromDevice,
           id: await getNewSafeId(),
