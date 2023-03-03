@@ -25,7 +25,7 @@ Run API server with any of the following command inside this directory.
 *When you run this for the first time, you need to run ``yarn install`` first to install dependencies.*
 *These command will enable hot reload, so you can try to edit anywhere in the code.*
 
-This app needs mail server to send confirmation emails to user's registered address, that is, if you sign up new account on frontend running at `http://localhost:19006`, API server will send email to the new account email address using provided mail server information. You have 3 options to set it properly.
+This app needs mail server to send confirmation emails to user's registered address, that is, if you sign up new account on frontend running at `http://<your-local-ip-address>:19006`, API server will send email to the new account email address using provided mail server information. You have 3 options to set it properly.
 
 ### How to generate secure enough API token
 
@@ -39,7 +39,7 @@ With this option, API server simply uses your email account.
 ```sh
 API_PORT=3000 \
 WS_PORT=3001 \
-FRONTEND_DOMAIN=localhost \
+FRONTEND_DOMAIN=<your-local-ip-address> \
 FRONTEND_PORT=19006 \
 JWT_SECRET_KEY=<secret-key-for-api-to-verify-json-web-tokens> \
 DATABASE_HOST=localhost \
@@ -61,7 +61,7 @@ With this option, [SendGrid](https://sendgrid.com/) email server sends confirmat
 ```sh
 API_PORT=3000 \
 WS_PORT=3001 \
-FRONTEND_DOMAIN=localhost \
+FRONTEND_DOMAIN=<your-local-ip-address> \
 FRONTEND_PORT=19006 \
 JWT_SECRET_KEY=<secret-key-for-api-to-verify-json-web-tokens> \
 DATABASE_HOST=localhost \
@@ -81,7 +81,7 @@ With this option, API server sends emails using Gmail server through OAuth authe
 ```sh
 API_PORT=3000 \
 WS_PORT=3001 \
-FRONTEND_DOMAIN=localhost \
+FRONTEND_DOMAIN=<your-local-ip-address> \
 FRONTEND_PORT=19006 \
 JWT_SECRET_KEY=<secret-key-for-api-to-verify-json-web-tokens> \
 DATABASE_HOST=localhost \
@@ -103,5 +103,7 @@ Some tests use testing database, so running ``yarn test`` will **not** pass.
 To run tests including integration tests with testing database container, run:
 
 ```sh
+docker container prune -f && \
+docker volume prune -f && \
 docker compose -f docker-compose.test.yml -p api-test up --abort-on-container-exit --build
 ```

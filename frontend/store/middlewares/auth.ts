@@ -1,9 +1,9 @@
 import { AnyAction } from '@reduxjs/toolkit';
 import { ThunkMiddleware } from 'redux-thunk';
 import { RootState } from "..";
-import { AuthStateTypes } from '../../components/AuthModal';
+import { MIN_PASSWORD_LENGTH } from '../../constants';
 import { AuthStateConfirmChangeEmail, AuthStateConfirmResetPassword } from '../models/user';
-import { askServerConfirmChangeEmail, askServerConfirmResetPassword, askServerConfirmSignupEmail, askServerEdit, askServerLogin, askServerResetPassword, askServerSignup, callAuthModal, submitConfirmNewEmail, submitEdit, submitLogin, submitNewPassword, submitResetPassword, submitSignup, validationError } from '../slices/user';
+import { askServerConfirmChangeEmail, askServerConfirmResetPassword, askServerConfirmSignupEmail, askServerEdit, askServerLogin, askServerResetPassword, askServerSignup, AuthStateTypes, callAuthModal, submitConfirmNewEmail, submitEdit, submitLogin, submitNewPassword, submitResetPassword, submitSignup, validationError } from '../slices/user';
 
 enum SubmitTypes {
   SIGNUP = 'signup',
@@ -141,7 +141,6 @@ function validate(args:
       return validateConfirmResetPassword(args.params)
   }
 }
-const MIN_PASSWORD_LENGTH = 8
 function validateSignup(params: {email: string, password: string, passwordConfirm: string}): {emailValidationErrorMessage: string | null, passwordValidationErrorMessage: string | null, passwordConfirmValidationErrorMessage: string | null} {
   const {email, password, passwordConfirm} = params
   const emailValidationErrorMessage = _validate('Email', email, {required: true, isEmail: true})

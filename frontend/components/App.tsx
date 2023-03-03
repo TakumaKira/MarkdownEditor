@@ -6,13 +6,16 @@ import useRestore from '../hooks/useRestore'
 import useLoadPath from '../hooks/useLoadPath'
 import store from '../store'
 import Layout from './Layout'
+import { BrowserRouter } from './common/BrowserRouter'
 
 const App = () => {
   return (
     <Provider store={store}>
-      <Hooks>
-        <Layout />
-      </Hooks>
+      <BrowserRouter>
+        <Hooks>
+          <Layout />
+        </Hooks>
+      </BrowserRouter>
     </Provider>
   )
 }

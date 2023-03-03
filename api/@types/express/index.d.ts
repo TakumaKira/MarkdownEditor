@@ -1,9 +1,11 @@
-import { UserInfoOnToken } from '../../src/models/user'
+import { UserInfoOnAuthToken } from '../../src/models/user'
+import { DocumentsUpdateRequest } from '../../src/models/document'
 
 declare global {
   namespace Express {
     interface Request {
-      user: UserInfoOnToken
+      user: UserInfoOnAuthToken
+      documentsRequest: DocumentsUpdateRequest
     }
   }
 }

@@ -191,6 +191,7 @@ export const API_PORT = Number(apiPort)
 export const WS_PORT = Number(wsPort)
 export const FRONTEND_PROTOCOL = frontendProtocol
 export const FRONTEND_DOMAIN = frontendDomain!
+/** This is used only frontend is in development mode. */
 export const FRONTEND_PORT = frontendPort
 
 // Json Web Token settings

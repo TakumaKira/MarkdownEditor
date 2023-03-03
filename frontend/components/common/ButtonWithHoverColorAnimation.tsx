@@ -11,6 +11,9 @@ const styles = StyleSheet.create({
     height: '100%',
     width: '100%'
   },
+  preventUnwantedStretchOnIos: {
+    maxWidth: '100%',
+  },
 })
 
 /**
@@ -26,6 +29,7 @@ const ButtonWithHoverColorAnimation = (props: {
   style?: StyleProp<ViewStyle>
   childrenWrapperStyle?: StyleProp<ViewStyle>
   disabled?: boolean
+  testID?: string
 }) => {
   const {
     onPress,
@@ -36,6 +40,7 @@ const ButtonWithHoverColorAnimation = (props: {
     style,
     childrenWrapperStyle,
     disabled,
+    testID,
   } = props
 
   const ref = React.useRef(null)
@@ -43,9 +48,9 @@ const ButtonWithHoverColorAnimation = (props: {
   const interpolatedBgColor = useAnimatedColor(isHovered, duration, offBgColorRGB, onBgColorRGB)
 
   return (
-    <TouchableOpacity onPress={onPress} ref={ref} style={[styles.clip, style]} disabled={disabled}>
+    <TouchableOpacity onPress={onPress} ref={ref} style={[styles.clip, style]} disabled={disabled} testID={testID}>
       <Animated.View style={[styles.fill, {backgroundColor: disabled ? offBgColorRGB : interpolatedBgColor}]}>
-        <View style={[styles.fill, childrenWrapperStyle]}>
+        <View style={[styles.fill, styles.preventUnwantedStretchOnIos, childrenWrapperStyle]}>
           {children}
         </View>
       </Animated.View>

@@ -53,7 +53,6 @@ Users should be able to:
 ### Screenshot
 
 ![](./preview.jpg)
-<!-- ![](./screenshot.jpg) TODO: Switch from preview.jpg above to this line when I got my own screenshot.jpg -->
 
 ### Links
 
@@ -191,9 +190,37 @@ Please see [README for db](./db/README.md).
 
 ### Run E2E testing
 
-When you get frontend/api/database ready, then you can open up E2E testing tool with Cypress by running the following command:
+When you get frontend/api/database all running and working with each other, then you can open up E2E testing tool with Cypress by running the following command:
+
 *When you run this for the first time, you need to run ``yarn install`` first to install dependencies.*
 
+*When you run E2E tests against remote url deployed on GCP, you need to connect to database using [Cloud SQL Auth Proxy](./how-to-deploy-this-to-GCP.md#connect-to-the-database) as tests needs to access directly to the database. You should be able to connect the database with host `0.0.0.0` and port `3306` using command like `./cloud-sql-proxy --address 0.0.0.0 --port 3306 <your-gcp-project-id>:<your-gcp-project-region>:<your-gcp-database-instance-name>` and set `0.0.0.0` as `DATABASE_HOST` of commands below.*
+
+To open testing window, run the following command.
+
 ```sh
-CYPRESS_BASE_URL=<frontend-url> yarn cypress:open
+CYPRESS_BASE_URL=<frontend-url> \
+CYPRESS_MAILOSAUR_API_KEY=<your-mailosaur-api-key> \
+DATABASE_HOST=<your-database-host-ip> \
+MYSQL_DATABASE=markdown_editor \
+MYSQL_USER=markdown_editor_app \
+MYSQL_PASSWORD=<your-password-for-app> \
+API_JWT_SECRET_KEY=<your-api-jwt-secret-key> \
+yarn cypress:open \
+--env MAILOSAUR_SERVER_ID=<your-mailosaur-server-id>,API_BASE_URL=<your-api-base-url>
+```
+
+To run tests and record result on [Cypress Cloud](https://docs.cypress.io/guides/cloud/introduction), run the following command.
+
+```sh
+CYPRESS_BASE_URL=<frontend-url> \
+CYPRESS_MAILOSAUR_API_KEY=<your-mailosaur-api-key> \
+DATABASE_HOST=<your-database-host-ip> \
+MYSQL_DATABASE=markdown_editor \
+MYSQL_USER=markdown_editor_app \
+MYSQL_PASSWORD=<your-password-for-app> \
+API_JWT_SECRET_KEY=<your-api-jwt-secret-key> \
+yarn cypress:record \
+--key <your-cypress-cloud-record-key>
+--env MAILOSAUR_SERVER_ID=<your-mailosaur-server-id>,API_BASE_URL=<your-api-base-url>
 ```

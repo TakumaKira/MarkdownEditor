@@ -1,4 +1,4 @@
-import { DocumentsUploadResponse } from '@api/document'
+import { Document, DocumentsUpdateResponse } from '@api/document'
 import { AsyncThunk, createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 import env from '../../env'
@@ -6,7 +6,7 @@ import { ConfirmationStateTypes } from '../../constants/confirmationMessages'
 import { sortDocumentsFromNewest } from '../../helpers/sortDocuments'
 import { upload } from '../../services/api'
 import { getData } from '../../services/asyncStorage'
-import { ConfirmationState, ConfirmationStateWithNextId, DocumentOnDevice, DocumentOnEdit, DocumentState } from '../models/document'
+import { DocumentOnDevice, DocumentOnEdit, DocumentState } from '../models/document'
 
 const generateNewDocument = (): DocumentOnDevice => ({
   id: uuidv4(),
@@ -14,6 +14,7 @@ const generateNewDocument = (): DocumentOnDevice => ({
   content: '',
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
+  savedOnDBAt: null,
   isDeleted: false,
   isUploaded: false
 })
@@ -25,16 +26,17 @@ const initialState: DocumentState = {
     titleInput: '',
     mainInput: ''
   },
-  latestUpdatedDocumentFromDBAt: null,
+  lastSyncWithDBAt: null,
   confirmationState: null,
-  restoreIsDone: false
+  restoreFromAsyncStorageIsDone: false,
+  isAskingUpdate: false,
 }
 
 export const restoreDocument = createAsyncThunk('document/restoreDocument', () => {
   return getData('document')
 })
 
-export const askServerUpdate: AsyncThunk<DocumentsUploadResponse | null, DocumentState, {}> = createAsyncThunk('document/askServerUpdate', (documentState: DocumentState) => {
+export const askServerUpdate: AsyncThunk<DocumentsUpdateResponse | null, DocumentState, {}> = createAsyncThunk('document/askServerUpdate', (documentState: DocumentState) => {
   try {
     return upload(documentState)
   } catch (err) {
@@ -54,12 +56,12 @@ const documentSlice = createSlice({
       state.documentOnEdit.mainInput = action.payload
     },
     addDocuments: (state, action: PayloadAction<{name: string, content: string}[]>) => {
-      action.payload.forEach(({name, content}) => {
+      state.documentList.push(...action.payload.map(({name, content}) => {
         const newDocument = generateNewDocument()
         newDocument.name = name
         newDocument.content = content
-        state.documentList.push(newDocument)
-      })
+        return newDocument
+      }))
     },
     newDocument: state => {
       const newDocument = generateNewDocument()
@@ -83,92 +85,137 @@ const documentSlice = createSlice({
     saveDocument: state => {
       if (!state.documentOnEdit.id) {
         const newDocument = generateNewDocument()
-        state.documentList.push(newDocument)
         state.documentOnEdit.id = newDocument.id
-        state.documentOnEdit.titleInput = newDocument.name ?? ''
-        state.documentOnEdit.mainInput = newDocument.content ?? ''
+        newDocument.name = state.documentOnEdit.titleInput
+        newDocument.content = state.documentOnEdit.mainInput
+        state.documentList.push(newDocument)
+      } else {
+        const selectedDocument = state.documentList.find(({id}) => id === state.documentOnEdit.id)
+        if (selectedDocument) {
+          selectedDocument.name = state.documentOnEdit.titleInput
+          selectedDocument.content = state.documentOnEdit.mainInput
+          selectedDocument.updatedAt = new Date().toISOString()
+          selectedDocument.isUploaded = false
         }
-      const selectedDocumentIndex = state.documentList.findIndex(({id}) => id === state.documentOnEdit.id)
-      if (selectedDocumentIndex !== -1) {
-        state.documentList[selectedDocumentIndex].name = state.documentOnEdit.titleInput
-        state.documentList[selectedDocumentIndex].content = state.documentOnEdit.mainInput
-        state.documentList[selectedDocumentIndex].updatedAt = new Date().toISOString()
-        state.documentList[selectedDocumentIndex].isUploaded = false
       }
     },
     deleteSelectedDocument: state => {
-      const sorted = sortDocumentsFromNewest(state.documentList)
-      const selectedDocumentIndex = sorted.findIndex(({id}) => id === state.documentOnEdit.id)
-      const nextSelectedDocumentIndex = selectedDocumentIndex === sorted.length - 1 ? selectedDocumentIndex - 1 : selectedDocumentIndex + 1
-      const nextSelectedDocument = sorted[nextSelectedDocumentIndex]
-      const deletedDocument = state.documentList.find(({id}) => id === state.documentOnEdit.id)
-      if (deletedDocument) {
-        deletedDocument.name = null
-        deletedDocument.content = null
-        deletedDocument.createdAt = null
-        deletedDocument.updatedAt = new Date().toISOString()
-        deletedDocument.isDeleted = true
-        deletedDocument.isUploaded = false
+      if (state.documentOnEdit.id === null) {
+        // documentOnEdit is from input params and not saved.
+        const sorted = sortDocumentsFromNewest(state.documentList).filter(({isDeleted}) => !isDeleted)
+        const latestDocument = sorted[0] || generateNewDocument()
+        state.documentOnEdit.id = latestDocument.id
+        state.documentOnEdit.titleInput = latestDocument.name ?? ''
+        state.documentOnEdit.mainInput = latestDocument.content ?? ''
+      } else {
+        const notDeletedDocuments = state.documentList.filter(({isDeleted}) => !isDeleted)
+        if (notDeletedDocuments.length === 0) {
+          console.error(new Error('Document list should have at least one not-deleted document.'))
+        } else if (
+          notDeletedDocuments.length === 1
+          && notDeletedDocuments[0].name === env.NEW_DOCUMENT_TITLE
+          && notDeletedDocuments[0].content === ''
+        ) {
+          // Nothing to delete.
+          // Reset to default input in case it has some input.
+          state.documentOnEdit.titleInput = env.NEW_DOCUMENT_TITLE
+          state.documentOnEdit.mainInput = ''
+        } else {
+          const toBeDeletedDocument = state.documentList.find(({id}) => id === state.documentOnEdit.id)
+          if (toBeDeletedDocument) {
+            toBeDeletedDocument.name = null
+            toBeDeletedDocument.content = null
+            toBeDeletedDocument.updatedAt = new Date().toISOString()
+            toBeDeletedDocument.isDeleted = true
+            toBeDeletedDocument.isUploaded = false
+          }
+          if (notDeletedDocuments.length <= 1) {
+            const nextSelectedDocument = generateNewDocument()
+            state.documentList.push(nextSelectedDocument)
+            state.documentOnEdit.id = nextSelectedDocument.id
+            state.documentOnEdit.titleInput = nextSelectedDocument.name ?? ''
+            state.documentOnEdit.mainInput = nextSelectedDocument.content ?? ''
+          } else {
+            const sorted = sortDocumentsFromNewest(state.documentList)
+            const selectedDocumentIndex = sorted.findIndex(({id}) => id === state.documentOnEdit.id)
+            const nextSelectedDocumentIndex = selectedDocumentIndex === sorted.length - 1 ? selectedDocumentIndex - 1 : selectedDocumentIndex + 1
+            const nextSelectedDocument = sorted[nextSelectedDocumentIndex]
+            state.documentOnEdit.id = nextSelectedDocument.id
+            state.documentOnEdit.titleInput = nextSelectedDocument.name ?? ''
+            state.documentOnEdit.mainInput = nextSelectedDocument.content ?? ''
+          }
+        }
       }
-      state.documentOnEdit.id = nextSelectedDocument.id
-      state.documentOnEdit.titleInput = nextSelectedDocument.name ?? ''
-      state.documentOnEdit.mainInput = nextSelectedDocument.content ?? ''
     },
     /** Used only for right after loaded and any document not selected yet despite of not loaded from url params. */
     selectLatestDocument: state => {
-      const sorted = sortDocumentsFromNewest(state.documentList)
-      const latestDocument = sorted[0] as DocumentOnDevice | undefined
+      const sorted = sortDocumentsFromNewest(state.documentList).filter(({isDeleted}) => !isDeleted)
+      const latestDocument = sorted[0] as DocumentOnDevice | undefined // Should not generate new document here.
       state.documentOnEdit.id = latestDocument?.id ?? null
       state.documentOnEdit.titleInput = latestDocument?.name ?? ''
       state.documentOnEdit.mainInput = latestDocument?.content ?? ''
     },
-    acceptServerResponse: (state, action: PayloadAction<DocumentsUploadResponse>) => {
+    acceptServerResponse: (state, action: PayloadAction<DocumentsUpdateResponse>) => {
       const response = action.payload
 
-      let latestUpdatedDocumentFromDBAt: string | null = null
+      // If id of the document on edit is listed on updatedIdsAsUnavailable,
+      if (response.updatedIdsAsUnavailable.some(({from}) => from === state.documentOnEdit.id)) {
+        // the selected id should be updated.
+        state.documentOnEdit.id = response.updatedIdsAsUnavailable.find(({from}) => from === state.documentOnEdit.id)?.to!
 
-      // Uploaded documents are successfully updated.
-      response.uploadedDocumentsId.forEach(id => {
-        const uploaded = state.documentList.find(({id: d}) => d === id)
-        if (uploaded) {
-          uploaded.isUploaded = true
-          if (latestUpdatedDocumentFromDBAt === null || uploaded.updatedAt > latestUpdatedDocumentFromDBAt) {
-            latestUpdatedDocumentFromDBAt = uploaded.updatedAt
-          }
-        } else {
-          console.error(`Server returned uploaded document id ${id}, but there's no document with that id.`)
+      // If id of the document on edit is saved and listed on duplicatedIdsAsConflicted,
+      } else if (
+        !selectSelectedDocumentHasEdit({document: state})
+        && response.duplicatedIdsAsConflicted.some(({original}) => original === state.documentOnEdit.id)
+      ) {
+        // selected document should be switched to the duplicated one.
+        const duplicatedDocumentId = response.duplicatedIdsAsConflicted.find(({original}) => original === state.documentOnEdit.id)?.duplicated!
+        const duplicatedDocument = response.allDocuments.find(({id}) => id === duplicatedDocumentId)!
+        state.documentOnEdit = {
+          id: duplicatedDocumentId,
+          titleInput: duplicatedDocument.name ?? '',
+          mainInput: duplicatedDocument.content ?? '',
         }
-      })
+      } else if (
+        // If id of the document on edit is unsaved and listed on duplicatedIdsAsConflicted,
+        (
+          selectSelectedDocumentHasEdit({document: state})
+          && response.duplicatedIdsAsConflicted.some(({original}) => original === state.documentOnEdit.id)
+        )
+        // If the document on edit has unsaved changes and the saved version also is different from the one from database,
+        || (selectSelectedDocumentHasEdit({document: state})
+          && (
+            state.documentList.find(({id}) => id === state.documentOnEdit.id)
+            && response.allDocuments.find(({id}) => id === state.documentOnEdit.id)
+            && !isEqual(
+              state.documentList.find(({id}) => id === state.documentOnEdit.id)!,
+              response.allDocuments.find(({id}) => id === state.documentOnEdit.id)!
+            )
+          )
+        )
+      ) {
+        // it should be duplicated as conflict.
+        const newDocument = generateNewDocument()
+        newDocument.name = `[Conflicted]: ${state.documentOnEdit.titleInput}`
+        newDocument.content = state.documentOnEdit.mainInput
+        state.documentList.push(newDocument)
+        state.documentOnEdit.id = newDocument.id
+        state.confirmationState = {type: ConfirmationStateTypes.UNSAVED_DOCUMENT_CONFLICTED}
+      }
 
-      // Update local with downloaded documents.
-      response.fromDB.forEach(fromDB => {
-        const localIndex = state.documentList.findIndex(({id}) => fromDB.id === id)
-        if (localIndex === -1) {
-          state.documentList.push({...fromDB, isUploaded: true})
-        } else {
-          if (fromDB.id === state.documentOnEdit.id && selectSelectedDocumentHasEdit({document: state})) {
-            state.documentOnEdit.titleInput = `[Conflicted]: ${state.documentOnEdit.titleInput}`
-            const newDocument = generateNewDocument()
-            newDocument.name = state.documentOnEdit.titleInput
-            newDocument.content = state.documentOnEdit.mainInput
-            state.documentList.push(newDocument)
-            state.documentOnEdit.id = newDocument.id
-            state.confirmationState = {type: ConfirmationStateTypes.UNSAVED_DOCUMENT_CONFLICTED}
-            // TODO: Upload conflicted document.
-          }
-          state.documentList[localIndex] = {...fromDB, isUploaded: true}
-        }
-        if (latestUpdatedDocumentFromDBAt === null || fromDB.updatedAt > latestUpdatedDocumentFromDBAt) {
-          latestUpdatedDocumentFromDBAt = fromDB.updatedAt
-        }
-      })
+      // Replace all the documents.
+      state.documentList = [...response.allDocuments.map(document => ({...document, isUploaded: true}))]
 
-      // No need to store deleted and uploaded documents.
-      state.documentList = state.documentList.filter(({isDeleted, isUploaded}) => !isDeleted || !isUploaded)
+      // Set new lastSyncWithDBAt value.
+      state.lastSyncWithDBAt = response.savedOnDBAt
 
-      // Update latestUpdatedDocumentFromDBAt.
-      if (latestUpdatedDocumentFromDBAt) {
-        state.latestUpdatedDocumentFromDBAt = latestUpdatedDocumentFromDBAt
+      state.isAskingUpdate = false
+
+      function isEqual(documentOnDevice: DocumentOnDevice, documentFromDB: Document): boolean {
+        return documentOnDevice.id === documentFromDB.id
+          && documentOnDevice.name === documentFromDB.name
+          && documentOnDevice.content === documentFromDB.content
+          && documentOnDevice.updatedAt === documentFromDB.updatedAt
       }
     },
     confirmationStateChanged: (state, action: PayloadAction<DocumentState['confirmationState']>) => {
@@ -179,16 +226,33 @@ const documentSlice = createSlice({
     builder.addCase(restoreDocument.fulfilled, (state, action) => {
       const restored = action.payload
       if (restored) {
-        try {
-          // TODO: Test automatically check to not miss restoring any property.
-          state.documentList = restored.documentList
-          state.documentOnEdit.id = restored.documentOnEdit.id
-          state.latestUpdatedDocumentFromDBAt = restored.latestUpdatedDocumentFromDBAt
-        } catch (err) {
-          console.error(err)
+        state.documentList = restored.documentList
+        state.documentOnEdit.id = restored.documentOnEdit.id
+        const selectedDocumentOnList = selectSelectedDocumentOnList({document: state})
+        if (selectedDocumentOnList) {
+          state.documentOnEdit.titleInput = selectedDocumentOnList.name ?? ''
+          state.documentOnEdit.mainInput = selectedDocumentOnList.content ?? ''
+        }
+        state.lastSyncWithDBAt = restored.lastSyncWithDBAt
+      } else {
+        const initialDocuments: {name: string, content: string}[] = env.INITIAL_DOCUMENTS
+        state.documentList.push(...initialDocuments.map(({name, content}) => {
+          const newDocument = generateNewDocument()
+          newDocument.name = name
+          newDocument.content = content
+          return newDocument
+        }))
+        const {id, name, content} = state.documentList[0]
+        state.documentOnEdit = {
+          id,
+          titleInput: name ?? '',
+          mainInput: content ?? '',
         }
       }
-      state.restoreIsDone = true
+      state.restoreFromAsyncStorageIsDone = true
+    })
+    builder.addCase(askServerUpdate.pending, (state, action) => {
+      state.isAskingUpdate = true
     })
   },
 })

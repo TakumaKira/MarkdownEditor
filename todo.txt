@@ -1,0 +1,67 @@
+Add new functionality
+- [ ] Guard name and content length on frontend by limiting input length.
+- [ ] Add email max length check on auth middleware validation.
+- [ ] If stored token is invalid, just ask login again.
+- [ ] Hide user existence from API response?
+- [ ] Encrypt name and content of documents?
+- [ ] Setup auto deployment of natives apps?
+- [ ] Setup E2E test on native apps with Detox?
+- [x] Add frontend messages saying confirmation is successful and logged in.
+
+Fix
+- [x] Remove path and params.
+- [x] Cannot delete the last document.
+- [x] Horizontal scroll when sidebar is opened.
+- [x] Initial document from parameter is not saved properly.
+- [x] Email link is missing port number when it's in development.
+- [x] WebSocket is violating CORS when development mode.
+- [x] Documents are not synchronized.
+- [x] After fixing documents sync, check if web socket event works.
+- [x] Documents update request is missing token at first time.
+- [x] Modify frontend to make work with new api auth route
+- [x] If the activation was successful, frontend login by accepting the token.
+- [x] Token should be updated when payload changed.
+- [x] Should exit building if frontend has missing env vars
+
+Refactor
+- [ ] Unify ConfirmationModal and AuthModal?
+- [ ] Remove tests for middleware in route tests and just check the middleware is called in the route.
+- [ ] Build every key for async storage at one place.
+- [ ] addExtension function in TopBar needs tests.
+- [ ] Check words: ResetPassword / PasswordReset
+- [ ] Add validation to the functions converting isoString.
+- [ ] Use validator library for auth middleware validation.
+- [ ] Add validation for restoring state from AsyncStorage in case stored state structure is changed.
+- [ ] Make sure by type or test that each property of themeColors.light and themeColors.dark has its counterpart.
+- [ ] Add tests for checking not to miss any property on restoring state from AsyncStorage especially after stored state structure changed.
+- [ ] Add E2E tests for checking web path and params being removed after being used.
+- [ ] Switch preview image on README to actual one of mine.
+- [ ] Use actual font or image on logo in html mail
+- [ ] Add lint.
+- [ ] Modify /frontend/app.config.js and /frontend/constants.ts
+- [ ] Share every constants between frontend and api
+- [ ] Share every API interfaces
+- [ ] Share some functions from src to cypress?
+- [ ] Test frontend integration just mocking async storage and axios
+- [ ] Test being disconnected from network
+- [ ] Test frontend(especially middleware chains)
+- [ ] Make SQL more high performant?
+- [ ] Want to make sure websocket connection is closed after logged out(maybe on E2E test?).
+- [ ] Want better type annotation for props of withCustomFont.
+- [ ] Want better type conversion for Text/TextInput inside TextWithCustomFont/TextInputWithCustomFont.
+- [ ] Want a way to test if children doesn't do extra rendering for Preview and its children component.
+- [ ] Want to cancel image load when Preview/Image component is unmounted to put new one.
+- [x] Frontend Layout component should not know too much detail of confirmationState.
+- [x] Make api document route conflict resolver if statement more clear.
+- [x] Refactor and add unit/E2E tests for acceptServerResponse conflict resolver if statement and its dependency isEqual function.
+- [x] Should remove WEB_VERSION_URL from web build
+- [x] Add integration tests?
+- [x] Check if every auth route works
+- [x] Change api token
+- [x] Refactor/prepare stories/prepare unit and E2E tests
+
+Check
+- [ ] Can deploy frontend to GCP without WEB_VERSION_URL
+
+Others
+- [ ] Contribute to https://github.com/storybookjs/react-native/issues/323 to make initStoryshots test work?

@@ -8,4 +8,4 @@ spec:
   healthCheck:
     port: 3001
     type: HTTP
-    requestPath: /socket.io/?EIO=4&transport=polling&t=OGkXEGA&b64=1
+    requestPath: /socket.io/?EIO=4&transport=polling

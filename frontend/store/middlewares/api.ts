@@ -1,7 +1,7 @@
 import { AnyAction } from '@reduxjs/toolkit';
 import { ThunkMiddleware } from 'redux-thunk';
 import { RootState } from "..";
-import { acceptServerResponse, askServerUpdate, deleteSelectedDocument, newDocument, restoreDocument, saveDocument } from "../slices/document";
+import { acceptServerResponse, askServerUpdate, deleteSelectedDocument, newDocument, restoreDocument, saveDocument, selectLatestDocument } from "../slices/document";
 
 export const apiMiddleware: ThunkMiddleware<RootState, AnyAction> = store => next => action => {
   next(action)
@@ -10,7 +10,6 @@ export const apiMiddleware: ThunkMiddleware<RootState, AnyAction> = store => nex
     action.type === newDocument.type
     || action.type === saveDocument.type
     || action.type === deleteSelectedDocument.type
-    || action.type === restoreDocument.fulfilled.type
   ) {
     const state = store.getState()
     const isLoggedIn = !!state.user.token
@@ -24,7 +23,14 @@ export const apiMiddleware: ThunkMiddleware<RootState, AnyAction> = store => nex
   ) {
     const { payload } = action as ReturnType<typeof askServerUpdate.fulfilled>
     if (payload) {
-      next(acceptServerResponse(payload))
+      store.dispatch(acceptServerResponse(payload))
     }
+  }
+
+  if (
+    action.type === acceptServerResponse.type
+    && store.getState().document.documentOnEdit.id === null
+  ) {
+    store.dispatch(selectLatestDocument())
   }
 }

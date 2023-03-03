@@ -1,4 +1,4 @@
-import { AuthStateTypes } from '../../components/AuthModal'
+import { AuthStateTypes } from "../slices/user"
 
 interface AuthStateBase {
   type: AuthStateTypes
@@ -50,7 +50,7 @@ export interface UserState {
   authState: null | AuthStateSignup | AuthStateConfirmSignupEmail | AuthStateLogin | AuthStateEdit | AuthStateConfirmChangeEmail | AuthStateResetPassword | AuthStateConfirmResetPassword | AuthStateDelete
   restoreIsDone: boolean
 }
-export interface UserStateRestore {
+export interface UserStateOnAsyncStorage {
   token: string | null
   email: string | null
 }

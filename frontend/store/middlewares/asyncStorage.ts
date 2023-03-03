@@ -5,7 +5,7 @@ import { filterDocumentStateToRestore, filterThemeStateToRestore, filterUserStat
 import { DocumentState } from "../models/document";
 import { ThemeState } from "../models/theme";
 import { UserState } from "../models/user";
-import { addDocuments, deleteSelectedDocument, newDocument, restoreDocument, saveDocument, selectDocument, selectLatestDocument } from "../slices/document";
+import { acceptServerResponse, addDocuments, deleteSelectedDocument, newDocument, restoreDocument, saveDocument, selectDocument, selectLatestDocument } from "../slices/document";
 import { restoreTheme, toggleTheme } from "../slices/theme";
 import { askServerLogin, removeLoginToken, restoreUser } from "../slices/user";
 
@@ -29,6 +29,7 @@ export const asyncStorageMiddleware: ThunkMiddleware<RootState, AnyAction> = sto
     || action.type === deleteSelectedDocument.type
     || action.type === selectLatestDocument.type
     || (action.type === restoreDocument.fulfilled.type && (action as PayloadAction<DocumentState | null>).payload === null)
+    || action.type === acceptServerResponse.type
   ) {
     storeData('document', filterDocumentStateToRestore(store.getState().document))
   }

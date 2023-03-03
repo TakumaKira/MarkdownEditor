@@ -117,7 +117,12 @@ const styles = StyleSheet.create({
   },
 })
 
-const TopBar = (props: {setShowSidebar: Dispatch<SetStateAction<boolean>>, showSidebar: boolean, checkLayout?: boolean, mockWindowWidth?: number}) => {
+const TopBar = (props: {
+  setShowSidebar: React.Dispatch<React.SetStateAction<boolean>>
+  showSidebar: boolean
+  checkLayout?: boolean
+  mockWindowWidth?: number
+}) => {
   const {
     setShowSidebar,
     showSidebar,
@@ -155,7 +160,15 @@ const MenuButton = (props: {toggle: () => void, isOpen: boolean}) => {
   } = props
 
   return (
-    <ButtonWithHoverColorAnimation onPress={toggle} offBgColorRGB={colors[700]} onBgColorRGB={colors.Orange} duration={0} style={styles.menuButton} childrenWrapperStyle={styles.menuButtonContents}>
+    <ButtonWithHoverColorAnimation
+      onPress={toggle}
+      offBgColorRGB={colors[700]}
+      onBgColorRGB={colors.Orange}
+      duration={0}
+      style={styles.menuButton}
+      childrenWrapperStyle={styles.menuButtonContents}
+      testID="topbar-menu-button"
+    >
       <SvgWrapper>
         {isOpen ? <CloseIcon /> : <HamburgerIcon />}
       </SvgWrapper>
@@ -173,7 +186,6 @@ const DocumentTitle = (props: {checkLayout?: boolean, mockWindowWidth?: number})
 
   const {titleInput} = useAppSelector(selectSelectedDocumentOnEdit)
   const dispatch = useAppDispatch()
-  // TODO: Needs tests
   const addExtension = () => {
     if (titleInput.replace(/\s*/, '') === '') {
       dispatch(updateTitleInput(env.NEW_DOCUMENT_TITLE))
@@ -244,6 +256,7 @@ const DocumentTitle = (props: {checkLayout?: boolean, mockWindowWidth?: number})
           onChangeText={text => dispatch(updateTitleInput(text))}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          testID="topbar-title-input"
         />
         <Animated.View style={[styles.documentTitleInputUnderline, {width: borderBottomWidthAnim}]} />
       </View>
@@ -274,11 +287,21 @@ const SaveButton = (props: {onPress: () => void, mockWindowWidth?: number}) => {
   const mediaType = useMediaquery({width: mockWindowWidth})
 
   return (
-    <ButtonWithHoverColorAnimation onPress={onPress} offBgColorRGB={colors.Orange} onBgColorRGB={colors.OrangeHover} style={styles.saveButton} childrenWrapperStyle={styles.saveButtonContents}>
+    <ButtonWithHoverColorAnimation
+      onPress={onPress}
+      offBgColorRGB={colors.Orange}
+      onBgColorRGB={colors.OrangeHover}
+      style={styles.saveButton}
+      childrenWrapperStyle={styles.saveButtonContents}
+    >
       <SvgWrapper>
         <SaveIcon />
       </SvgWrapper>
-      {mediaType !== MediaType.MOBILE && <Text style={[styles.saveButtonLabel, textStyles.headingM]}>Save Changes</Text>}
+      {mediaType !== MediaType.MOBILE &&
+        <Text style={[styles.saveButtonLabel, textStyles.headingM]}>
+          Save Changes
+        </Text>
+      }
     </ButtonWithHoverColorAnimation>
   )
 }

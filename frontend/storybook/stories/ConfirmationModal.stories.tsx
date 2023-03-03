@@ -31,28 +31,16 @@ storiesOf('ConfirmationModal', module)
   )
   .add('Delete', () =>
     <ConfirmationModal
-      title={text('title', confirmationMessages[ConfirmationStateTypes.DELETE].title)}
-      message={text('message', confirmationMessages[ConfirmationStateTypes.DELETE].message('Document Title.md'))}
-      buttonLabel={text('button label', confirmationMessages[ConfirmationStateTypes.DELETE].buttonLabel).replace('&amp;', '&')}
-      onPressButton={action('onPressButton')}
-      onPressBackground={action('onPressBackground')}
+      confirmationState={{
+        type: ConfirmationStateTypes.DELETE
+      }}
     />
   )
   .add('Leaved unsaved document', () =>
     <ConfirmationModal
-      title={text('title', confirmationMessages[ConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT].title)}
-      message={text('message', confirmationMessages[ConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT].message('Document Title.md'))}
-      buttonLabel={text('button label', confirmationMessages[ConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT].buttonLabel).replace('&amp;', '&')}
-      onPressButton={action('onPressButton')}
-      onPressBackground={action('onPressBackground')}
-    />
-  )
-  .add('Long text', () =>
-    <ConfirmationModal
-      title={text('title', LONG_TITLE)}
-      message={text('message', LONG_TEXT)}
-      buttonLabel={text('button label', 'Click')}
-      onPressButton={action('onPressButton')}
-      onPressBackground={action('onPressBackground')}
+      confirmationState={{
+        type: ConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT,
+        nextId: ''
+      }}
     />
   )

@@ -3,7 +3,7 @@ import { Text, TextProps } from 'react-native'
 import withCustomFont from './withCustomFont'
 
 const TextWithCustomFont = (props: TextProps) => {
-  const WithCustomFont = React.useMemo(() => withCustomFont(Text as unknown as React.ComponentFactory<TextProps, Text>), []) // TODO: Better type conversion
+  const WithCustomFont = React.useMemo(() => withCustomFont(Text as unknown as React.ComponentFactory<TextProps, Text>), [])
 
   return (
     <WithCustomFont {...props} />
