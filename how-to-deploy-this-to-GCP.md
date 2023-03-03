@@ -100,6 +100,8 @@ mysql -uroot -p<your-database-root-password> -h0.0.0.0 < ./db/init/4-init-user-p
 mysql -uroot -p<your-database-root-password> -h0.0.0.0 < ./db/init/5-init-document-procedures.sql
 ```
 
+Now, you can disconnect from the database.
+
 ### Setup image builders
 
 We are setting up image builders to build frontend/api app images to run on Google Kubernetes Engine.
