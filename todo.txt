@@ -9,7 +9,8 @@ Add new functionality
 - [x] Add frontend messages saying confirmation is successful and logged in.
 
 Fix
-- [ ] Cannot delete the last document.
+- [ ] Remove path and params.
+- [x] Cannot delete the last document.
 - [x] Horizontal scroll when sidebar is opened.
 - [x] Initial document from parameter is not saved properly.
 - [x] Email link is missing port number when it's in development.

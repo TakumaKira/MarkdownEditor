@@ -100,29 +100,60 @@ const documentSlice = createSlice({
       }
     },
     deleteSelectedDocument: state => {
-      const sorted = sortDocumentsFromNewest(state.documentList)
-      const selectedDocumentIndex = sorted.findIndex(({id}) => id === state.documentOnEdit.id)
-      const nextSelectedDocumentIndex = selectedDocumentIndex === sorted.length - 1 ? selectedDocumentIndex - 1 : selectedDocumentIndex + 1
-      const nextSelectedDocument = sorted[nextSelectedDocumentIndex]
-      const deletedDocument = state.documentList.find(({id}) => id === state.documentOnEdit.id)
-      if (deletedDocument) {
-        deletedDocument.name = null
-        deletedDocument.content = null
-        deletedDocument.updatedAt = new Date().toISOString()
-        deletedDocument.isDeleted = true
-        deletedDocument.isUploaded = false
+      if (state.documentOnEdit.id === null) {
+        // documentOnEdit is from input params and not saved.
+        const sorted = sortDocumentsFromNewest(state.documentList).filter(({isDeleted}) => !isDeleted)
+        const latestDocument = sorted[0] || generateNewDocument()
+        state.documentOnEdit.id = latestDocument.id
+        state.documentOnEdit.titleInput = latestDocument.name ?? ''
+        state.documentOnEdit.mainInput = latestDocument.content ?? ''
+      } else {
+        const notDeletedDocuments = state.documentList.filter(({isDeleted}) => !isDeleted)
+        if (notDeletedDocuments.length === 0) {
+          console.error(new Error('Document list should have at least one not-deleted document.'))
+        } else if (
+          notDeletedDocuments.length === 1
+          && notDeletedDocuments[0].name === env.NEW_DOCUMENT_TITLE
+          && notDeletedDocuments[0].content === ''
+        ) {
+          // Nothing to delete.
+          // Reset to default input in case it has some input.
+          state.documentOnEdit.titleInput = env.NEW_DOCUMENT_TITLE
+          state.documentOnEdit.mainInput = ''
+        } else {
+          const toBeDeletedDocument = state.documentList.find(({id}) => id === state.documentOnEdit.id)
+          if (toBeDeletedDocument) {
+            toBeDeletedDocument.name = null
+            toBeDeletedDocument.content = null
+            toBeDeletedDocument.updatedAt = new Date().toISOString()
+            toBeDeletedDocument.isDeleted = true
+            toBeDeletedDocument.isUploaded = false
+          }
+          if (notDeletedDocuments.length <= 1) {
+            const nextSelectedDocument = generateNewDocument()
+            state.documentList.push(nextSelectedDocument)
+            state.documentOnEdit.id = nextSelectedDocument.id
+            state.documentOnEdit.titleInput = nextSelectedDocument.name ?? ''
+            state.documentOnEdit.mainInput = nextSelectedDocument.content ?? ''
+          } else {
+            const sorted = sortDocumentsFromNewest(state.documentList)
+            const selectedDocumentIndex = sorted.findIndex(({id}) => id === state.documentOnEdit.id)
+            const nextSelectedDocumentIndex = selectedDocumentIndex === sorted.length - 1 ? selectedDocumentIndex - 1 : selectedDocumentIndex + 1
+            const nextSelectedDocument = sorted[nextSelectedDocumentIndex]
+            state.documentOnEdit.id = nextSelectedDocument.id
+            state.documentOnEdit.titleInput = nextSelectedDocument.name ?? ''
+            state.documentOnEdit.mainInput = nextSelectedDocument.content ?? ''
+          }
+        }
       }
-      state.documentOnEdit.id = nextSelectedDocument.id
-      state.documentOnEdit.titleInput = nextSelectedDocument.name ?? ''
-      state.documentOnEdit.mainInput = nextSelectedDocument.content ?? ''
     },
     /** Used only for right after loaded and any document not selected yet despite of not loaded from url params. */
     selectLatestDocument: state => {
-      const sorted = sortDocumentsFromNewest(state.documentList)
-      const latestDocument = sorted[0] as DocumentOnDevice | undefined
-      state.documentOnEdit.id = latestDocument?.id ?? null
-      state.documentOnEdit.titleInput = latestDocument?.name ?? ''
-      state.documentOnEdit.mainInput = latestDocument?.content ?? ''
+      const sorted = sortDocumentsFromNewest(state.documentList).filter(({isDeleted}) => !isDeleted)
+      const latestDocument = sorted[0] || generateNewDocument()
+      state.documentOnEdit.id = latestDocument.id
+      state.documentOnEdit.titleInput = latestDocument.name ?? ''
+      state.documentOnEdit.mainInput = latestDocument.content ?? ''
     },
     acceptServerResponse: (state, action: PayloadAction<DocumentsUpdateResponse>) => {
       const response = action.payload
