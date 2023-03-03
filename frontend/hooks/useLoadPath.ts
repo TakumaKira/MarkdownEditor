@@ -1,4 +1,5 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import env from '../env'
 import { API_PATHS } from '../constants'
 import { useAppDispatch, useAppSelector } from "../store/hooks"
@@ -10,6 +11,7 @@ const useLoadPath = () => {
   const dispatch = useAppDispatch()
   const storeInitializationIsDone = useAppSelector(state => state.storeInitializationIsDone)
   const documentState = useAppSelector(state => state.document)
+  const navigate = useNavigate()
 
   const tryLoadingInputFromUrlParams = (input: string) => {
     dispatch(deselectDocument())
@@ -47,6 +49,7 @@ const useLoadPath = () => {
       default:
         input && tryLoadingInputFromUrlParams(input)
     }
+    navigate('/')
   }, [storeInitializationIsDone])
 }
 export default useLoadPath

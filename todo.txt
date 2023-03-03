@@ -9,7 +9,7 @@ Add new functionality
 - [x] Add frontend messages saying confirmation is successful and logged in.
 
 Fix
-- [ ] Remove path and params.
+- [x] Remove path and params.
 - [x] Cannot delete the last document.
 - [x] Horizontal scroll when sidebar is opened.
 - [x] Initial document from parameter is not saved properly.

@@ -1,4 +1,5 @@
 import 'react-native-get-random-values'
+import { BrowserRouter } from "react-router-dom";
 import { Provider } from 'react-redux'
 import useApiAuth from '../hooks/useApiAuth'
 import useConfirmUnsavedDocument from '../hooks/useConfirmUnsavedDocument'
@@ -10,9 +11,11 @@ import Layout from './Layout'
 const App = () => {
   return (
     <Provider store={store}>
-      <Hooks>
-        <Layout />
-      </Hooks>
+      <BrowserRouter>
+        <Hooks>
+          <Layout />
+        </Hooks>
+      </BrowserRouter>
     </Provider>
   )
 }
