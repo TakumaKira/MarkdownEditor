@@ -47,6 +47,8 @@ declare global {
       setDocumentStateOnAsyncStorage(documentStateOnAsyncStorage: DocumentStateOnAsyncStorage): Chainable<JQuery<HTMLElement>>
 
       updateDocuments(email: string, password: string, documentsUpdateRequest: DocumentsUpdateRequest): Chainable<JQuery<HTMLElement>>
+
+      retrieveDestinationURLFromSendGridRedirectURL(sendGridRedirectURL: string): Chainable<string>
     }
   }
 }
@@ -98,4 +100,13 @@ Cypress.Commands.add('updateDocuments', (email, password, documentsUpdateRequest
       body: documentsUpdateRequest
     })
   )
+})
+
+Cypress.Commands.add('retrieveDestinationURLFromSendGridRedirectURL', sendGridRedirectURL => {
+  cy.request({
+    url: sendGridRedirectURL,
+    followRedirect: false,
+  }).then(resp => {
+    return resp.headers.location;
+  });
 })

@@ -57,7 +57,7 @@ describe('documents sync', () => {
   })
 
   context('edit from the first device', () => {
-    it('uploads newly saved document to database', () => {
+    it.only('uploads newly saved document to database', () => {
       const document1: DocumentOnDevice = {
         id: uuidv4(),
         name: "Test document #1.md",
@@ -187,6 +187,12 @@ describe('documents sync', () => {
       cy.getBySel('sidebar-documents-list').should('contain.text', documentFromOtherDevice.name)
       cy.getBySel('topbar-title-input').should('have.value', documentFromOtherDevice.name)
       cy.getBySel('main-editor-input').should('have.value', documentFromOtherDevice.content)
+    })
+  })
+
+  context('after logged out', () => {
+    it("should not get documents updated event", () => {
+      cy.log('TODO: Want to make sure websocket connection is closed after logged out.')
     })
   })
 

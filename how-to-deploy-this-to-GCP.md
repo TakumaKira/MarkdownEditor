@@ -516,7 +516,7 @@ Now you have source code on your project to run on Cloud Functions.
 Set Runtime environment variables:
 
 - PROJECT: `<YOUR-PROJECT-ID>`
-- ZONE: `<YOUR-ZONE>`
+- ZONE: `<YOUR-ZONE>`(This means region actually.)
 - CLUSTER: `app-cluster`
 - DEPLOYMENT: Deployment name. `frontend` for frontend deployment / `api` for api deployment.
 - CONTAINER: Container name like `frontend-sha256-1` for frontend / `api-sha256-1` for api.

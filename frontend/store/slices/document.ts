@@ -169,6 +169,8 @@ const documentSlice = createSlice({
 
       // Set new lastSyncWithDBAt value.
       state.lastSyncWithDBAt = response.savedOnDBAt
+
+      state.isAskingUpdate = false
     },
     confirmationStateChanged: (state, action: PayloadAction<DocumentState['confirmationState']>) => {
       state.confirmationState = action.payload
@@ -206,9 +208,6 @@ const documentSlice = createSlice({
     })
     builder.addCase(askServerUpdate.pending, (state, action) => {
       state.isAskingUpdate = true
-    })
-    builder.addCase(askServerUpdate.fulfilled, (state, action) => {
-      state.isAskingUpdate = false
     })
   },
 })

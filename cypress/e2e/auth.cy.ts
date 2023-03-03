@@ -28,16 +28,36 @@ describe('auth' , () => {
         {sentTo: testEmail1},
         {receivedAfter: signupTestStart}
       ).then(message => {
-        expect(message.html.links[0].href).to.equal(message.text.links[0].href)
-        const url = new URL(message.html.links[0].href)
-        const {origin, pathname, searchParams} = url
-        expect(origin).to.equal(Cypress.config().baseUrl)
-        expect(pathname).to.equal(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir)
-        const token = searchParams.get('token')
-        const payload = decodeToken<any>(token)
-        expect(payload.is).to.equal('SignupToken')
-        expect(payload.email).to.equal(testEmail1)
-        expect(dayjs(new Date(payload.iat * 1000)).isAfter(dayjs().subtract(30, 'minutes')))
+        let url: URL
+        if (message.html.links[0].href?.includes('sendgrid.net')) {
+          cy.retrieveDestinationURLFromSendGridRedirectURL(message.html.links[0].href).then(linkInHtml => {
+            cy.retrieveDestinationURLFromSendGridRedirectURL(message.text.links[0].href).then(linkInText => {
+              expect(linkInHtml).to.equal(linkInText)
+              url = new URL(linkInHtml)
+
+              const {origin, pathname, searchParams} = url
+              expect(origin).to.equal(Cypress.config().baseUrl)
+              expect(pathname).to.equal(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir)
+              const token = searchParams.get('token')
+              const payload = decodeToken<any>(token)
+              expect(payload.is).to.equal('SignupToken')
+              expect(payload.email).to.equal(testEmail1)
+              expect(dayjs(new Date(payload.iat * 1000)).isAfter(dayjs().subtract(30, 'minutes')))
+            })
+          })
+        } else {
+          expect(message.html.links[0].href).to.equal(message.text.links[0].href)
+          url = new URL(message.html.links[0].href)
+
+          const {origin, pathname, searchParams} = url
+          expect(origin).to.equal(Cypress.config().baseUrl)
+          expect(pathname).to.equal(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir)
+          const token = searchParams.get('token')
+          const payload = decodeToken<any>(token)
+          expect(payload.is).to.equal('SignupToken')
+          expect(payload.email).to.equal(testEmail1)
+          expect(dayjs(new Date(payload.iat * 1000)).isAfter(dayjs().subtract(30, 'minutes')))
+        }
       })
       cy.getBySel('auth-modal-ok-button').click()
       cy.getBySel('sidebar-login-button').click()
@@ -155,17 +175,38 @@ describe('auth' , () => {
         {sentTo: testEmail2},
         {receivedAfter: mailChangeTestStart}
       ).then(message => {
-        expect(message.html.links[0].href).to.equal(message.text.links[0].href)
-        const url = new URL(message.html.links[0].href)
-        const {origin, pathname, searchParams} = url
-        expect(origin).to.equal(Cypress.config().baseUrl)
-        expect(pathname).to.equal(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir)
-        const token = searchParams.get('token')
-        const payload = decodeToken<any>(token)
-        expect(payload.is).to.equal('EmailChangeToken')
-        expect(payload.oldEmail).to.equal(testEmail1)
-        expect(payload.newEmail).to.equal(testEmail2)
-        expect(dayjs(new Date(payload.iat * 1000)).isAfter(dayjs().subtract(30, 'minutes')))
+        let url: URL
+        if (message.html.links[0].href?.includes('sendgrid.net')) {
+          cy.retrieveDestinationURLFromSendGridRedirectURL(message.html.links[0].href).then(linkInHtml => {
+            cy.retrieveDestinationURLFromSendGridRedirectURL(message.text.links[0].href).then(linkInText => {
+              expect(linkInHtml).to.equal(linkInText)
+              url = new URL(linkInHtml)
+
+              const {origin, pathname, searchParams} = url
+              expect(origin).to.equal(Cypress.config().baseUrl)
+              expect(pathname).to.equal(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir)
+              const token = searchParams.get('token')
+              const payload = decodeToken<any>(token)
+              expect(payload.is).to.equal('EmailChangeToken')
+              expect(payload.oldEmail).to.equal(testEmail1)
+              expect(payload.newEmail).to.equal(testEmail2)
+              expect(dayjs(new Date(payload.iat * 1000)).isAfter(dayjs().subtract(30, 'minutes')))
+            })
+          })
+        } else {
+          expect(message.html.links[0].href).to.equal(message.text.links[0].href)
+          url = new URL(message.html.links[0].href)
+
+          const {origin, pathname, searchParams} = url
+          expect(origin).to.equal(Cypress.config().baseUrl)
+          expect(pathname).to.equal(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir)
+          const token = searchParams.get('token')
+          const payload = decodeToken<any>(token)
+          expect(payload.is).to.equal('EmailChangeToken')
+          expect(payload.oldEmail).to.equal(testEmail1)
+          expect(payload.newEmail).to.equal(testEmail2)
+          expect(dayjs(new Date(payload.iat * 1000)).isAfter(dayjs().subtract(30, 'minutes')))
+        }
       })
       cy.getBySel('auth-modal-ok-button').click()
       cy.getBySel('sidebar-logout-button').click()
@@ -236,17 +277,38 @@ describe('auth' , () => {
         {sentTo: testEmail2},
         {receivedAfter: mailWithPasswordChangeTestStart}
       ).then(message => {
-        expect(message.html.links[0].href).to.equal(message.text.links[0].href)
-        const url = new URL(message.html.links[0].href)
-        const {origin, pathname, searchParams} = url
-        expect(origin).to.equal(Cypress.config().baseUrl)
-        expect(pathname).to.equal(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir)
-        const token = searchParams.get('token')
-        const payload = decodeToken<any>(token)
-        expect(payload.is).to.equal('EmailChangeToken')
-        expect(payload.oldEmail).to.equal(testEmail1)
-        expect(payload.newEmail).to.equal(testEmail2)
-        expect(dayjs(new Date(payload.iat * 1000)).isAfter(dayjs().subtract(30, 'minutes')))
+        let url: URL
+        if (message.html.links[0].href?.includes('sendgrid.net')) {
+          cy.retrieveDestinationURLFromSendGridRedirectURL(message.html.links[0].href).then(linkInHtml => {
+            cy.retrieveDestinationURLFromSendGridRedirectURL(message.text.links[0].href).then(linkInText => {
+              expect(linkInHtml).to.equal(linkInText)
+              url = new URL(linkInHtml)
+
+              const {origin, pathname, searchParams} = url
+              expect(origin).to.equal(Cypress.config().baseUrl)
+              expect(pathname).to.equal(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir)
+              const token = searchParams.get('token')
+              const payload = decodeToken<any>(token)
+              expect(payload.is).to.equal('EmailChangeToken')
+              expect(payload.oldEmail).to.equal(testEmail1)
+              expect(payload.newEmail).to.equal(testEmail2)
+              expect(dayjs(new Date(payload.iat * 1000)).isAfter(dayjs().subtract(30, 'minutes')))
+            })
+          })
+        } else {
+          expect(message.html.links[0].href).to.equal(message.text.links[0].href)
+          url = new URL(message.html.links[0].href)
+
+          const {origin, pathname, searchParams} = url
+          expect(origin).to.equal(Cypress.config().baseUrl)
+          expect(pathname).to.equal(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir)
+          const token = searchParams.get('token')
+          const payload = decodeToken<any>(token)
+          expect(payload.is).to.equal('EmailChangeToken')
+          expect(payload.oldEmail).to.equal(testEmail1)
+          expect(payload.newEmail).to.equal(testEmail2)
+          expect(dayjs(new Date(payload.iat * 1000)).isAfter(dayjs().subtract(30, 'minutes')))
+        }
       })
       cy.getBySel('auth-modal-ok-button').click()
       cy.contains(testEmail1)
@@ -350,16 +412,36 @@ describe('auth' , () => {
         {sentTo: testEmail1, subject: 'Markdown: You asked to reset your password.'},
         {receivedAfter: passwordResetTestStart}
       ).then(message => {
-        expect(message.html.links[0].href).to.equal(message.text.links[0].href)
-        const url = new URL(message.html.links[0].href)
-        const {origin, pathname, searchParams} = url
-        expect(origin).to.equal(Cypress.config().baseUrl)
-        expect(pathname).to.equal(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir)
-        const token = searchParams.get('token')
-        const payload = decodeToken<any>(token)
-        expect(payload.is).to.equal('ResetPasswordToken')
-        expect(payload.email).to.equal(testEmail1)
-        expect(dayjs(new Date(payload.iat * 1000)).isAfter(dayjs().subtract(30, 'minutes')))
+        let url: URL
+        if (message.html.links[0].href?.includes('sendgrid.net')) {
+          cy.retrieveDestinationURLFromSendGridRedirectURL(message.html.links[0].href).then(linkInHtml => {
+            cy.retrieveDestinationURLFromSendGridRedirectURL(message.text.links[0].href).then(linkInText => {
+              expect(linkInHtml).to.equal(linkInText)
+              url = new URL(linkInHtml)
+
+              const {origin, pathname, searchParams} = url
+              expect(origin).to.equal(Cypress.config().baseUrl)
+              expect(pathname).to.equal(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir)
+              const token = searchParams.get('token')
+              const payload = decodeToken<any>(token)
+              expect(payload.is).to.equal('ResetPasswordToken')
+              expect(payload.email).to.equal(testEmail1)
+              expect(dayjs(new Date(payload.iat * 1000)).isAfter(dayjs().subtract(30, 'minutes')))
+            })
+          })
+        } else {
+          expect(message.html.links[0].href).to.equal(message.text.links[0].href)
+          url = new URL(message.html.links[0].href)
+
+          const {origin, pathname, searchParams} = url
+          expect(origin).to.equal(Cypress.config().baseUrl)
+          expect(pathname).to.equal(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir)
+          const token = searchParams.get('token')
+          const payload = decodeToken<any>(token)
+          expect(payload.is).to.equal('ResetPasswordToken')
+          expect(payload.email).to.equal(testEmail1)
+          expect(dayjs(new Date(payload.iat * 1000)).isAfter(dayjs().subtract(30, 'minutes')))
+        }
       })
       cy.getBySel('auth-modal-ok-button').click()
       cy.getBySel('sidebar-login-button').click()
