@@ -133,7 +133,10 @@ const documentSlice = createSlice({
         state.documentOnEdit.id = response.updatedIdsAsUnavailable.find(({from}) => from === state.documentOnEdit.id)?.to!
 
       // If id of the document on edit is saved and listed on duplicatedIdsAsConflicted,
-      } else if (!selectSelectedDocumentHasEdit({document: state}) && response.duplicatedIdsAsConflicted.some(({original}) => original === state.documentOnEdit.id)) {
+      } else if (
+        !selectSelectedDocumentHasEdit({document: state})
+        && response.duplicatedIdsAsConflicted.some(({original}) => original === state.documentOnEdit.id)
+      ) {
         // selected document should be switched to the duplicated one.
         const duplicatedDocumentId = response.duplicatedIdsAsConflicted.find(({original}) => original === state.documentOnEdit.id)?.duplicated!
         const duplicatedDocument = response.allDocuments.find(({id}) => id === duplicatedDocumentId)!
@@ -144,14 +147,21 @@ const documentSlice = createSlice({
         }
       } else if (
         // If id of the document on edit is unsaved and listed on duplicatedIdsAsConflicted,
-        (selectSelectedDocumentHasEdit({document: state}) && response.duplicatedIdsAsConflicted.some(({original}) => original === state.documentOnEdit.id))
+        (
+          selectSelectedDocumentHasEdit({document: state})
+          && response.duplicatedIdsAsConflicted.some(({original}) => original === state.documentOnEdit.id)
+        )
         // If the document on edit has unsaved changes and the saved version also is different from the one from database,
         || (selectSelectedDocumentHasEdit({document: state})
           && (
             state.documentList.find(({id}) => id === state.documentOnEdit.id)
             && response.allDocuments.find(({id}) => id === state.documentOnEdit.id)
-            && !isEqual(state.documentList.find(({id}) => id === state.documentOnEdit.id)!, response.allDocuments.find(({id}) => id === state.documentOnEdit.id)!))
+            && !isEqual(
+              state.documentList.find(({id}) => id === state.documentOnEdit.id)!,
+              response.allDocuments.find(({id}) => id === state.documentOnEdit.id)!
+            )
           )
+        )
       ) {
         // it should be duplicated as conflict.
         const newDocument = generateNewDocument()
@@ -169,6 +179,13 @@ const documentSlice = createSlice({
       state.lastSyncWithDBAt = response.savedOnDBAt
 
       state.isAskingUpdate = false
+
+      function isEqual(documentOnDevice: DocumentOnDevice, documentFromDB: Document): boolean {
+        return documentOnDevice.id === documentFromDB.id
+          && documentOnDevice.name === documentFromDB.name
+          && documentOnDevice.content === documentFromDB.content
+          && documentOnDevice.updatedAt === documentFromDB.updatedAt
+      }
     },
     confirmationStateChanged: (state, action: PayloadAction<DocumentState['confirmationState']>) => {
       state.confirmationState = action.payload
@@ -240,10 +257,3 @@ export const selectLiveDocumentList = (state: {document: DocumentState}): Docume
   state.document.documentList.filter(({isDeleted}) => !isDeleted)
 
 export default documentSlice.reducer
-
-function isEqual(documentOnDevice: DocumentOnDevice, documentFromDB: Document): boolean {
-  return documentOnDevice.id === documentFromDB.id
-    && documentOnDevice.name === documentFromDB.name
-    && documentOnDevice.content === documentFromDB.content
-    && documentOnDevice.updatedAt === documentFromDB.updatedAt
-}

@@ -22,7 +22,6 @@ Fix
 - [x] Should exit building if frontend has missing env vars
 
 Refactor
-- [ ] Refactor and add unit/E2E tests for acceptServerResponse conflict resolver if statement and its dependency isEqual function.
 - [ ] Frontend Layout component should not know too much detail of confirmationState.
 - [ ] Unify ConfirmationModal and AuthModal?
 - [ ] Remove tests for middleware in route tests and just check the middleware is called in the route.
@@ -51,6 +50,7 @@ Refactor
 - [ ] Want a way to test if children doesn't do extra rendering for Preview and its children component.
 - [ ] Want to cancel image load when Preview/Image component is unmounted to put new one.
 - [x] Make api document route conflict resolver if statement more clear.
+- [x] Refactor and add unit/E2E tests for acceptServerResponse conflict resolver if statement and its dependency isEqual function.
 - [x] Should remove WEB_VERSION_URL from web build
 - [x] Add integration tests?
 - [x] Check if every auth route works
