@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = "*"
+uvicorn = "*"
+sqlalchemy = "*"
+pydantic = "*"
+mysqlclient = "*"
+python-jose = "*"
+pytest = "*"
+passlib = "*"
+bcrypt = "*"
+pytest-mock = "*"
+websockets = "*"
+sendgrid = "*"
+
+[dev-packages]
+httpx = "*"
+
+[requires]
+python_version = "3.9"

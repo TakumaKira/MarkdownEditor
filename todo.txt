@@ -9,6 +9,8 @@ Add new functionality
 - [x] Add frontend messages saying confirmation is successful and logged in.
 
 Fix
+- [ ] Update jwt payload structure.
+- [ ] Accept how to connect FastApi version websocket server.
 - [x] Remove path and params.
 - [x] Cannot delete the last document.
 - [x] Horizontal scroll when sidebar is opened.
@@ -24,6 +26,7 @@ Fix
 - [x] Should exit building if frontend has missing env vars
 
 Refactor
+- [ ] Change api directory to api-node-express and api-python to api-fastapi.
 - [ ] Unify ConfirmationModal and AuthModal?
 - [ ] Remove tests for middleware in route tests and just check the middleware is called in the route.
 - [ ] Build every key for async storage at one place.
