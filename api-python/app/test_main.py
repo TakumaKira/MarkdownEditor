@@ -1,4 +1,5 @@
 import os
+import re
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
 from app.database.base import SessionLocal
@@ -16,6 +17,11 @@ def test_read_main():
     assert response.json() == {"message": "MarkdownEditor API is working."}
 
 
+url_pattern_in_html = re.compile(r'href=(?:"|\')?(\S+)(?:"|\')(?:\s|>)')
+url_pattern_in_plain_text = re.compile(r'https?://\S+')
+
+# No tests for checking if mailer is working.
+
 MOCK_SENDER_EMAIL="confirm@markdown.com"
 
 MOCK_STANDARD_MAIL_SERVER_HOST="mail.markdown.com"
@@ -24,6 +30,8 @@ MOCK_STANDARD_MAIL_SERVER_USER="no-reply@markdown.com"
 MOCK_STANDARD_MAIL_SERVER_PASS="mock_mail_server_password"
 
 @mock.patch.dict(os.environ, {
+    "FRONTEND_DOMAIN": "localhost",
+    "FRONTEND_PORT": "19006",
     "CONFIRMATION_EMAIL_SERVER_TYPE": "StarndardMailServer",
     "STANDARD_MAIL_SERVER_HOST": MOCK_STANDARD_MAIL_SERVER_HOST,
     "STANDARD_MAIL_SERVER_PORT": MOCK_STANDARD_MAIL_SERVER_PORT,
@@ -67,11 +75,18 @@ def test_signup_smtp(mocker: MockerFixture):
     assert mock_server.send_message.call_count == 1
     assert mock_server.send_message.call_args[0][0]["From"] == MOCK_SENDER_EMAIL
     assert mock_server.send_message.call_args[0][0]["To"] == USER_EMAIL
+    html_body = mock_server.send_message.call_args[0][0].get_body(preferencelist=('html')).get_content()
+    plain_text_body = mock_server.send_message.call_args[0][0].get_body(preferencelist=('plain')).get_content()
+    html_urls = url_pattern_in_html.findall(html_body)
+    plain_text_urls = url_pattern_in_plain_text.findall(plain_text_body)
+    assert html_urls[0] == plain_text_urls[0]
 
 
 MOCK_SENDGRID_API_KEY = "mock_sendgrid_api_key"
 
 @mock.patch.dict(os.environ, {
+    "FRONTEND_DOMAIN": "localhost",
+    "FRONTEND_PORT": "19006",
     "CONFIRMATION_EMAIL_SERVER_TYPE": "SendGrid",
     "SENDGRID_API_KEY": MOCK_SENDGRID_API_KEY,
     "SENDER_EMAIL": MOCK_SENDER_EMAIL
@@ -105,6 +120,18 @@ def test_signup_sendgrid(mocker: MockerFixture):
     assert mock_sg.send.call_count == 1
     assert mock_sg.send.call_args[0][0].get()["from"]["email"] == MOCK_SENDER_EMAIL
     assert mock_sg.send.call_args[0][0].personalizations[0].get()["to"][0]["email"] == USER_EMAIL
+    content = mock_sg.send.call_args[0][0].get()["content"]
+    urls = {}
+    for c in content:
+        if (c.get("type") == "text/plain"):
+            plain_text_body = c.get("value")
+            plain_text_urls = url_pattern_in_plain_text.findall(plain_text_body)
+            urls.update({"plain_text_url": plain_text_urls[0]})
+        elif (c.get("type") == "text/html"):
+            html_body = c.get("value")
+            html_urls = url_pattern_in_html.findall(html_body)
+            urls.update({"html_url": html_urls[0]})
+    assert urls.get("plain_text_url") == urls.get("html_url")
 
 
 def test_websocket():

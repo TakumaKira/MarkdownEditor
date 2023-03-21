@@ -1,15 +1,13 @@
 import os
 from typing import Union
-from fastapi import Depends, Header, HTTPException, Request, status
+from fastapi import Depends, Header, HTTPException, status
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from app.constants import JWT_ENCODE_ALGORITHM
 from app.database import crud
 from app.database.base import get_db
 from app.database.models import User
-
-
-ALGORITHM = "HS256"
 
 
 class TokenData(BaseModel):
@@ -29,7 +27,7 @@ async def get_current_user(token: str = Depends(get_x_auth_token_header), db: Se
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, os.environ.get("API_JWT_SECRET_KEY"), algorithms=[ALGORITHM])
+        payload = jwt.decode(token, os.environ.get("API_JWT_SECRET_KEY"), algorithms=[JWT_ENCODE_ALGORITHM])
         email: str = payload.get("email")
         if email is None:
             raise credentials_exception
