@@ -6,15 +6,7 @@ from app.database.base import SessionLocal
 from app.database import models
 from unittest import mock
 
-from .main import app
-
-
-def test_read_main():
-    client = TestClient(app)
-
-    response = client.get("/")
-    assert response.status_code == 200
-    assert response.json() == {"message": "MarkdownEditor API is working."}
+from app.main import app
 
 
 url_pattern_in_html = re.compile(r'href=(?:"|\')?(\S+)(?:"|\')(?:\s|>)')
@@ -132,15 +124,3 @@ def test_signup_sendgrid(mocker: MockerFixture):
             html_urls = url_pattern_in_html.findall(html_body)
             urls.update({"html_url": html_urls[0]})
     assert urls.get("plain_text_url") == urls.get("html_url")
-
-
-def test_websocket():
-    client = TestClient(app)
-    with client.websocket_connect("/ws", headers={"x-auth-token": os.environ.get("VALID_AUTH_TOKEN")}) as websocket:
-        client.get(
-            # TODO: Remove parameter
-            "/api/documents?user_id=365",
-            headers={"x-auth-token": os.environ.get("VALID_AUTH_TOKEN")}
-        )
-        data = websocket.receive_json()
-        assert data == {"message": "Documents sent."}
