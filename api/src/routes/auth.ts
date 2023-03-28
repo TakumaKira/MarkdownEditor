@@ -110,7 +110,7 @@ authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
 
     if (!user.is_activated) return res.status(400).send({message: 'This user is not activated.'})
 
-    const isValidPassword = await bcrypt.compare(password, user.password)
+    const isValidPassword = await bcrypt.compare(password, user.hashed_password)
     if (!isValidPassword) return res.status(400).send({message: 'Email/Password is incorrect.'})
 
     const token = await generateAuthToken(user.id, user.email)
@@ -184,7 +184,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
       return res.status(400).send({message: `User with email ${oldEmail} is not activated yet. Please activate then retry.`})
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password)
+    const isValidPassword = await bcrypt.compare(password, user.hashed_password)
     if (!isValidPassword) return res.status(400).send({message: 'Password is incorrect.'})
 
     await updateUserEmail(user.id, newEmail)

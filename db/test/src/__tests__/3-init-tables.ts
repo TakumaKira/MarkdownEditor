@@ -33,7 +33,7 @@ test('users table has expected columns', async () => {
     {
       "Default": null,
       "Extra": "",
-      "Field": "password",
+      "Field": "hashed_password",
       "Key": "",
       "Null": "NO",
       "Type": "char(60)",

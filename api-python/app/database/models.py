@@ -9,7 +9,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     email = Column(String, unique=True, index=True)
-    password = Column(String)
+    hashed_password = Column(String)
     is_activated = Column(Boolean, default=False)
 
     documents = relationship("Document", back_populates="user")

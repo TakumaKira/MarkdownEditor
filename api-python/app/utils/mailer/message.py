@@ -1,34 +1,14 @@
+from string import Template
+from pathlib import Path
+
 def get_signup_confirmation_message(frontendProtocol: str, frontendDomain: str, frontendPort: str, path: str, token: str):
-  url = "{frontendProtocol}://{frontendDomain}{path}?token={token}".format(
-    frontendProtocol=frontendProtocol,
-    frontendDomain=frontendDomain,
-    path=path,
-    token=token
-  ) if frontendPort == None else "{frontendProtocol}://{frontendDomain}:{frontendPort}{path}?token={token}".format(
-    frontendProtocol=frontendProtocol,
-    frontendDomain=frontendDomain,
-    frontendPort=frontendPort,
-    path=path,
-    token=token
-  )
-  text = """\
-Please access to {url} to confirm your email."""
-  html = """\
-<div style="height: 100%; width: 100%; background-color: #2B2D31;">
-<div style="padding: 100px 0; text-align: center;">
-  <p style="font-family: sans-serif; font-weight: 500; font-size: 28px; color: #7C8187; letter-spacing: 3px;">Welcome to</p>
-  <p style="font-family: sans-serif; font-weight: 700; font-size: 36px; color: #ffffff; letter-spacing: 12px;">MARKDOWN</p>
-  <a href="{url}" style="text-decoration: none; color: #ffffff;">
-    <div style="margin: auto; width: 202px; padding: 10px 0; background-color: #E46643; border-radius: 4px;">
-      <span style="font-family: sans-serif; font-size: 15px;">
-        Confirm Email
-      </span>
-    </div>
-  </a>
-</div>
-</div>"""
+  html_template = Template(Path("./app/utils/mailer/email_templates/signup_confirmation.html").read_text())
+  text_template = Template(Path("./app/utils/mailer/email_templates/signup_confirmation.txt").read_text())
+  url = f"{frontendProtocol}://{frontendDomain}{path}?token={token}" if frontendPort == None else f"{frontendProtocol}://{frontendDomain}:{frontendPort}{path}?token={token}"
+  html = html_template.substitute(url=url)
+  text = text_template.substitute(url=url)
   return {
     "subject": "Welcome to Markdown Editor!",
-    "text": text.format(url=url),
-    "html": html.format(url=url),
+    "text": text,
+    "html": html,
   }

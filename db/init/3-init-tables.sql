@@ -5,7 +5,7 @@ USE markdown_editor;
 CREATE TABLE users (
 	id INT NOT NULL auto_increment PRIMARY KEY,
 	email VARCHAR(50) NOT NULL unique,
-	password CHAR(60) BINARY NOT NULL,
+	hashed_password CHAR(60) BINARY NOT NULL,
 	is_activated BOOL NOT NULL DEFAULT FALSE
 );
 

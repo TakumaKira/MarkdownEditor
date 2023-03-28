@@ -11,6 +11,10 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+
 def generate_signup_token(email: str):
     data = { "sub": "email:{email}".format(email=email), "is": "SignupToken" }
     encoded_jwt = jwt.encode(data, os.environ.get("API_JWT_SECRET_KEY"), algorithm=JWT_ENCODE_ALGORITHM)
