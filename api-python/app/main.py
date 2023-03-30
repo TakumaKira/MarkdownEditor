@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from .routers import auth, documents, websocket
-from app.handlers.exception_handler import add_app_exception_handler
+from app.handlers.exception_handler import add_app_exception_handler, add_validation_exception_handler
 
 
 # TODO: Add check_envs function.
@@ -13,6 +13,7 @@ app.include_router(documents.router)
 app.include_router(websocket.router)
 
 add_app_exception_handler(app)
+add_validation_exception_handler(app)
 
 
 @app.get("/")

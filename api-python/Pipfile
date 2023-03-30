@@ -16,6 +16,7 @@ bcrypt = "*"
 pytest-mock = "*"
 websockets = "*"
 sendgrid = "*"
+email-validator = "*"
 
 [dev-packages]
 httpx = "*"

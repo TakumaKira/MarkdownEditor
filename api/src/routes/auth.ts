@@ -23,7 +23,7 @@ authApiRouter.post(API_PATHS.AUTH.SIGNUP.dir, async (req, res, next) => {
   try {
     const result = signupRequestSchema.validate(req.body)
     if (result.error) {
-      return res.status(400).send({message: result.error.message})
+      return res.status(422).send({message: result.error.message})
     }
     const {email, password} = result.value
 
@@ -56,7 +56,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir, async (req, res, nex
   try {
     const result = confirmSignupEmailRequestSchema.validate(req.body)
     if (result.error) {
-      return res.status(400).send({message: result.error.message})
+      return res.status(422).send({message: result.error.message})
     }
     const {token} = result.value
 
@@ -101,7 +101,7 @@ authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
   try {
     const result = loginRequestSchema.validate(req.body)
     if (result.error) {
-      return res.status(400).send({message: result.error.message})
+      return res.status(422).send({message: result.error.message})
     }
     const {email, password} = result.value
 
@@ -128,7 +128,7 @@ authApiRouter.post(API_PATHS.AUTH.EDIT.dir, apiAuthMiddleware, async (req, res, 
   try {
     const result = editRequestSchema.validate(req.body)
     if (result.error) {
-      return res.status(400).send({message: result.error.message})
+      return res.status(422).send({message: result.error.message})
     }
     const {email: newEmail, password: newPassword} = result.value
     const {user: {id, email: oldEmail}} = req
@@ -159,7 +159,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
   try {
     const result = confirmChangeEmailRequestSchema.validate(req.body)
     if (result.error) {
-      return res.status(400).send({message: result.error.message})
+      return res.status(422).send({message: result.error.message})
     }
     const {token, password} = result.value
 
@@ -202,7 +202,7 @@ authApiRouter.post(API_PATHS.AUTH.RESET_PASSWORD.dir, async (req, res, next) => 
   try {
     const result = resetPasswordRequestSchema.validate(req.body)
     if (result.error) {
-      return res.status(400).send({message: result.error.message})
+      return res.status(422).send({message: result.error.message})
     }
     const {email} = result.value
 
@@ -228,7 +228,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, n
   try {
     const result = confirmResetPasswordRequestSchema.validate(req.body)
     if (result.error) {
-      return res.status(400).send({message: result.error.message})
+      return res.status(422).send({message: result.error.message})
     }
     const {token, password} = result.value
 

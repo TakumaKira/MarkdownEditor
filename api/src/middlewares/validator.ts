@@ -20,7 +20,7 @@ const documentsRequestValidatorMiddleware: RequestHandler = (req, res, next) => 
   try {
     const result = documentsRequestSchema.validate(req.body)
     if (result.error) {
-      return res.status(400).send({message: result.error.message})
+      return res.status(422).send({message: result.error.message})
     }
     req.documentsRequest = result.value
     next()

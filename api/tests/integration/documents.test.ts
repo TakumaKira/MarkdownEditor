@@ -345,7 +345,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
 
   // documentsRequestValidatorMiddleware tests(check if it guards invalid requests)
 
-  test('return 400 without updating any documents and emitting no event if request body is not valid DocumentsRequest', async () => {
+  test('return 422 without updating any documents and emitting no event if request body is not valid DocumentsRequest', async () => {
     const mainUserCallback = jest.fn()
     const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {token: mainUser.authToken}})
     mainUserSocket.on(DOCUMENT_UPDATED_WS_EVENT, mainUserCallback)
@@ -406,7 +406,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest)
     // EXPECTED RESPONSE
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(422)
     expect(res.body.message).toBe("\"updates[0].updatedAt\" with value \"2000-01-02T00:00:00.000\" fails to match the required pattern: /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/")
     // Check database.
     const result = await db.query(sql`
@@ -454,7 +454,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest)
     // EXPECTED RESPONSE
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(422)
     expect(res.body.message).toBe("\"updates[0].name\" length must be less than or equal to 50 characters long")
     // Check database.
     const result = await db.query(sql`
@@ -560,7 +560,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       .set({[AUTH_TOKEN_KEY]: mainUser.authToken})
       .send(documentsRequest)
     // EXPECTED RESPONSE
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(422)
     expect(res.body.message).toBe("\"updates[0].content\" length must be less than or equal to 20000 characters long")
     // Check database.
     const result = await db.query(sql`

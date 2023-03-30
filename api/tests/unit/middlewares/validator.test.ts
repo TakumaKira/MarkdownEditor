@@ -94,7 +94,7 @@ describe('documentsRequestValidatorMiddleware', () => {
     const res = {status} as unknown as Response
     const next = jest.fn()
     documentsRequestValidatorMiddleware(req, res, next)
-    expect(status).toBeCalledWith(400)
+    expect(status).toBeCalledWith(422)
     expect(send).toBeCalledWith({message: "\"updates[0].createdAt\" with value \"2000-01-01T00:00:00.000\" fails to match the required pattern: /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/"})
     expect(next).not.toBeCalled()
     expect(req.documentsRequest).toEqual(undefined)
@@ -120,7 +120,7 @@ describe('documentsRequestValidatorMiddleware', () => {
     const res = {status} as unknown as Response
     const next = jest.fn()
     documentsRequestValidatorMiddleware(req, res, next)
-    expect(status).toBeCalledWith(400)
+    expect(status).toBeCalledWith(422)
     expect(send).toBeCalledWith({message: "\"updates[0].updatedAt\" with value \"2000-01-01T01:00:00.000\" fails to match the required pattern: /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/"})
     expect(next).not.toBeCalled()
     expect(req.documentsRequest).toEqual(undefined)
@@ -146,7 +146,7 @@ describe('documentsRequestValidatorMiddleware', () => {
     const res = {status} as unknown as Response
     const next = jest.fn()
     documentsRequestValidatorMiddleware(req, res, next)
-    expect(status).toBeCalledWith(400)
+    expect(status).toBeCalledWith(422)
     expect(send).toBeCalledWith({message: "\"updates[0].savedOnDBAt\" with value \"2000-01-01T00:00:01.000\" fails to match the required pattern: /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/"})
     expect(next).not.toBeCalled()
     expect(req.documentsRequest).toEqual(undefined)
@@ -173,7 +173,7 @@ describe('documentsRequestValidatorMiddleware', () => {
     const res = {status} as unknown as Response
     const next = jest.fn()
     documentsRequestValidatorMiddleware(req, res, next)
-    expect(status).toBeCalledWith(400)
+    expect(status).toBeCalledWith(422)
     expect(send).toBeCalledWith({message: "\"someExtraProp\" is not allowed"})
     expect(next).not.toBeCalled()
     expect(req.documentsRequest).toEqual(undefined)
@@ -199,7 +199,7 @@ describe('documentsRequestValidatorMiddleware', () => {
     const res = {status} as unknown as Response
     const next = jest.fn()
     documentsRequestValidatorMiddleware(req, res, next)
-    expect(status).toBeCalledWith(400)
+    expect(status).toBeCalledWith(422)
     expect(send).toBeCalledWith({message: "\"updates[0].id\" must be a valid GUID"})
     expect(next).not.toBeCalled()
     expect(req.documentsRequest).toEqual(undefined)
@@ -252,7 +252,7 @@ describe('documentsRequestValidatorMiddleware', () => {
     const res = {status} as unknown as Response
     const next = jest.fn()
     documentsRequestValidatorMiddleware(req, res, next)
-    expect(status).toBeCalledWith(400)
+    expect(status).toBeCalledWith(422)
     expect(send).toBeCalledWith({message: "\"updates[0].name\" length must be less than or equal to 50 characters long"})
     expect(next).not.toBeCalled()
     expect(req.documentsRequest).toEqual(undefined)
@@ -304,7 +304,7 @@ describe('documentsRequestValidatorMiddleware', () => {
     const res = {status} as unknown as Response
     const next = jest.fn()
     documentsRequestValidatorMiddleware(req, res, next)
-    expect(status).toBeCalledWith(400)
+    expect(status).toBeCalledWith(422)
     expect(send).toBeCalledWith({message: "\"updates[0].content\" length must be less than or equal to 20000 characters long"})
     expect(next).not.toBeCalled()
     expect(req.documentsRequest).toEqual(undefined)

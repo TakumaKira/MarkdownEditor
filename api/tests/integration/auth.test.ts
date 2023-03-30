@@ -33,31 +33,31 @@ afterEach(() => {
 })
 
 describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
-  test('returns 400 if email and password are not provided on request body', async () => {
+  test('returns 422 if email and password are not provided on request body', async () => {
     // Post and check response.
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({})
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(422)
     expect(res.body.message).toBe("\"email\" is required")
   })
 
-  test('returns 400 if email is not provided on request body', async () => {
+  test('returns 422 if email is not provided on request body', async () => {
     // Post and check response.
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({password: 'password'})
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(422)
     expect(res.body.message).toBe("\"email\" is required")
   })
 
-  test('returns 400 if password is not provided on request body and new user does not be created', async () => {
+  test('returns 422 if password is not provided on request body and new user does not be created', async () => {
     const email = 'test@email.com'
     // Post and check response.
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({email})
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(422)
     expect(res.body.message).toBe("\"password\" is required")
     // Make sure the user is not created.
     const result = await db.query(sql`
@@ -161,17 +161,17 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
 })
 
 describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
-  test('returns 400 if request does not have token', async () => {
+  test('returns 422 if request does not have token', async () => {
     const resForUndefined = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
       .send()
-    expect(resForUndefined.status).toBe(400)
+    expect(resForUndefined.status).toBe(422)
     expect(resForUndefined.body.message).toBe("\"token\" is required")
 
     const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
       .send({})
-    expect(resForEmptyObject.status).toBe(400)
+    expect(resForEmptyObject.status).toBe(422)
     expect(resForEmptyObject.body.message).toBe("\"token\" is required")
   })
 
@@ -289,33 +289,33 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
 })
 
 describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
-  test('returns 400 if email and password are not provided on request body', async () => {
+  test('returns 422 if email and password are not provided on request body', async () => {
     const resForUndefined = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send()
-    expect(resForUndefined.status).toBe(400)
+    expect(resForUndefined.status).toBe(422)
     expect(resForUndefined.body.message).toBe("\"email\" is required")
 
     const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({})
-    expect(resForEmptyObject.status).toBe(400)
+    expect(resForEmptyObject.status).toBe(422)
     expect(resForEmptyObject.body.message).toBe("\"email\" is required")
   })
 
-  test('returns 400 if email is not provided on request body', async () => {
+  test('returns 422 if email is not provided on request body', async () => {
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({password: 'password'})
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(422)
     expect(res.body.message).toBe("\"email\" is required")
   })
 
-  test('returns 400 if password is not provided on request body', async () => {
+  test('returns 422 if password is not provided on request body', async () => {
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({email: 'test@email.com'})
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(422)
     expect(res.body.message).toBe("\"password\" is required")
   })
 
@@ -660,7 +660,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(isUpdatedPassword).toBe(false)
   })
 
-  test('returns 400 without updating email nor password if both email and password is missing', async () => {
+  test('returns 422 without updating email nor password if both email and password is missing', async () => {
     const oldEmail = 'old@email.com'
     const oldPassword = 'oldPassword'
     const newPassword = 'newPassword'
@@ -694,14 +694,14 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
       .post(API_PATHS.AUTH.EDIT.path)
       .set({[AUTH_TOKEN_KEY]: validAuthToken})
       .send()
-    expect(resForUndefined.status).toBe(400)
+    expect(resForUndefined.status).toBe(422)
     expect(resForUndefined.body.message).toBe("\"value\" must have at least 1 key")
 
     const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
       .set({[AUTH_TOKEN_KEY]: validAuthToken})
       .send({})
-    expect(resForEmptyObject.status).toBe(400)
+    expect(resForEmptyObject.status).toBe(422)
     expect(resForEmptyObject.body.message).toBe("\"value\" must have at least 1 key")
     // Make sure email and password is not updated.
     const result = await db.query(sql`
@@ -865,29 +865,29 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
 })
 
 describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
-  test('returns 400 if token and password are missing on request body', async () => {
+  test('returns 422 if token and password are missing on request body', async () => {
     const resForUndefined = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send()
-    expect(resForUndefined.status).toBe(400)
+    expect(resForUndefined.status).toBe(422)
     expect(resForUndefined.body.message).toBe("\"token\" is required")
 
     const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({})
-    expect(resForEmptyObject.status).toBe(400)
+    expect(resForEmptyObject.status).toBe(422)
     expect(resForEmptyObject.body.message).toBe("\"token\" is required")
   })
 
-  test('returns 400 if token is missing on request body', async () => {
+  test('returns 422 if token is missing on request body', async () => {
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({password: 'password'})
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(422)
     expect(res.body.message).toBe("\"token\" is required")
   })
 
-  test('returns 400 without updating email if password is missing on request body', async () => {
+  test('returns 422 without updating email if password is missing on request body', async () => {
     const oldEmail = 'old@email.com'
     const newEmail = 'new@email.com'
     const password = 'password'
@@ -920,7 +920,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path)
       .send({token})
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(422)
     expect(res.body.message).toBe("\"password\" is required")
     // Make sure email is not updated.
     const result = await db.query(sql`
@@ -1322,17 +1322,17 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
 })
 
 describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
-  test('returns 400 if request does not have email', async () => {
+  test('returns 422 if request does not have email', async () => {
     const resForUndefined = await request(apiApp)
       .post(API_PATHS.AUTH.RESET_PASSWORD.path)
       .send()
-    expect(resForUndefined.status).toBe(400)
+    expect(resForUndefined.status).toBe(422)
     expect(resForUndefined.body.message).toBe("\"email\" is required")
 
     const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.RESET_PASSWORD.path)
       .send({})
-    expect(resForEmptyObject.status).toBe(400)
+    expect(resForEmptyObject.status).toBe(422)
     expect(resForEmptyObject.body.message).toBe("\"email\" is required")
   })
 
@@ -1397,30 +1397,30 @@ describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
 })
 
 describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
-  test('returns 400 if request does not have token and password', async () => {
+  test('returns 422 if request does not have token and password', async () => {
     const resForUndefined = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send()
-    expect(resForUndefined.status).toBe(400)
+    expect(resForUndefined.status).toBe(422)
     expect(resForUndefined.body.message).toBe("\"token\" is required")
 
     const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send({})
-    expect(resForEmptyObject.status).toBe(400)
+    expect(resForEmptyObject.status).toBe(422)
     expect(resForEmptyObject.body.message).toBe("\"token\" is required")
   })
 
-  test('returns 400 if request does not have token', async () => {
+  test('returns 422 if request does not have token', async () => {
     const password = 'password'
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send({password})
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(422)
     expect(res.body.message).toBe("\"token\" is required")
   })
 
-  test('returns 400 without updating password if request does not have password', async () => {
+  test('returns 422 without updating password if request does not have password', async () => {
     const email = 'test@email.com'
     const oldPassword = 'oldPassword'
     const salt = await bcrypt.genSalt(10)
@@ -1451,7 +1451,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path)
       .send({token})
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(422)
     expect(res.body.message).toBe("\"password\" is required")
     // Make sure password is not updated.
     const result = await db.query(sql`

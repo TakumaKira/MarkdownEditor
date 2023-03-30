@@ -197,3 +197,102 @@ def test_signup_with_unactivated_email(mocker: MockerFixture):
     assert response.json() == { "message": MESSAGE_AUTH_CONFIRMATION_EMAIL_SENT }
     assert verify_password(USER_PASSWORD_1, db_user_new.hashed_password) == False
     assert verify_password(USER_PASSWORD_2, db_user_new.hashed_password) == True
+
+
+@mock.patch.dict(os.environ, {
+    "FRONTEND_PROTOCOL": MOCK_USE_SECURE_PROTOCOL,
+    "FRONTEND_DOMAIN": MOCK_FRONTEND_DOMAIN,
+    "SENDER_EMAIL": MOCK_SENDER_EMAIL,
+    "CONFIRMATION_EMAIL_SERVER_TYPE": "SendGrid",
+    "SENDGRID_API_KEY": MOCK_SENDGRID_API_KEY,
+})
+def test_signup_with_invalid_email(mocker: MockerFixture):
+    mock_sg = mocker.MagicMock()
+    mock_sg.send = mocker.MagicMock()
+    mock_sg_client_class = mocker.patch("app.utils.mailer.sendgrid.sendgrid.SendGridAPIClient")
+    mock_sg_client_class.return_value = mock_sg
+
+    USER_EMAIL = "test"
+    USER_PASSWORD = "user-password"
+
+    client = TestClient(app)
+    response = client.post(
+        "/api/auth/signup",
+        json={"email": USER_EMAIL, "password": USER_PASSWORD}
+    )
+
+    db = SessionLocal()
+    db_user_query = db.query(models.User).filter(models.User.email == USER_EMAIL)
+    db_user = db_user_query.first()
+    db_user_query.delete()
+    db.commit()
+
+    assert response.status_code == 422
+    assert response.json() == { "message": "email is not a valid email address" }
+    assert db_user == None
+
+
+@mock.patch.dict(os.environ, {
+    "FRONTEND_PROTOCOL": MOCK_USE_SECURE_PROTOCOL,
+    "FRONTEND_DOMAIN": MOCK_FRONTEND_DOMAIN,
+    "SENDER_EMAIL": MOCK_SENDER_EMAIL,
+    "CONFIRMATION_EMAIL_SERVER_TYPE": "SendGrid",
+    "SENDGRID_API_KEY": MOCK_SENDGRID_API_KEY,
+})
+def test_signup_with_too_long_email(mocker: MockerFixture):
+    mock_sg = mocker.MagicMock()
+    mock_sg.send = mocker.MagicMock()
+    mock_sg_client_class = mocker.patch("app.utils.mailer.sendgrid.sendgrid.SendGridAPIClient")
+    mock_sg_client_class.return_value = mock_sg
+
+    USER_EMAIL = "test78901234567890123456789012345678901@example.com"
+    USER_PASSWORD = "user-password"
+
+    client = TestClient(app)
+    response = client.post(
+        "/api/auth/signup",
+        json={"email": USER_EMAIL, "password": USER_PASSWORD}
+    )
+
+    db = SessionLocal()
+    db_user_query = db.query(models.User).filter(models.User.email == USER_EMAIL)
+    db_user = db_user_query.first()
+    db_user_query.delete()
+    db.commit()
+
+    assert response.status_code == 422
+    assert response.json() == { "message": "email must be less than or equal to 50 letters" }
+    assert db_user == None
+
+
+@mock.patch.dict(os.environ, {
+    "FRONTEND_PROTOCOL": MOCK_USE_SECURE_PROTOCOL,
+    "FRONTEND_DOMAIN": MOCK_FRONTEND_DOMAIN,
+    "SENDER_EMAIL": MOCK_SENDER_EMAIL,
+    "CONFIRMATION_EMAIL_SERVER_TYPE": "SendGrid",
+    "SENDGRID_API_KEY": MOCK_SENDGRID_API_KEY,
+})
+def test_signup_with_too_short_password(mocker: MockerFixture):
+    mock_sg = mocker.MagicMock()
+    mock_sg.send = mocker.MagicMock()
+    mock_sg_client_class = mocker.patch("app.utils.mailer.sendgrid.sendgrid.SendGridAPIClient")
+    mock_sg_client_class.return_value = mock_sg
+
+    USER_EMAIL = "test@example.com"
+    USER_PASSWORD = "pass"
+
+    client = TestClient(app)
+    response = client.post(
+        "/api/auth/signup",
+        json={"email": USER_EMAIL, "password": USER_PASSWORD}
+    )
+
+    db = SessionLocal()
+    db_user_query = db.query(models.User).filter(models.User.email == USER_EMAIL)
+    db_user = db_user_query.first()
+    db_user_query.delete()
+    db.commit()
+
+    assert response.status_code == 422
+    assert response.json() == { "message": "ensure password has at least 8 characters" }
+    assert db_user == None
