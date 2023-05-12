@@ -1,60 +1,33 @@
 import { RequestHandler } from 'express';
+import sessionStorage from '../services/sessionStorage';
 import { Socket } from 'socket.io';
 import { ExtendedError } from 'socket.io/dist/namespace';
-import { AUTH_TOKEN_KEY, EMAIL_LENGTH_MAX } from '../constants';
-import { JWT_SECRET_KEY } from '../getEnvs';
-import decodeToken from '../services/decodeToken';
-import Joi from 'joi'
-import { UserInfoOnAuthToken } from '../models/user';
-
-const userInfoOnAuthTokenSchema = Joi.object<UserInfoOnAuthToken>({
-  id: Joi.number().required(),
-  email: Joi.string().required().email().max(EMAIL_LENGTH_MAX),
-  is: Joi.equal('AuthToken').required(),
-  iat: Joi.number().required(),
-})
 
 const apiAuthMiddleware: RequestHandler = (req, res, next) => {
   try {
-    const token = req.header(AUTH_TOKEN_KEY)
-    if (!token) {
-      return res.status(401).send({message: 'Access denied. Request does not have valid token.'})
+    if (!req.session.userId) {
+      return res.status(401).send({message: 'Access denied. Request is not authorized.'})
     }
-
-    try {
-      const tokenPayload = decodeToken(token, JWT_SECRET_KEY)
-      const result = userInfoOnAuthTokenSchema.validate(tokenPayload)
-      if (result.error) {
-        throw new Error('Token is not valid as an auth token.')
-      }
-      req.user = result.value
-      next()
-    } catch {
-      res.status(401).send({message: 'Access denied. Request does not have valid token.'})
-    }
+    next()
   } catch (e) {
     next(e)
   }
 }
-const wsAuthMiddleware = (socket: Socket, next: (err?: ExtendedError) => void): void => {
+const wsAuthMiddleware = async (socket: Socket, next: (err?: ExtendedError) => void): Promise<void> => {
   try {
-    const token = socket.handshake.auth.token
-    if (!token) {
-      return next(new Error('Access denied. Request does not have valid token.'))
+    const { wsHandshakeToken } = socket.handshake.auth
+    if (!wsHandshakeToken) {
+      return next(new Error('Access denied. Handshake request does not have valid token.'))
     }
-
-    try {
-      const tokenPayload = decodeToken(token, JWT_SECRET_KEY)
-      const result = userInfoOnAuthTokenSchema.validate(tokenPayload)
-      if (result.error) {
-        throw new Error('Token is not valid as an auth token.')
-      }
-      socket.user = result.value
-      socket.join(socket.user.id.toString())
-      next()
-    } catch {
-      next(new Error('Access denied. Request does not have valid token.'))
+    const session = await sessionStorage.getSession(wsHandshakeToken)
+    if (session === null) {
+      return next(new Error('Access denied. Handshake request does not have valid token.'))
     }
+    if (session.userId === undefined) {
+      throw new Error('Session does not have userId.')
+    }
+    socket.join(session.userId.toString())
+    next()
   } catch (e) {
     console.error(e)
     next(new Error('Something went wrong.'))

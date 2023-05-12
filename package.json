@@ -22,5 +22,6 @@
     "jsonwebtoken": "^9.0.0",
     "typescript": "^4.9.5",
     "uuid": "^9.0.0"
-  }
+  },
+  "dependencies": {}
 }

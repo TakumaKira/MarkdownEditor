@@ -5,6 +5,12 @@ export const DOCUMENT_CONTENT_LENGTH_LIMIT = 20000
 export const EMAIL_LENGTH_MAX = 50
 export const MIN_PASSWORD_LENGTH = 8
 
+export const REDIS_KEYS = {
+  APP: 'mde',
+  SESSION: 'session',
+  WS_HANDSHAKE_TOKEN: 'ws_hs_token',
+} as const
+
 export const API_PATHS = {
   ROOT: {
     path: '/', dir: '/'
@@ -20,6 +26,9 @@ export const API_PATHS = {
     },
     LOGIN: {
       path: '/api/auth/login', dir: '/login',
+    },
+    LOGOUT: {
+      path: '/api/auth/logout', dir: '/logout',
     },
     EDIT: {
       path: '/api/auth/edit', dir: '/edit',

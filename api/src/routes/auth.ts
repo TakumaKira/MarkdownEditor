@@ -9,6 +9,8 @@ import { generateEmailConfirmationToken, generateAuthToken, generateEmailChangeT
 import { apiAuthMiddleware } from '../middlewares/auth'
 import Joi from 'joi'
 import { createUser, activateUser, getUser, updateUserPassword, updateUserEmail, deleteUser } from '../services/database';
+import { destroySession, regenerateSession } from '../services/sessionStorage/utils'
+import sessionStorage from '../services/sessionStorage'
 
 const authApiRouter = Router()
 
@@ -77,6 +79,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir, async (req, res, nex
       if (!is_activated) {
         throw new Error(`User with email ${email} is not activated successfully. Please try again.`)
       }
+      await regenerateSession(req, sessionStorage)
       const token = await generateAuthToken(id, email)
       return res.send({message: 'Confirmation successful.', token})
     } catch (error: any) {
@@ -101,20 +104,43 @@ authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
   try {
     const result = loginRequestSchema.validate(req.body)
     if (result.error) {
+      await destroySession(req, sessionStorage)
       return res.status(400).send({message: result.error.message})
     }
     const {email, password} = result.value
 
     const user = await getUser(email)
-    if (!user) return res.status(400).send({message: 'Email/Password is incorrect.'})
+    if (!user) {
+      await destroySession(req, sessionStorage)
+      return res.status(400).send({message: 'Email/Password is incorrect.'})
+    }
 
-    if (!user.is_activated) return res.status(400).send({message: 'This user is not activated.'})
+    if (!user.is_activated) {
+      await destroySession(req, sessionStorage)
+      return res.status(400).send({message: 'This user is not activated.'})
+    }
 
-    const isValidPassword = await bcrypt.compare(password, user.password)
-    if (!isValidPassword) return res.status(400).send({message: 'Email/Password is incorrect.'})
+    const isValidPassword = await bcrypt.compare(password, user.hashed_password)
+    if (!isValidPassword) {
+      await destroySession(req, sessionStorage)
+      return res.status(400).send({message: 'Email/Password is incorrect.'})
+    }
+
+    req.session.userId = String(user.id)
+    req.session.userEmail = email
+    await regenerateSession(req, sessionStorage)
 
     const token = await generateAuthToken(user.id, user.email)
-    res.send({message: 'Login successful.', token})
+    res.send({message: 'Login successful.', token, wsHandshakeToken: req.session.wsHandshakeToken})
+  } catch (e) {
+    next(e)
+  }
+})
+
+authApiRouter.get(API_PATHS.AUTH.LOGOUT.dir, apiAuthMiddleware, async (req, res, next) => {
+  try {
+    await destroySession(req, sessionStorage)
+    res.send({message: 'Logout successful.'})
   } catch (e) {
     next(e)
   }
@@ -130,20 +156,25 @@ authApiRouter.post(API_PATHS.AUTH.EDIT.dir, apiAuthMiddleware, async (req, res, 
     if (result.error) {
       return res.status(400).send({message: result.error.message})
     }
-    const {email: newEmail, password: newPassword} = result.value
-    const {user: {id, email: oldEmail}} = req
+    const { email: newEmail, password: newPassword } = result.value
+    const { userId: id, userEmail: oldEmail } = req.session
+    if (!id || !oldEmail) {
+      throw new Error('Session does not have required fields')
+    }
 
     if (newPassword) {
       const salt = await bcrypt.genSalt(10)
       const hashedPassword = await bcrypt.hash(newPassword, salt)
-      await updateUserPassword(id, hashedPassword)
+      await updateUserPassword(Number(id), hashedPassword)
     }
     if (newEmail) {
       const token = generateEmailChangeToken(oldEmail, newEmail, {expiresIn: '30m'})
       const {subject, text, html} = getConfirmationEmail('changeEmail', token)
       await mailServer.send(newEmail, subject, text, html)
+      await regenerateSession(req, sessionStorage)
       res.send({message: `Confirmation email was sent to ${newEmail}. Please check the inbox and confirm.`})
     } else {
+      await regenerateSession(req, sessionStorage)
       res.send({message: 'Password update successful.'})
     }
   } catch (e) {
@@ -184,10 +215,11 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
       return res.status(400).send({message: `User with email ${oldEmail} is not activated yet. Please activate then retry.`})
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password)
+    const isValidPassword = await bcrypt.compare(password, user.hashed_password)
     if (!isValidPassword) return res.status(400).send({message: 'Password is incorrect.'})
 
     await updateUserEmail(user.id, newEmail)
+    await regenerateSession(req, sessionStorage)
     const authToken = await generateAuthToken(user.id, newEmail)
     return res.send({message: 'Email change successful.', token: authToken})
   } catch (e) {
@@ -214,6 +246,7 @@ authApiRouter.post(API_PATHS.AUTH.RESET_PASSWORD.dir, async (req, res, next) => 
     const token = generateEmailConfirmationToken('ResetPasswordToken', email, {expiresIn: '30m'})
     const {subject, text, html} = getConfirmationEmail('resetPassword', token)
     await mailServer.send(email, subject, text, html)
+    await regenerateSession(req, sessionStorage)
     res.send({message: `Confirmation email was sent to ${email}. Please check the inbox and confirm.`})
   } catch (e) {
     next(e)
@@ -254,6 +287,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, n
     const hashedPassword = await bcrypt.hash(password, salt)
     await updateUserPassword(user.id, hashedPassword)
     const authToken = await generateAuthToken(user.id, email)
+    await regenerateSession(req, sessionStorage)
     return res.send({message: 'Password reset successful.', token: authToken})
   } catch (e) {
     next(e)
@@ -263,7 +297,8 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, n
 authApiRouter.post(API_PATHS.AUTH.DELETE.dir, apiAuthMiddleware, async (req, res, next) => {
   try {
     try {
-      await deleteUser(req.user.id)
+      await deleteUser(Number(req.session.userId))
+      req.session.destroy(err => {})
       return res.send({message: 'User deleted successfully.'})
     } catch (error: any) {
       if (error?.sqlState === '45011') {

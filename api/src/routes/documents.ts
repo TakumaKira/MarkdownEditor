@@ -11,6 +11,10 @@ const documentsRouter = Router()
 
 documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware, async (req, res, next) => {
   try {
+    if (!req.session.userId) {
+      throw new Error('Session does not have userId')
+    }
+
     const { documentsRequest } = req
     const updatesFromDevice = documentsRequest.updates
 
@@ -48,7 +52,7 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
       // If a document is needed to be resolve conflict, resolve and push it to update list.
       if (documentFromDB && (
         // userId did match
-        documentFromDB.user_id === req.user.id
+        documentFromDB.user_id === Number(req.session.userId)
         // createAt did match
         && fromUnixTimestampToISOString(documentFromDB.created_at) === trimMilliseconds(updateFromDevice.createdAt)
         // savedOnDBAt did not match
@@ -70,16 +74,16 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
       // If a document is needed the id to be changed, find new id and assign it as new id(this operation looks fairly costly, but this won't happen so many times so just leave log), then push it to update list.
       } else if (documentFromDB && (
         // userId did not match
-        documentFromDB.user_id !== req.user.id
+        documentFromDB.user_id !== Number(req.session.userId)
         // userId did match and createdAt did not match
         || (
-          documentFromDB.user_id === req.user.id
+          documentFromDB.user_id === Number(req.session.userId)
           && fromUnixTimestampToISOString(documentFromDB.created_at) !== trimMilliseconds(updateFromDevice.createdAt)
         )
         // userId did match and createdAt did match aånd one from device did not have savedOnDBAt
         || (
           // Notice this is really close case to the conflict case above.
-          documentFromDB.user_id === req.user.id
+          documentFromDB.user_id === Number(req.session.userId)
           && fromUnixTimestampToISOString(documentFromDB.created_at) === trimMilliseconds(updateFromDevice.createdAt)
           && updateFromDevice.savedOnDBAt === null // documentFromDB.saved_on_db_at is always not null
         )
@@ -105,11 +109,11 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
 
     // Now all of updateFromDevice should be safe to update to database.
 
-    await updateDocuments(updatesToDB, req.user.id)
+    await updateDocuments(updatesToDB, Number(req.session.userId))
     // If the transaction was unsuccessful, above will throw and errorMiddleware will handled it.
 
     // If the transaction was successful, get every document of the user and return it and emit update event to the user to make other devices start update. No need to send updated document's id, just make them save editing document and start sync.
-    const allDocumentsOnDB = await getUserDocuments(req.user.id)
+    const allDocumentsOnDB = await getUserDocuments(Number(req.session.userId))
 
     const allDocuments: Document[] = allDocumentsOnDB.map(doc => normalizeDocument(doc))
 
@@ -118,7 +122,7 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
     // If there's update to database, send update notification.
     if (updatesFromDevice.length > 0) {
       // Device may ignore the notification if updatedAt has been already accepted as response.
-      wsServer.to(req.user.id.toString()).emit(DOCUMENT_UPDATED_WS_EVENT, {savedOnDBAt} as DocumentUpdatedWsMessage)
+      wsServer.to(req.session.userId).emit(DOCUMENT_UPDATED_WS_EVENT, {savedOnDBAt} as DocumentUpdatedWsMessage)
     }
   } catch (e) {
     next(e)
