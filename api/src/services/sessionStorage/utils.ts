@@ -20,20 +20,15 @@ export function regenerateSession(req: Express.Request, sessionStorage: Controll
       req.session.userId = userId
       req.session.userEmail = userEmail
       const newToken = uid.sync(24)
-      console.log('oldToken', oldToken)
-      console.log('newToken', newToken)
       // wsHandshakeToken should also be regenerated here.
       req.session.wsHandshakeToken = newToken
       sessionStorage.saveWsHandshakeToken(req.session.id, newToken)
       webSocketServer.fetchSockets()
         .then(sockets => {
-          sockets.forEach(socket => {
-            console.log('socket.handshake.auth.wsHandshakeToken', socket.handshake.auth.wsHandshakeToken)
-            if (socket.handshake.auth.wsHandshakeToken === oldToken) {
-              socket.handshake.auth.wsHandshakeToken = newToken
-              console.log(`socket.handshake.auth.wsHandshakeToken is updated from ${oldToken} to ${newToken}`)
-            }
-          })
+          const socket = sockets.find(socket => socket.handshake.auth.wsHandshakeToken === oldToken)
+          if (socket) {
+            socket.handshake.auth.wsHandshakeToken = newToken
+          }
         })
       resolve()
     })
