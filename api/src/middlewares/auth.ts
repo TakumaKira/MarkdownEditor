@@ -17,11 +17,15 @@ const wsAuthMiddleware = async (socket: Socket, next: (err?: ExtendedError) => v
   try {
     const { wsHandshakeToken } = socket.handshake.auth
     if (!wsHandshakeToken) {
-      return next(new Error('Access denied. Handshake request does not have valid token.'))
+      socket.conn.send(JSON.stringify({message: 'Access denied. Handshake request does not have valid token.'}), undefined)
+      socket.conn.close(true)
+      return
     }
     const session = await sessionStorage.getSession(wsHandshakeToken)
     if (session === null) {
-      return next(new Error('Access denied. Handshake request does not have valid token.'))
+      socket.conn.send(JSON.stringify({message: 'Access denied. Handshake request does not have valid token.'}), undefined)
+      socket.conn.close(true)
+      return
     }
     if (session.userId === undefined) {
       throw new Error('Session does not have userId.')
