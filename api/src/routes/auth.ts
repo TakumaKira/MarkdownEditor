@@ -11,6 +11,7 @@ import Joi from 'joi'
 import { createUser, activateUser, getUser, updateUserPassword, updateUserEmail, deleteUser } from '../services/database';
 import { destroySession, regenerateSession } from '../services/sessionStorage/utils'
 import sessionStorage from '../services/sessionStorage'
+import wsServer from '../servers/wsServer'
 
 const authApiRouter = Router()
 
@@ -79,7 +80,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir, async (req, res, nex
       if (!is_activated) {
         throw new Error(`User with email ${email} is not activated successfully. Please try again.`)
       }
-      await regenerateSession(req, sessionStorage)
+      await regenerateSession(req, sessionStorage, wsServer)
       const token = await generateAuthToken(id, email)
       return res.send({message: 'Confirmation successful.', token})
     } catch (error: any) {
@@ -128,10 +129,12 @@ authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
 
     req.session.userId = String(user.id)
     req.session.userEmail = email
-    await regenerateSession(req, sessionStorage)
+    await regenerateSession(req, sessionStorage, wsServer)
 
     const token = await generateAuthToken(user.id, user.email)
-    res.send({message: 'Login successful.', token, wsHandshakeToken: req.session.wsHandshakeToken})
+    res
+      .header('wsHandshakeToken', req.session.wsHandshakeToken)
+      .send({message: 'Login successful.' })
   } catch (e) {
     next(e)
   }
@@ -171,11 +174,15 @@ authApiRouter.post(API_PATHS.AUTH.EDIT.dir, apiAuthMiddleware, async (req, res, 
       const token = generateEmailChangeToken(oldEmail, newEmail, {expiresIn: '30m'})
       const {subject, text, html} = getConfirmationEmail('changeEmail', token)
       await mailServer.send(newEmail, subject, text, html)
-      await regenerateSession(req, sessionStorage)
-      res.send({message: `Confirmation email was sent to ${newEmail}. Please check the inbox and confirm.`})
+      await regenerateSession(req, sessionStorage, wsServer)
+      res
+        .header('wsHandshakeToken', req.session.wsHandshakeToken)
+        .send({message: `Confirmation email was sent to ${newEmail}. Please check the inbox and confirm.`})
     } else {
-      await regenerateSession(req, sessionStorage)
-      res.send({message: 'Password update successful.'})
+      await regenerateSession(req, sessionStorage, wsServer)
+      res
+        .header('wsHandshakeToken', req.session.wsHandshakeToken)
+        .send({message: 'Password update successful.'})
     }
   } catch (e) {
     next(e)
@@ -219,9 +226,11 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
     if (!isValidPassword) return res.status(400).send({message: 'Password is incorrect.'})
 
     await updateUserEmail(user.id, newEmail)
-    await regenerateSession(req, sessionStorage)
+    await regenerateSession(req, sessionStorage, wsServer)
     const authToken = await generateAuthToken(user.id, newEmail)
-    return res.send({message: 'Email change successful.', token: authToken})
+    return res
+      .header('wsHandshakeToken', req.session.wsHandshakeToken)
+      .send({message: 'Email change successful.', token: authToken})
   } catch (e) {
     next(e)
   }
@@ -246,8 +255,10 @@ authApiRouter.post(API_PATHS.AUTH.RESET_PASSWORD.dir, async (req, res, next) => 
     const token = generateEmailConfirmationToken('ResetPasswordToken', email, {expiresIn: '30m'})
     const {subject, text, html} = getConfirmationEmail('resetPassword', token)
     await mailServer.send(email, subject, text, html)
-    await regenerateSession(req, sessionStorage)
-    res.send({message: `Confirmation email was sent to ${email}. Please check the inbox and confirm.`})
+    await regenerateSession(req, sessionStorage, wsServer)
+    res
+      .header('wsHandshakeToken', req.session.wsHandshakeToken)
+      .send({message: `Confirmation email was sent to ${email}. Please check the inbox and confirm.`})
   } catch (e) {
     next(e)
   }
@@ -287,8 +298,10 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, n
     const hashedPassword = await bcrypt.hash(password, salt)
     await updateUserPassword(user.id, hashedPassword)
     const authToken = await generateAuthToken(user.id, email)
-    await regenerateSession(req, sessionStorage)
-    return res.send({message: 'Password reset successful.', token: authToken})
+    await regenerateSession(req, sessionStorage, wsServer)
+    return res
+      .header('wsHandshakeToken', req.session.wsHandshakeToken)
+      .send({message: 'Password reset successful.', token: authToken})
   } catch (e) {
     next(e)
   }
@@ -298,7 +311,7 @@ authApiRouter.post(API_PATHS.AUTH.DELETE.dir, apiAuthMiddleware, async (req, res
   try {
     try {
       await deleteUser(Number(req.session.userId))
-      req.session.destroy(err => {})
+      await destroySession(req, sessionStorage)
       return res.send({message: 'User deleted successfully.'})
     } catch (error: any) {
       if (error?.sqlState === '45011') {
