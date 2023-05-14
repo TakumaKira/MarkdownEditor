@@ -5,7 +5,7 @@ import { API_PATHS, EMAIL_LENGTH_MAX, MIN_PASSWORD_LENGTH } from '../constants'
 import getConfirmationEmail from '../services/emailTemplates'
 import { JWT_SECRET_KEY, mailServer } from '../getEnvs'
 import decodeToken from '../services/decodeToken'
-import { generateEmailConfirmationToken, generateAuthToken, generateEmailChangeToken } from '../services/encodeToken'
+import { generateEmailConfirmationToken, generateEmailChangeToken } from '../services/encodeToken'
 import { apiAuthMiddleware } from '../middlewares/auth'
 import Joi from 'joi'
 import { createUser, activateUser, getUser, updateUserPassword, updateUserEmail, deleteUser } from '../services/database';
@@ -81,8 +81,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir, async (req, res, nex
         throw new Error(`User with email ${email} is not activated successfully. Please try again.`)
       }
       await regenerateSession(req, sessionStorage, wsServer)
-      const token = await generateAuthToken(id, email)
-      return res.send({message: 'Confirmation successful.', token})
+      return res.send({message: 'Confirmation successful.'})
     } catch (error: any) {
       if (error?.sqlState === '45011') {
         return res.status(400).send({message: 'The email you are trying to confirm does not exist on database.'})
@@ -130,8 +129,6 @@ authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
     req.session.userId = String(user.id)
     req.session.userEmail = email
     await regenerateSession(req, sessionStorage, wsServer)
-
-    const token = await generateAuthToken(user.id, user.email)
     res
       .header('wsHandshakeToken', req.session.wsHandshakeToken)
       .send({message: 'Login successful.' })
@@ -227,10 +224,9 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
 
     await updateUserEmail(user.id, newEmail)
     await regenerateSession(req, sessionStorage, wsServer)
-    const authToken = await generateAuthToken(user.id, newEmail)
     return res
       .header('wsHandshakeToken', req.session.wsHandshakeToken)
-      .send({message: 'Email change successful.', token: authToken})
+      .send({message: 'Email change successful.'})
   } catch (e) {
     next(e)
   }
@@ -297,11 +293,10 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, n
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     await updateUserPassword(user.id, hashedPassword)
-    const authToken = await generateAuthToken(user.id, email)
     await regenerateSession(req, sessionStorage, wsServer)
     return res
       .header('wsHandshakeToken', req.session.wsHandshakeToken)
-      .send({message: 'Password reset successful.', token: authToken})
+      .send({message: 'Password reset successful.'})
   } catch (e) {
     next(e)
   }
