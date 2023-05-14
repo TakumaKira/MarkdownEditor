@@ -6,6 +6,8 @@ import { DocumentsUpdateResponse, Document, DocumentUpdatedWsMessage } from '../
 import { getDocuments, getNewSafeId, getUserDocuments, normalizeDocument, updateDocuments } from '../services/database'
 import wsServer from '../servers/wsServer'
 import { fromUnixTimestampToISOString, trimMilliseconds } from '../services/database/utils'
+import { regenerateSession } from '../services/sessionStorage/utils'
+import sessionStorage from '../services/sessionStorage'
 
 const documentsRouter = Router()
 
@@ -117,7 +119,11 @@ documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware
 
     const allDocuments: Document[] = allDocumentsOnDB.map(doc => normalizeDocument(doc))
 
-    res.send({allDocuments, updatedIdsAsUnavailable, duplicatedIdsAsConflicted, savedOnDBAt} as DocumentsUpdateResponse)
+    await regenerateSession(req, sessionStorage, wsServer)
+
+    res
+      .header('wsHandshakeToken', req.session.wsHandshakeToken)
+      .send({allDocuments, updatedIdsAsUnavailable, duplicatedIdsAsConflicted, savedOnDBAt} as DocumentsUpdateResponse)
 
     // If there's update to database, send update notification.
     if (updatesFromDevice.length > 0) {
