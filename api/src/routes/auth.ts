@@ -10,10 +10,14 @@ import { apiAuthMiddleware } from '../middlewares/auth'
 import Joi from 'joi'
 import { createUser, activateUser, getUser, updateUserPassword, updateUserEmail, deleteUser } from '../services/database';
 import { destroySession, regenerateSession } from '../services/sessionStorage/utils'
-import sessionStorage from '../services/sessionStorage'
-import wsServer from '../servers/wsServer'
+import getSessionStorage from '../services/sessionStorage'
+import getWsServer from '../servers/wsServer'
+
+const sessionStorage = getSessionStorage()
 
 const authApiRouter = Router()
+
+const wsServer = getWsServer()
 
 const emailSchema = Joi.string().email().max(EMAIL_LENGTH_MAX)
 const passwordSchema = Joi.string().min(MIN_PASSWORD_LENGTH)
@@ -120,7 +124,7 @@ authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
       return res.status(400).send({message: 'This user is not activated.'})
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.hashed_password)
+    const isValidPassword = await bcrypt.compare(password, user.password)
     if (!isValidPassword) {
       await destroySession(req, sessionStorage)
       return res.status(400).send({message: 'Email/Password is incorrect.'})
@@ -219,7 +223,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
       return res.status(400).send({message: `User with email ${oldEmail} is not activated yet. Please activate then retry.`})
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.hashed_password)
+    const isValidPassword = await bcrypt.compare(password, user.password)
     if (!isValidPassword) return res.status(400).send({message: 'Password is incorrect.'})
 
     await updateUserEmail(user.id, newEmail)

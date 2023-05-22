@@ -25,4 +25,8 @@ export default class Controller {
     const session: Express.Request['session'] = JSON.parse(sessionStr)
     return session
   }
+
+  destroy() {
+    return this.client.quit()
+  }
 }

@@ -8,7 +8,7 @@
     "build": "npx tsc -p tsconfig.build.json",
     "dev": "npx nodemon ./src/index.ts",
     "test": "jest --watchAll --coverage",
-    "test:ci": "jest --detectOpenHandles --forceExit"
+    "test:ci": "jest"
   },
   "dependencies": {
     "@databases/mysql": "^5.2.1",

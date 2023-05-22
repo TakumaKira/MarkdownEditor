@@ -1,8 +1,8 @@
 import { Server } from "http"
-import apiApp from "./apiApp"
+import getApiApp from "./apiApp"
 
 const startApiServer = (apiPort: number): Server => {
-  return apiApp.listen(apiPort, () => {
+  return getApiApp().listen(apiPort, () => {
     console.log(`⚡️[server]: API server is running at localhost:${apiPort}`)
   })
 }

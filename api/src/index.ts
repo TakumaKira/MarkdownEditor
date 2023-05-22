@@ -1,4 +1,5 @@
-import apiServer from './servers/apiServer'
-import wsServer from './servers/wsServer'
+import getApiServer from './servers/apiServer'
+import getWsServer from './servers/wsServer'
 
-export { apiServer, wsServer }
+const apiServer = getApiServer()
+const wsServer = getWsServer()

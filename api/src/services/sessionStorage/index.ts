@@ -1,9 +1,12 @@
+import onExit from '../../onExit'
 import Controller from './controller'
-import sessionStore from './sessionStore'
 
-const sessionStorage = new Controller()
-export default sessionStorage
+let sessionStorage: Controller
 
-export {
-  sessionStore,
+export default () => {
+  if (!sessionStorage) {
+    sessionStorage = new Controller()
+    onExit.add(() => sessionStorage.destroy())
+  }
+  return sessionStorage
 }

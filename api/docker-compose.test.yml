@@ -12,6 +12,11 @@ services:
       - db:/var/lib/mysql
       - ../db/init:/docker-entrypoint-initdb.d
 
+  redis:
+    image: redis:6.2.12
+    expose:
+      - 6379
+
   api-test:
     build:
       context: .
@@ -24,6 +29,7 @@ services:
       MYSQL_DATABASE: markdown_editor
       MYSQL_USER: markdown_editor_app
       MYSQL_PASSWORD: password
+      REDIS_HOST: redis
     command: dockerize
       -wait tcp://db:3306 -timeout 60s
       sh -c "yarn test:ci"

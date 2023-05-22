@@ -1,5 +1,12 @@
+import { Server } from "socket.io"
 import { WS_PORT } from "../../getEnvs";
 import startWsServer from "./startWsServer";
 
-const wsServer = startWsServer(WS_PORT)
-export default wsServer
+let wsServer: Server
+
+export default () => {
+  if (!wsServer) {
+    wsServer = startWsServer(WS_PORT)
+  }
+  return wsServer
+}

@@ -1,15 +1,23 @@
-import { ConnectionPool, sql, SQLQuery } from '@databases/mysql'
-import db from './connector'
-import { getDocuments, getNewSafeId, getUserDocuments, updateDocuments } from './queryDocuments'
-import { activateUser, createUser, deleteUser, getUser, updateUserEmail, updateUserPassword } from './queryUsers'
+import getDB from './connector'
+import { _getDocuments, _getNewSafeId, _getUserDocuments, _updateDocuments } from './queryDocuments'
+import { _activateUser, _createUser, _deleteUser, _getUser, _updateUserEmail, _updateUserPassword } from './queryUsers'
 import { fromISOStringToDatetimeString, normalizeDocument } from './utils'
 
-export default db
-export {
-  sql,
-  ConnectionPool,
-  SQLQuery,
+const db = getDB()
 
+const createUser = _createUser(db)
+const activateUser = _activateUser(db)
+const getUser = _getUser(db)
+const updateUserEmail = _updateUserEmail(db)
+const updateUserPassword = _updateUserPassword(db)
+const deleteUser = _deleteUser(db)
+
+const updateDocuments = _updateDocuments(db)
+const getDocuments = _getDocuments(db)
+const getUserDocuments = _getUserDocuments(db)
+const getNewSafeId = _getNewSafeId(db)
+
+export {
   createUser,
   activateUser,
   getUser,

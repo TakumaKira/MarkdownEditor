@@ -20,6 +20,9 @@ const mysqlDatabase = process.env.MYSQL_DATABASE
 const mysqlUser = process.env.MYSQL_USER
 const mysqlPassword = process.env.MYSQL_PASSWORD
 
+// Redis settings
+const redisHost = process.env.REDIS_HOST
+
 // Confirmation email settings
 /** Needed to be set to the address you own. */
 const senderEmail = process.env.SENDER_EMAIL
@@ -196,6 +199,9 @@ export const FRONTEND_PORT = frontendPort
 
 // Json Web Token settings
 export const JWT_SECRET_KEY = jwtSecretKey!
+
+// Redis settings
+export const REDIS_HOST = redisHost || 'localhost'
 
 // Database settings
 export const DATABASE_HOST = databaseHost!

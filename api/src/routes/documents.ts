@@ -4,12 +4,16 @@ import { apiAuthMiddleware } from '../middlewares/auth'
 import { documentsRequestValidatorMiddleware } from '../middlewares/validator'
 import { DocumentsUpdateResponse, Document, DocumentUpdatedWsMessage } from '../models/document'
 import { getDocuments, getNewSafeId, getUserDocuments, normalizeDocument, updateDocuments } from '../services/database'
-import wsServer from '../servers/wsServer'
+import getWsServer from '../servers/wsServer'
 import { fromUnixTimestampToISOString, trimMilliseconds } from '../services/database/utils'
 import { regenerateSession } from '../services/sessionStorage/utils'
-import sessionStorage from '../services/sessionStorage'
+import getSessionStorage from '../services/sessionStorage'
+
+const sessionStorage = getSessionStorage()
 
 const documentsRouter = Router()
+
+const wsServer = getWsServer()
 
 documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware, async (req, res, next) => {
   try {

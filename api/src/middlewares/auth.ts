@@ -1,7 +1,9 @@
 import { RequestHandler } from 'express';
-import sessionStorage from '../services/sessionStorage';
+import getSessionStorage from '../services/sessionStorage';
 import { Socket } from 'socket.io';
 import { ExtendedError } from 'socket.io/dist/namespace';
+
+const sessionStorage = getSessionStorage()
 
 const apiAuthMiddleware: RequestHandler = (req, res, next) => {
   try {

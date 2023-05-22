@@ -1,5 +1,12 @@
+import { Server } from "http"
 import { API_PORT } from "../../getEnvs";
 import startApiServer from "./startApiServer";
 
-const apiServer = startApiServer(API_PORT)
-export default apiServer
+let apiServer: Server
+
+export default () => {
+  if (!apiServer) {
+    apiServer = startApiServer(API_PORT)
+  }
+  return apiServer
+}

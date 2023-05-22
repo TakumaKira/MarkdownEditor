@@ -1,26 +1,30 @@
 import { createClient } from 'redis'
 import onExit from '../../onExit'
+import { REDIS_HOST } from '../../getEnvs'
 
-const client = createClient()
+const clients: ReturnType<typeof createClient>[] = []
 
-const getClient = () => {
-  if (!client.isOpen) {
-    client.connect()
-      .then(() => {
-        console.info('Redis client connected.')
-      })
-      .catch(e => {
-        console.error(e)
-        throw new Error('Could not connect to Redis server.')
-      })
-  }
+export default () => {
+  const client = createClient({
+    url: `redis://${REDIS_HOST}`
+  })
+  clients.push(client)
+  client.connect()
+    .then(() => {
+      console.info('Redis client connected.')
+    })
+    .catch(e => {
+      console.error(e)
+      throw new Error('Could not connect to Redis server.')
+    })
   return client
 }
-export default getClient
 
 onExit.add(() => {
-  if (client.isOpen) {
-    client.quit()
-    console.info('Redis client closed.')
-  }
+  clients.forEach(client => {
+    if (client.isOpen) {
+      client.quit()
+      console.info('Redis client closed.')
+    }
+  })
 })
