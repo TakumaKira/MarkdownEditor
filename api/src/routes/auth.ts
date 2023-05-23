@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt'
 import { Router } from 'express'
 import { TokenExpiredError } from 'jsonwebtoken'
-import { API_PATHS, EMAIL_LENGTH_MAX, MIN_PASSWORD_LENGTH } from '../constants'
+import { API_PATHS, EMAIL_LENGTH_MAX, MIN_PASSWORD_LENGTH, WS_HANDSHAKE_TOKEN_KEY } from '../constants'
 import getConfirmationEmail from '../services/emailTemplates'
 import { JWT_SECRET_KEY, mailServer } from '../getEnvs'
 import decodeToken from '../services/decodeToken'
@@ -134,7 +134,7 @@ authApiRouter.post(API_PATHS.AUTH.LOGIN.dir, async (req, res, next) => {
     req.session.userEmail = email
     await regenerateSession(req, sessionStorage, wsServer)
     res
-      .header('wsHandshakeToken', req.session.wsHandshakeToken)
+      .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
       .send({message: 'Login successful.' })
   } catch (e) {
     next(e)
@@ -177,12 +177,12 @@ authApiRouter.post(API_PATHS.AUTH.EDIT.dir, apiAuthMiddleware, async (req, res, 
       await mailServer.send(newEmail, subject, text, html)
       await regenerateSession(req, sessionStorage, wsServer)
       res
-        .header('wsHandshakeToken', req.session.wsHandshakeToken)
+        .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
         .send({message: `Confirmation email was sent to ${newEmail}. Please check the inbox and confirm.`})
     } else {
       await regenerateSession(req, sessionStorage, wsServer)
       res
-        .header('wsHandshakeToken', req.session.wsHandshakeToken)
+        .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
         .send({message: 'Password update successful.'})
     }
   } catch (e) {
@@ -229,7 +229,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir, async (req, res, nex
     await updateUserEmail(user.id, newEmail)
     await regenerateSession(req, sessionStorage, wsServer)
     return res
-      .header('wsHandshakeToken', req.session.wsHandshakeToken)
+      .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
       .send({message: 'Email change successful.'})
   } catch (e) {
     next(e)
@@ -257,7 +257,7 @@ authApiRouter.post(API_PATHS.AUTH.RESET_PASSWORD.dir, async (req, res, next) => 
     await mailServer.send(email, subject, text, html)
     await regenerateSession(req, sessionStorage, wsServer)
     res
-      .header('wsHandshakeToken', req.session.wsHandshakeToken)
+      .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
       .send({message: `Confirmation email was sent to ${email}. Please check the inbox and confirm.`})
   } catch (e) {
     next(e)
@@ -299,7 +299,7 @@ authApiRouter.post(API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir, async (req, res, n
     await updateUserPassword(user.id, hashedPassword)
     await regenerateSession(req, sessionStorage, wsServer)
     return res
-      .header('wsHandshakeToken', req.session.wsHandshakeToken)
+      .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
       .send({message: 'Password reset successful.'})
   } catch (e) {
     next(e)
