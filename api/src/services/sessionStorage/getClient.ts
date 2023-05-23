@@ -9,7 +9,7 @@ export default () => {
     url: `redis://${REDIS_HOST}`
   })
   clients.push(client)
-  client.connect()
+  const isConnecting = client.connect()
     .then(() => {
       console.info('Redis client connected.')
     })
@@ -17,7 +17,7 @@ export default () => {
       console.error(e)
       throw new Error('Could not connect to Redis server.')
     })
-  return client
+  return { client, isConnecting }
 }
 
 onExit.add(() => {

@@ -8,10 +8,10 @@ import documentsRouter from '../../routes/documents'
 import rootRouter from '../../routes/root'
 import getSessionMiddleware from '../../middlewares/session'
 
-const setupApiRoutes = (apiApp: Express, frontendDomain: string) => {
+const setupApiRoutes = async (apiApp: Express, frontendDomain: string) => {
   apiApp.use(cors({origin: `${FRONTEND_PROTOCOL}://${frontendDomain}${FRONTEND_PORT ? ':' + FRONTEND_PORT : ''}`}))
   apiApp.use(express.json())
-  apiApp.use(getSessionMiddleware())
+  apiApp.use(await getSessionMiddleware())
   apiApp.use(API_PATHS.ROOT.path, rootRouter)
   apiApp.use(API_PATHS.AUTH.path, authApiRouter)
   apiApp.use(API_PATHS.DOCUMENTS.path, documentsRouter)

@@ -3,9 +3,9 @@ import { JWT_SECRET_KEY } from '../../getEnvs'
 import getSessionStore from './sessionStore'
 
 const ONE_WEEK_IN_MILLISECONDS = 7 * 24 * 60 * 60 * 1000
-export default () => session({
+export default async () => session({
   secret: JWT_SECRET_KEY,
-  store: getSessionStore(),
+  store: await getSessionStore(),
   saveUninitialized: false,
   resave: false,
   rolling: true,

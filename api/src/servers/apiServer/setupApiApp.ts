@@ -1,7 +1,7 @@
 import { Express } from 'express'
 import setupApiRoutes from './setupApiRoutes'
 
-const setupApiApp = (apiApp: Express, frontendDomain: string) => {
-  setupApiRoutes(apiApp, frontendDomain)
+const setupApiApp = async (apiApp: Express, frontendDomain: string) => {
+  await setupApiRoutes(apiApp, frontendDomain)
 }
 export default setupApiApp

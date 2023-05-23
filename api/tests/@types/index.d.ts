@@ -10,7 +10,7 @@ declare global {
   var db: ConnectionPool | undefined
   /** When sharing connection pool above, sql also needs to be shared by unknown reason otherwise db.query function doesn't accept query built by sql function. */
   var sql: SQL | undefined
-  var redisClient: ReturnType<typeof getClient> | undefined
+  var redisClient: ReturnType<typeof getClient>['client'] | undefined
 }
 
 export {}
