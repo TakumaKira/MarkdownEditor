@@ -15,6 +15,7 @@ import getClient from "../src/services/sessionStorage/getClient"
 let destroyApiApp: () => Promise<void>
 
 beforeAll(async () => {
+  // Global set ups
   globalThis.wsServer = getWsServer()
   const { apiApp, isReady: apiAppIsReady, destroy } = getApiApp(globalThis.wsServer)
   globalThis.apiApp = apiApp
@@ -28,6 +29,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
+  // Global tear downs
   await destroyApiApp()
   await new Promise(setImmediate)
   return
