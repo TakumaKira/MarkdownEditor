@@ -1,4 +1,4 @@
+// jest is not available here.
 export default async function() {
-  // jest is not available here.
   return
 }
