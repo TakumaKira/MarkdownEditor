@@ -1,7 +1,7 @@
 import { Server } from 'socket.io'
-import { wsAuthMiddleware } from '../../middlewares/auth'
+import { getWsAuthMiddleware } from '../../middlewares/auth'
 
 const setupWsRoutes = (wsServer: Server) => {
-  wsServer.use(wsAuthMiddleware)
+  wsServer.use(getWsAuthMiddleware())
 }
 export default setupWsRoutes

@@ -1,7 +1,9 @@
 import { Express } from 'express'
+import { Server } from 'socket.io'
 import setupApiRoutes from './setupApiRoutes'
 
-const setupApiApp = async (apiApp: Express, frontendDomain: string) => {
-  await setupApiRoutes(apiApp, frontendDomain)
+const setupApiApp = (apiApp: Express, frontendDomain: string, wsServer: Server) => {
+  const isReady = setupApiRoutes(apiApp, frontendDomain, wsServer)
+  return isReady
 }
 export default setupApiApp

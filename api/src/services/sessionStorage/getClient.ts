@@ -4,12 +4,14 @@ import { REDIS_HOST } from '../../getEnvs'
 
 const clients: ReturnType<typeof createClient>[] = []
 
-export default () => {
+export default (disableAutoCleanup?: boolean) => {
   const client = createClient({
     url: `redis://${REDIS_HOST}`
   })
-  clients.push(client)
-  const isConnecting = client.connect()
+  if (!disableAutoCleanup) {
+    clients.push(client)
+  }
+  const isReady = client.connect()
     .then(() => {
       console.info('Redis client connected.')
     })
@@ -17,14 +19,16 @@ export default () => {
       console.error(e)
       throw new Error('Could not connect to Redis server.')
     })
-  return { client, isConnecting }
+  return { client, isReady }
 }
 
-onExit.add(() => {
-  clients.forEach(client => {
-    if (client.isOpen) {
-      client.quit()
-      console.info('Redis client closed.')
-    }
-  })
+onExit.add(async () => {
+  await Promise.all(clients.map(client =>
+    client.quit()
+      .then(() => console.info('Redis client closed.'))
+      .catch(err => {
+        console.error('Failed to close Redis client.')
+        console.error(err)
+      })
+  ))
 })

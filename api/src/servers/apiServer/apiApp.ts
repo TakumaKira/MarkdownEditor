@@ -1,9 +1,11 @@
 import express from "express"
+import { Server } from "socket.io"
 import { FRONTEND_DOMAIN } from "../../getEnvs"
 import setupApiApp from "./setupApiApp"
+import onExit from "../../onExit"
 
-export default async () => {
+export default (wsServer: Server) => {
   const apiApp = express()
-  await setupApiApp(apiApp, FRONTEND_DOMAIN)
-  return apiApp
+  const isReady = setupApiApp(apiApp, FRONTEND_DOMAIN, wsServer)
+  return { apiApp, isReady, destroy: onExit.execute }
 }

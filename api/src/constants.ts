@@ -1,4 +1,7 @@
+export const SESSION_SID_KEY = 'connect.sid'
 export const WS_HANDSHAKE_TOKEN_KEY = 'ws-handshake-token'
+/** 1 week in milliseconds */
+export const SESSION_MAX_AGE = 7 * 24 * 60 * 60 * 1000
 export const DOCUMENT_UPDATED_WS_EVENT = 'documents_updated'
 export const DOCUMENT_NAME_LENGTH_LIMIT = 50
 export const DOCUMENT_CONTENT_LENGTH_LIMIT = 20000

@@ -1,18 +1,16 @@
-const callbackList: Array<Function> = []
+export interface OnExit {
+  add: (callback: () => Promise<void>) => void;
+  execute: () => Promise<void>;
+}
 
-const onExit = {
-  add: function (callback: Function) {
+const callbackList: Array<() => Promise<void>> = []
+
+const onExit: OnExit = {
+  add: function (callback: () => Promise<void>) {
     callbackList.push(callback)
+  },
+  execute: async function () {
+    await Promise.all(callbackList.map(fn => fn()))
   }
 }
 export default onExit
-
-function handle(signal: string) {
-  console.log(`\nReceived ${signal}`)
-  for (const callback of callbackList) {
-    callback()
-  }
-  process.exit()
-}
-process.on('SIGINT', handle)
-process.on('SIGTERM', handle)

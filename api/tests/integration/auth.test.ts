@@ -1,35 +1,27 @@
 import request from 'supertest'
-import { API_PATHS, AUTH_TOKEN_KEY } from '../../src/constants'
-import db, { sql } from '../../src/services/database'
-import apiApp from '../../src/servers/apiServer/apiApp'
-import { JWT_SECRET_KEY, mailServer } from '../../src/getEnvs'
+import { API_PATHS, SESSION_SID_KEY } from '../../src/constants'
+import { JWT_SECRET_KEY, getMailServer } from '../../src/getEnvs'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import decodeToken from '../../src/services/decodeToken'
-import { UserInfoOnAuthToken } from '../../src/models/user'
 import { v4 as uuidv4 } from 'uuid'
-import wsServer from '../../src/servers/wsServer'
+import { assertSession } from '../utils'
+import cookie from 'cookie'
 
-jest.mock('../../src/getEnvs', () => ({
-  ...jest.requireActual('../../src/getEnvs'),
-  mailServer: {
-    send: jest.fn()
-  }
-}))
-
-beforeAll(() => {
+beforeAll(async () => {
+  return
 })
-afterAll(() => {
-  wsServer.close()
+afterAll(async () => {
+  return
 })
 
-beforeEach(() => {
+beforeEach(async () => {
   // Initialize users table.
-  return db.query(sql`
+  return await db.query(sql`
     DELETE FROM users;
   `)
 })
-afterEach(() => {
+afterEach(async () => {
+  return
 })
 
 describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
@@ -96,7 +88,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
   })
 
   test('creates un-activated user and send signup confirmation email if email is not registered yet', async () => {
-    const mockMailServerSend = mailServer.send
+    const mockMailServerSend = getMailServer().send
     const email = 'test@email.com'
     const password = 'password'
     // Signup a user and check response.
@@ -122,7 +114,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
   })
 
   test('overwrites password and send signup confirmation email if email is already registered but not activated', async () => {
-    const mockMailServerSend = mailServer.send
+    const mockMailServerSend = getMailServer().send
     const email = 'test@email.com'
     const password1 = 'password1'
     const salt = await bcrypt.genSalt(10)
@@ -280,11 +272,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
       .send({token})
     expect(res.status).toBe(200)
-    const authToken = res.body?.token
-    expect(typeof authToken).toBe('string')
-    const decodedAuthToken = decodeToken<UserInfoOnAuthToken>(authToken, JWT_SECRET_KEY)
-    expect(decodedAuthToken.is).toBe('AuthToken')
-    expect(decodedAuthToken.email).toBe(email)
+    await assertSession(res, email)
   })
 })
 
@@ -379,7 +367,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
     expect(res.body.message).toBe('Email/Password is incorrect.')
   })
 
-  test('returns auth token if email and password are correct and user is activated', async () => {
+  test('returns 200 with valid session cookie if email and password are correct and user is activated', async () => {
     const email = 'test@email.com'
     const password = 'password'
     const salt = await bcrypt.genSalt(10)
@@ -402,11 +390,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email, password })
     expect(res.status).toBe(200)
-    const authToken = res.body?.token
-    expect(typeof authToken).toBe('string')
-    const decodedAuthToken = decodeToken<UserInfoOnAuthToken>(authToken, JWT_SECRET_KEY)
-    expect(decodedAuthToken.is).toBe('AuthToken')
-    expect(decodedAuthToken.email).toBe(email)
+    await assertSession(res, email)
   })
 })
 
@@ -441,14 +425,14 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
       .post(API_PATHS.AUTH.EDIT.path)
       .send({ email: newEmail, password: newPassword })
     expect(resForNoSet.status).toBe(401)
-    expect(resForNoSet.body.message).toBe('Access denied. Request does not have valid token.')
+    expect(resForNoSet.body.message).toBe('Access denied. Request is not authorized.')
 
-    const resForEmptyString = await request(apiApp)
+    const resForEmptyArray = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({[AUTH_TOKEN_KEY]: ''})
+      .set('Cookie', [])
       .send({ email: newEmail, password: newPassword })
-    expect(resForEmptyString.status).toBe(401)
-    expect(resForEmptyString.body.message).toBe('Access denied. Request does not have valid token.')
+    expect(resForEmptyArray.status).toBe(401)
+    expect(resForEmptyArray.body.message).toBe('Access denied. Request is not authorized.')
     // Make sure email and password is not updated.
     const result = await db.query(sql`
       SELECT email, password
@@ -462,7 +446,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(isUpdatedPassword).toBe(false)
   })
 
-  test('returns 401 without updating email nor password if no auth token provided', async () => {
+  test('returns 401 without updating email nor password if no session cookie provided', async () => {
     const oldEmail = 'old@email.com'
     const newEmail = 'new@email.com'
     const oldPassword = 'oldPassword'
@@ -492,14 +476,14 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
       .post(API_PATHS.AUTH.EDIT.path)
       .send({ email: newEmail, password: newPassword })
     expect(resForNoSet.status).toBe(401)
-    expect(resForNoSet.body.message).toBe('Access denied. Request does not have valid token.')
+    expect(resForNoSet.body.message).toBe('Access denied. Request is not authorized.')
 
-    const resForEmptyString = await request(apiApp)
+    const resForEmptyArray = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({[AUTH_TOKEN_KEY]: ''})
+      .set('Cookie', [])
       .send({ email: newEmail, password: newPassword })
-    expect(resForEmptyString.status).toBe(401)
-    expect(resForEmptyString.body.message).toBe('Access denied. Request does not have valid token.')
+    expect(resForEmptyArray.status).toBe(401)
+    expect(resForEmptyArray.body.message).toBe('Access denied. Request is not authorized.')
     // Make sure email and password is not updated.
     const result = await db.query(sql`
       SELECT email, password
@@ -513,7 +497,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(isUpdatedPassword).toBe(false)
   })
 
-  test('returns 401 without updating email nor password if auth token is not valid', async () => {
+  test('returns 401 without updating email nor password if session cookie is not valid', async () => {
     const oldEmail = 'old@email.com'
     const newEmail = 'new@email.com'
     const oldPassword = 'oldPassword'
@@ -539,114 +523,22 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
         WHERE email = ${oldEmail};
     `))[0].id
 
-    const validAuthToken = jwt.sign(
-      {is: 'AuthToken', id: 1, email: oldEmail},
-      JWT_SECRET_KEY
-    )
+    const resLogin = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGIN.path)
+      .send({ email: oldEmail, password: oldPassword })
+    const setCookieHeaders: string[] = resLogin.headers['set-cookie']
+    const cookies = setCookieHeaders.map(headerValue => cookie.parse(headerValue))
+    const sessionCookieIndex = cookies.findIndex((cookie: any) => cookie.hasOwnProperty(SESSION_SID_KEY))
+    const connectSid: string | undefined = cookies[sessionCookieIndex]?.[SESSION_SID_KEY];
+    const validSessionSid = connectSid.match(/s:([^\.]+)/)?.[1]
+    const invalidCookie: string[] = [setCookieHeaders[0].replace(validSessionSid!, `${validSessionSid}1`)]
+
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({[AUTH_TOKEN_KEY]: `${validAuthToken}1`})
+      .set('Cookie', invalidCookie)
       .send({ email: newEmail, password: newPassword })
     expect(res.status).toBe(401)
-    expect(res.body.message).toBe('Access denied. Request does not have valid token.')
-    // Make sure email and password is not updated.
-    const result = await db.query(sql`
-      SELECT email, password
-        FROM users
-        WHERE id = ${id};
-    `)
-    expect(result[0].email).toBe(oldEmail)
-    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
-    expect(isOriginalPassword).toBe(true)
-    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
-    expect(isUpdatedPassword).toBe(false)
-  })
-
-  test('returns 401 without updating email nor password if given token is not encoded with right secret', async () => {
-    const oldEmail = 'old@email.com'
-    const newEmail = 'new@email.com'
-    const oldPassword = 'oldPassword'
-    const newPassword = 'newPassword'
-    const salt = await bcrypt.genSalt(10)
-    const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
-    // Create activated user.
-    await db.query(sql`
-      INSERT INTO users (
-        email,
-        password,
-        is_activated
-      )
-      VALUES (
-        ${oldEmail},
-        ${hashedOldPassword},
-        true
-      );
-    `)
-    const id = (await db.query(sql`
-      SELECT id
-        FROM users
-        WHERE email = ${oldEmail};
-    `))[0].id
-
-    const tokenWithIncorrectSecret = jwt.sign(
-      {is: 'AuthToken', id: 1, email: oldEmail},
-      `${JWT_SECRET_KEY}1`
-    )
-    const res = await request(apiApp)
-      .post(API_PATHS.AUTH.EDIT.path)
-      .set({[AUTH_TOKEN_KEY]: tokenWithIncorrectSecret})
-      .send({ email: newEmail, password: newPassword })
-    expect(res.status).toBe(401)
-    expect(res.body.message).toBe('Access denied. Request does not have valid token.')
-    // Make sure email and password is not updated.
-    const result = await db.query(sql`
-      SELECT email, password
-        FROM users
-        WHERE id = ${id};
-    `)
-    expect(result[0].email).toBe(oldEmail)
-    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
-    expect(isOriginalPassword).toBe(true)
-    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
-    expect(isUpdatedPassword).toBe(false)
-  })
-
-  test('returns 401 without updating email nor password if given token is not authToken', async () => {
-    const oldEmail = 'old@email.com'
-    const newEmail = 'new@email.com'
-    const oldPassword = 'oldPassword'
-    const newPassword = 'newPassword'
-    const salt = await bcrypt.genSalt(10)
-    const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
-    // Create activated user.
-    await db.query(sql`
-      INSERT INTO users (
-        email,
-        password,
-        is_activated
-      )
-      VALUES (
-        ${oldEmail},
-        ${hashedOldPassword},
-        true
-      );
-    `)
-    const id = (await db.query(sql`
-      SELECT id
-        FROM users
-        WHERE email = ${oldEmail};
-    `))[0].id
-
-    const nonAuthToken = jwt.sign(
-      {is: 'SignupToken', email: oldEmail},
-      JWT_SECRET_KEY
-    )
-    const res = await request(apiApp)
-      .post(API_PATHS.AUTH.EDIT.path)
-      .set({[AUTH_TOKEN_KEY]: nonAuthToken})
-      .send({ email: newEmail, password: newPassword })
-    expect(res.status).toBe(401)
-    expect(res.body.message).toBe('Access denied. Request does not have valid token.')
+    expect(res.body.message).toBe('Access denied. Request is not authorized.')
     // Make sure email and password is not updated.
     const result = await db.query(sql`
       SELECT email, password
@@ -685,21 +577,21 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
         WHERE email = ${oldEmail};
     `))[0].id
 
-    const validAuthToken = jwt.sign(
-      {is: 'AuthToken', id: 1, email: oldEmail},
-      JWT_SECRET_KEY
-    )
+    const resLogin = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGIN.path)
+      .send({ email: oldEmail, password: oldPassword })
+    const validCookie: string[] = resLogin.headers['set-cookie']
 
     const resForUndefined = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({[AUTH_TOKEN_KEY]: validAuthToken})
+      .set('Cookie', validCookie)
       .send()
     expect(resForUndefined.status).toBe(400)
     expect(resForUndefined.body.message).toBe("\"value\" must have at least 1 key")
 
     const resForEmptyObject = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({[AUTH_TOKEN_KEY]: validAuthToken})
+      .set('Cookie', validCookie)
       .send({})
     expect(resForEmptyObject.status).toBe(400)
     expect(resForEmptyObject.body.message).toBe("\"value\" must have at least 1 key")
@@ -717,7 +609,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
   })
 
   test('sends confirmation mail if only new email is provided and returns message', async () => {
-    const mockMailServerSend = mailServer.send
+    const mockMailServerSend = getMailServer().send
     const oldEmail = 'old@email.com'
     const newEmail = 'new@email.com'
     const oldPassword = 'oldPassword'
@@ -743,13 +635,14 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
         WHERE email = ${oldEmail};
     `))[0].id
 
-    const validAuthToken = jwt.sign(
-      {is: 'AuthToken', id: 1, email: oldEmail},
-      JWT_SECRET_KEY
-    )
+    const resLogin = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGIN.path)
+      .send({ email: oldEmail, password: oldPassword })
+    const validCookie: string[] = resLogin.headers['set-cookie']
+
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({[AUTH_TOKEN_KEY]: validAuthToken})
+      .set('Cookie', validCookie)
       .send({email: newEmail})
     expect(mockMailServerSend).toBeCalledWith(newEmail, expect.any(String), expect.any(String), expect.any(String))
     expect(res.status).toBe(200)
@@ -790,14 +683,14 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
         FROM users
         WHERE email = ${email}
     `))[0].id as number
-    const validAuthToken = jwt.sign(
-      {is: 'AuthToken', id, email},
-      JWT_SECRET_KEY
-    )
+    const resLogin = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGIN.path)
+      .send({ email, password: oldPassword })
+    const validCookie: string[] = resLogin.headers['set-cookie']
     const newPassword = 'newPassword'
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({[AUTH_TOKEN_KEY]: validAuthToken})
+      .set('Cookie', validCookie)
       .send({password: newPassword})
     expect(res.status).toBe(200)
     expect(res.body.message).toBe('Password update successful.')
@@ -814,7 +707,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
   })
 
   test('updates only password and sends confirmation mail if both new email and new password is provided', async () => {
-    const mockMailServerSend = mailServer.send
+    const mockMailServerSend = getMailServer().send
     const oldEmail = 'old@email.com'
     const oldPassword = 'oldPassword'
     const salt = await bcrypt.genSalt(10)
@@ -838,15 +731,15 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
         WHERE email = ${oldEmail}
     `))[0].id
 
-    const validAuthToken = jwt.sign(
-      {is: 'AuthToken', id, email: oldEmail},
-      JWT_SECRET_KEY
-    )
+    const resLogin = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGIN.path)
+      .send({ email: oldEmail, password: oldPassword })
+    const validCookie: string[] = resLogin.headers['set-cookie']
     const newEmail = 'new@email.com'
     const newPassword = 'newPassword'
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.EDIT.path)
-      .set({[AUTH_TOKEN_KEY]: validAuthToken})
+      .set('Cookie', validCookie)
       .send({email: newEmail, password: newPassword})
     expect(mockMailServerSend).toBeCalledWith(newEmail, expect.any(String), expect.any(String), expect.any(String))
     expect(res.status).toBe(200)
@@ -1272,7 +1165,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     expect(result[0].email).toBe(oldEmail)
   })
 
-  test('updates email and returns auth token if there is no problem on entire process', async () => {
+  test('updates email and returns 200 with valid session cookie if there is no problem on entire process', async () => {
     const oldEmail = 'old@email.com'
     const newEmail = 'new@email.com'
     const password = 'password'
@@ -1306,11 +1199,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       .send({token, password})
     expect(res.status).toBe(200)
     expect(res.body.message).toBe('Email change successful.')
-    const authToken = res.body?.token
-    expect(typeof authToken).toBe('string')
-    const decodedAuthToken = decodeToken<UserInfoOnAuthToken>(authToken, JWT_SECRET_KEY)
-    expect(decodedAuthToken.is).toBe('AuthToken')
-    expect(decodedAuthToken.email).toBe(newEmail)
+    await assertSession(res, newEmail)
     // Make sure email is updated.
     const result = await db.query(sql`
       SELECT email
@@ -1370,7 +1259,7 @@ describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
   })
 
   test('sends confirmation mail if there is no problem', async () => {
-    const mockMailServerSend = mailServer.send
+    const mockMailServerSend = getMailServer().send
     const email = 'test@email.com'
     const password = 'password'
     const salt = await bcrypt.genSalt(10)
@@ -1390,9 +1279,9 @@ describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.RESET_PASSWORD.path)
       .send({email})
+    expect(mockMailServerSend).toBeCalledWith(email, expect.any(String), expect.any(String), expect.any(String))
     expect(res.status).toBe(200)
     expect(res.body.message).toBe(`Confirmation email was sent to ${email}. Please check the inbox and confirm.`)
-    expect(mockMailServerSend).toBeCalledWith(email, expect.any(String), expect.any(String), expect.any(String))
   })
 })
 
@@ -1725,7 +1614,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
 })
 
 describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
-  test('returns 401 without deleting user if no auth token provided', async () => {
+  test('returns 401 without deleting user if no session cookie provided', async () => {
     const email = 'test@email.com'
     const password = 'password'
     const salt = await bcrypt.genSalt(10)
@@ -1753,14 +1642,14 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
       .post(API_PATHS.AUTH.DELETE.path)
       .send()
     expect(resForNoSet.status).toBe(401)
-    expect(resForNoSet.body.message).toBe('Access denied. Request does not have valid token.')
+    expect(resForNoSet.body.message).toBe('Access denied. Request is not authorized.')
 
-    const resForEmptyString = await request(apiApp)
+    const resForEmptyArray = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
-      .set({[AUTH_TOKEN_KEY]: ''})
+      .set('Cookie', [])
       .send()
-    expect(resForEmptyString.status).toBe(401)
-    expect(resForEmptyString.body.message).toBe('Access denied. Request does not have valid token.')
+    expect(resForEmptyArray.status).toBe(401)
+    expect(resForEmptyArray.body.message).toBe('Access denied. Request is not authorized.')
     // Make sure email and password is not updated.
     const result = await db.query(sql`
       SELECT email, password
@@ -1772,7 +1661,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     expect(isOriginalPassword).toBe(true)
   })
 
-  test('returns 401 without deleting user if auth token is not valid', async () => {
+  test('returns 401 without deleting user if session cookie is not valid', async () => {
     const email = 'test@email.com'
     const password = 'password'
     const salt = await bcrypt.genSalt(10)
@@ -1796,106 +1685,22 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
         WHERE email = ${email};
     `))[0].id
 
-    const validAuthToken = jwt.sign(
-      {is: 'AuthToken', id: 1, email},
-      JWT_SECRET_KEY
-    )
+    const resLogin = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGIN.path)
+      .send({ email, password })
+    const setCookieHeaders: string[] = resLogin.headers['set-cookie']
+    const cookies = setCookieHeaders.map(headerValue => cookie.parse(headerValue))
+    const sessionCookieIndex = cookies.findIndex((cookie: any) => cookie.hasOwnProperty(SESSION_SID_KEY))
+    const connectSid: string | undefined = cookies[sessionCookieIndex]?.[SESSION_SID_KEY];
+    const validSessionSid = connectSid.match(/s:([^\.]+)/)?.[1]
+    const invalidCookie: string[] = [setCookieHeaders[0].replace(validSessionSid!, `${validSessionSid}1`)]
+
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
-      .set({[AUTH_TOKEN_KEY]: `${validAuthToken}1`})
+      .set('Cookie', invalidCookie)
       .send()
     expect(res.status).toBe(401)
-    expect(res.body.message).toBe('Access denied. Request does not have valid token.')
-    // Make sure email and password is not updated.
-    const result = await db.query(sql`
-      SELECT email, password
-        FROM users
-        WHERE id = ${id};
-    `)
-    expect(result[0].email).toBe(email)
-    const isOriginalPassword = await bcrypt.compare(password, result[0].password)
-    expect(isOriginalPassword).toBe(true)
-  })
-
-  test('returns 401 without deleting user if given token is not encoded with right secret', async () => {
-    const email = 'test@email.com'
-    const password = 'password'
-    const salt = await bcrypt.genSalt(10)
-    const hashedPassword = await bcrypt.hash(password, salt)
-    // Create activated user.
-    await db.query(sql`
-      INSERT INTO users (
-        email,
-        password,
-        is_activated
-      )
-      VALUES (
-        ${email},
-        ${hashedPassword},
-        true
-      );
-    `)
-    const id = (await db.query(sql`
-      SELECT id
-        FROM users
-        WHERE email = ${email};
-    `))[0].id
-
-    const tokenWithIncorrectSecret = jwt.sign(
-      {is: 'AuthToken', id: 1, email},
-      `${JWT_SECRET_KEY}1`
-    )
-    const res = await request(apiApp)
-      .post(API_PATHS.AUTH.DELETE.path)
-      .set({[AUTH_TOKEN_KEY]: tokenWithIncorrectSecret})
-      .send()
-    expect(res.status).toBe(401)
-    expect(res.body.message).toBe('Access denied. Request does not have valid token.')
-    // Make sure email and password is not updated.
-    const result = await db.query(sql`
-      SELECT email, password
-        FROM users
-        WHERE id = ${id};
-    `)
-    expect(result[0].email).toBe(email)
-    const isOriginalPassword = await bcrypt.compare(password, result[0].password)
-    expect(isOriginalPassword).toBe(true)
-  })
-
-  test('returns 401 without deleting user if given token is not authToken', async () => {
-    const email = 'test@email.com'
-    const password = 'password'
-    const salt = await bcrypt.genSalt(10)
-    const hashedPassword = await bcrypt.hash(password, salt)
-    // Create activated user.
-    await db.query(sql`
-      INSERT INTO users (
-        email,
-        password,
-        is_activated
-      )
-      VALUES (
-        ${email},
-        ${hashedPassword},
-        true
-      );
-    `)
-    const id = (await db.query(sql`
-      SELECT id
-        FROM users
-        WHERE email = ${email};
-    `))[0].id
-
-    const notAuthToken = jwt.sign(
-      {is: 'SignupToken', id: 1, email},
-      JWT_SECRET_KEY
-    )
-    const res = await request(apiApp)
-      .post(API_PATHS.AUTH.DELETE.path)
-      .set({[AUTH_TOKEN_KEY]: notAuthToken})
-      .send()
-    expect(res.status).toBe(401)
-    expect(res.body.message).toBe('Access denied. Request does not have valid token.')
+    expect(res.body.message).toBe('Access denied. Request is not authorized.')
     // Make sure email and password is not updated.
     const result = await db.query(sql`
       SELECT email, password
@@ -1909,14 +1714,34 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
 
   test('returns 400 if user does not exist', async () => {
     const email = 'test@email.com'
-
-    const validAuthToken = jwt.sign(
-      {is: 'AuthToken', id: 1, email},
-      JWT_SECRET_KEY
-    )
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    // Create activated user.
+    await db.query(sql`
+      INSERT INTO users (
+        email,
+        password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedPassword},
+        true
+      );
+    `)
+    const resLogin = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGIN.path)
+      .send({ email, password })
+    const validCookie: string[] = resLogin.headers['set-cookie']
+    // Delete the user.
+    await db.query(sql`
+      DELETE FROM users
+        WHERE email = ${email};
+    `)
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
-      .set({[AUTH_TOKEN_KEY]: validAuthToken})
+      .set('Cookie', validCookie)
       .send()
     expect(res.status).toBe(400)
     expect(res.body.message).toBe('The email you are trying to delete does not exist on database.')
@@ -1971,13 +1796,13 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     `)
     expect(documentInsertResult).toHaveProperty('affectedRows', 1)
 
-    const validAuthToken = jwt.sign(
-      {is: 'AuthToken', id: userId, email},
-      JWT_SECRET_KEY
-    )
+    const resLogin = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGIN.path)
+      .send({ email, password })
+    const validCookie: string[] = resLogin.headers['set-cookie']
     const res = await request(apiApp)
       .post(API_PATHS.AUTH.DELETE.path)
-      .set({[AUTH_TOKEN_KEY]: validAuthToken})
+      .set('Cookie', validCookie)
       .send()
     expect(res.status).toBe(200)
     expect(res.body.message).toBe('User deleted successfully.')

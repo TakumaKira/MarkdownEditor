@@ -7,16 +7,27 @@ let wsServer: Server
 
 const startWsServer = (wsPort: number) => {
   if (wsServer) {
-    console.trace('wsServer is already running')
+    console.error(new Error('wsServer is already running'))
     return wsServer
   }
   wsServer = new Server(wsPort, {cors: {origin: `${FRONTEND_PROTOCOL}://${FRONTEND_DOMAIN}${FRONTEND_PORT ? ':' + FRONTEND_PORT : ''}`}})
   setupWsServer(wsServer)
-  onExit.add(() => {
-    wsServer.close()
+  onExit.add(async () => {
+    await new Promise<void>((resolve, reject) =>
+      wsServer.close(err => {
+        if (err) {
+          console.error('Failed to close WebSocket server.')
+          console.error(err)
+          reject()
+          return
+        }
+        console.info('WebSocket closed.')
+        resolve()
+      })
+    )
   })
 
-  console.log(`⚡️[server]: Websocket server is running at localhost:${wsPort}`)
+  console.info(`⚡️[server]: Websocket server is running at localhost:${wsPort}`)
   return wsServer
 }
 export default startWsServer

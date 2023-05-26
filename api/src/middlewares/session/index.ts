@@ -1,17 +1,23 @@
 import session from 'express-session'
 import { JWT_SECRET_KEY } from '../../getEnvs'
 import getSessionStore from './sessionStore'
+import { SESSION_MAX_AGE } from '../../constants'
 
-const ONE_WEEK_IN_MILLISECONDS = 7 * 24 * 60 * 60 * 1000
-export default async () => session({
-  secret: JWT_SECRET_KEY,
-  store: await getSessionStore(),
-  saveUninitialized: false,
-  resave: false,
-  rolling: true,
-  cookie: {
-    httpOnly: true,
-    sameSite: true,
-    maxAge: ONE_WEEK_IN_MILLISECONDS,
-  },
-})
+export default () => {
+  const { sessionStore, isReady } = getSessionStore()
+  return {
+    sessionMiddleware: session({
+      secret: JWT_SECRET_KEY,
+      store: sessionStore,
+      saveUninitialized: false,
+      resave: false,
+      rolling: true,
+      cookie: {
+        httpOnly: true,
+        sameSite: true,
+        maxAge: SESSION_MAX_AGE,
+      },
+    }),
+    isReady
+  }
+}

@@ -210,4 +210,4 @@ export const MYSQL_USER = mysqlUser!
 export const MYSQL_PASSWORD = mysqlPassword!
 
 // Confirmation email settings
-export const mailServer = _mailServer!
+export const getMailServer = () => _mailServer!

@@ -3,18 +3,18 @@ import getClient from "./getClient";
 import { getRedisKeyName } from "./utils";
 
 export default class Controller {
-  private clientGetter = getClient()
+  private clientGetter: ReturnType<typeof getClient> = getClient(true)
   get client(): ReturnType<typeof getClient>['client'] {
     return this.clientGetter.client
   }
 
   async saveWsHandshakeToken(sessionId: string, wsHandshakeToken: string): Promise<void> {
-    await this.clientGetter.isConnecting
+    await this.clientGetter.isReady
     await this.client.set(getRedisKeyName(REDIS_KEYS.WS_HANDSHAKE_TOKEN, wsHandshakeToken), sessionId)
   }
 
   async removeWsHandshakeToken(sessionId: string): Promise<void> {
-    await this.clientGetter.isConnecting
+    await this.clientGetter.isReady
     const sessionStr = await this.client.get(getRedisKeyName(REDIS_KEYS.SESSION, sessionId))
     if (sessionStr === null) return
     const session: Express.Request['session'] = JSON.parse(sessionStr)
@@ -23,7 +23,7 @@ export default class Controller {
   }
 
   async getSession(wsHandshakeToken: string): Promise<Express.Request['session'] | null> {
-    await this.clientGetter.isConnecting
+    await this.clientGetter.isReady
     const sessionId = await this.client.get(getRedisKeyName(REDIS_KEYS.WS_HANDSHAKE_TOKEN, wsHandshakeToken))
     if (sessionId === null) return null
     const sessionStr = await this.client.get(getRedisKeyName(REDIS_KEYS.SESSION, sessionId))
@@ -32,7 +32,13 @@ export default class Controller {
     return session
   }
 
-  destroy() {
-    return this.client.quit()
+  async destroy() {
+    try {
+      await this.clientGetter.client.quit()
+      await new Promise(setImmediate)
+    } catch (e) {
+      console.error(e)
+      throw new Error('Failed to destroy session controller.')
+    }
   }
 }

@@ -10,14 +10,13 @@ export default () => {
   return db
 }
 
-onExit.add(() => {
-  connections.forEach(db => {
+onExit.add(async () => {
+  await Promise.all(connections.map(db => {
     db.dispose()
-      .then(() => {
-        console.info('Database client disconnected.')
-      })
-      .catch((ex) => {
+      .then(() => console.info('Database client disposed.'))
+      .catch(ex => {
+        console.error('Failed to dispose database client.')
         console.error(ex)
       })
-  })
+  }))
 })
