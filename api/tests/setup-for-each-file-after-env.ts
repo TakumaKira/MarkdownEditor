@@ -1,3 +1,9 @@
+/*
+jest is available here.
+beforeAll in this file runs before each test file's beforeAll.
+afterAll in this file runs before each test file's afterAll.
+*/
+
 const mockSend = jest.fn()
 jest.mock('../src/getEnvs', () => ({
   ...jest.requireActual('../src/getEnvs'),
@@ -12,14 +18,12 @@ import getWsServer from '../src/servers/wsServer'
 import getDb from '../src/services/database/connector'
 import getClient from "../src/services/sessionStorage/getClient"
 
-let destroyApiApp: () => Promise<void>
-
 beforeAll(async () => {
   // Global set ups
   globalThis.wsServer = getWsServer()
   const { apiApp, isReady: apiAppIsReady, destroy } = getApiApp(globalThis.wsServer)
   globalThis.apiApp = apiApp
-  destroyApiApp = destroy
+  globalThis.destroyApiApp = destroy
   globalThis.db = getDb()
   globalThis.sql = sql
   const { client, isReady: redisClientIsReady } = getClient()
@@ -30,7 +34,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   // Global tear downs
-  await destroyApiApp()
   await new Promise(setImmediate)
   return
 })

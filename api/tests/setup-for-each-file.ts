@@ -1,0 +1,4 @@
+/*
+Runs before each test file
+jest is available here but beforeAll and afterAll are not available here.
+*/

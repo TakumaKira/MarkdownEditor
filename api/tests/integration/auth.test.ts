@@ -11,6 +11,7 @@ beforeAll(async () => {
   return
 })
 afterAll(async () => {
+  await destroyApiApp()
   return
 })
 
