@@ -12,23 +12,8 @@ jest.mock('../src/getEnvs', () => ({
   })
 }))
 
-import { sql } from '@databases/mysql';
-import getApiApp from '../src/servers/apiServer/apiApp'
-import getWsServer from '../src/servers/wsServer'
-import getDb from '../src/services/database/connector'
-import getClient from "../src/services/sessionStorage/getClient"
-
 beforeAll(async () => {
   // Global set ups
-  globalThis.wsServer = getWsServer()
-  const { apiApp, isReady: apiAppIsReady, destroy } = getApiApp(globalThis.wsServer)
-  globalThis.apiApp = apiApp
-  globalThis.destroyApiApp = destroy
-  globalThis.db = getDb()
-  globalThis.sql = sql
-  const { client, isReady: redisClientIsReady } = getClient()
-  globalThis.redisClient = client
-  await Promise.all([apiAppIsReady, redisClientIsReady])
   return
 })
 

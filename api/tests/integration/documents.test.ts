@@ -13,8 +13,10 @@ import { API_PATHS, DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT, D
 import { DocumentFromDevice, DocumentFromDB, DocumentsUpdateRequest, DocumentsUpdateResponse, Document, DocumentUpdatedWsMessage } from '../../src/models/document'
 import { WS_PORT } from '../../src/getEnvs'
 import { regIsISODateString } from '../../src/middlewares/validator'
+import { setupApiAppForTest } from '../utils'
 
 beforeAll(async () => {
+  await setupApiAppForTest()
   await addUsers()
   return
 })

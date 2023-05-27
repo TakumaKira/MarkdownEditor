@@ -4,10 +4,11 @@ import { JWT_SECRET_KEY, getMailServer } from '../../src/getEnvs'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { v4 as uuidv4 } from 'uuid'
-import { assertSession } from '../utils'
+import { assertSession, setupApiAppForTest } from '../utils'
 import cookie from 'cookie'
 
 beforeAll(async () => {
+  await setupApiAppForTest()
   return
 })
 afterAll(async () => {
