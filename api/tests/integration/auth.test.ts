@@ -4,23 +4,21 @@ import { JWT_SECRET_KEY } from '../../src/getEnvs'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { v4 as uuidv4 } from 'uuid'
-import { assertSession, closeApiAppForTest, setupApiAppForTest } from '../utils'
+import { assertSession, apiAppForTest } from '../utils'
 import cookie from 'cookie'
 import getMailServer from '../../src/services/mailServer'
 
 beforeAll(async () => {
-  await setupApiAppForTest()
-  return
+  await apiAppForTest.setup()
 })
 afterAll(async () => {
-  await closeApiAppForTest()
+  await apiAppForTest.close()
   await new Promise(resolve => setTimeout(resolve, 100))
-  return
 })
 
 beforeEach(async () => {
   // Initialize users table.
-  return await dbClient.query(sql`
+  await dbClient.query(sql`
     DELETE FROM users;
   `)
 })

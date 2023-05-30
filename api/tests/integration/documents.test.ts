@@ -13,18 +13,16 @@ import { API_PATHS, DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT, D
 import { DocumentFromDevice, DocumentFromDB, DocumentsUpdateRequest, DocumentsUpdateResponse, Document, DocumentUpdatedWsMessage } from '../../src/models/document'
 import { WS_PORT } from '../../src/getEnvs'
 import { regIsISODateString } from '../../src/middlewares/validator'
-import { closeApiAppForTest, setupApiAppForTest } from '../utils'
+import { apiAppForTest } from '../utils'
 
 beforeAll(async () => {
-  await setupApiAppForTest()
+  await apiAppForTest.setup()
   await addUsers()
-  return
 })
 afterAll(async () => {
   await clearUsers()
-  await closeApiAppForTest()
+  await apiAppForTest.close()
   await new Promise(resolve => setTimeout(resolve, 100))
-  return
 })
 
 type User = { id: number, email: string, password: string }
@@ -66,13 +64,13 @@ const clearUsers = async () => {
   `)
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   // Initialize documents table.
-  return dbClient.query(sql`
+  await dbClient.query(sql`
     DELETE FROM documents;
   `)
 })
-afterEach(() => {
+afterEach(async () => {
 })
 
 const TESTING_WS_SERVER_AP = `ws://localhost:${WS_PORT}`

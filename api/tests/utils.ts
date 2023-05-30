@@ -9,99 +9,95 @@ import getSessionStorageClient from '../src/services/sessionStorage/client'
 import getApiApp from "../src/servers/apiServer/apiApp"
 
 /**
- * Setup apiApp / wsServer / dbClient / sessionStorageClient.
+ * Setup/close apiApp / wsServer / dbClient / sessionStorageClient.
  */
-export async function setupApiAppForTest() {
-  const { sessionStorageClient, closeSessionStorageClient, sessionStorageClientIsReady } = getSessionStorageClient()
-  const { wsServer, closeWsServer } = getWsServer(sessionStorageClient, sessionStorageClientIsReady)
-  const { dbClient, closeDBClient } = getDBClient()
-  const apiApp = getApiApp(wsServer, dbClient, sessionStorageClient, sessionStorageClientIsReady)
+export const apiAppForTest = {
+  setup: async function () {
+    const { sessionStorageClient, closeSessionStorageClient, sessionStorageClientIsReady } = getSessionStorageClient()
+    const { wsServer, closeWsServer } = getWsServer(sessionStorageClient, sessionStorageClientIsReady)
+    const { dbClient, closeDBClient } = getDBClient()
+    const apiApp = getApiApp(wsServer, dbClient, sessionStorageClient, sessionStorageClientIsReady)
 
-  globalThis.apiApp = apiApp
-  globalThis.wsServer = wsServer
-  globalThis.dbClient = dbClient
-  globalThis.sql = sql
-  globalThis.sessionStorageClient = sessionStorageClient
-  globalThis.sessionStorageClientIsReady = sessionStorageClientIsReady
+    globalThis.apiApp = apiApp
+    globalThis.wsServer = wsServer
+    globalThis.dbClient = dbClient
+    globalThis.sql = sql
+    globalThis.sessionStorageClient = sessionStorageClient
+    globalThis.sessionStorageClientIsReady = sessionStorageClientIsReady
 
-  await sessionStorageClientIsReady
+    await sessionStorageClientIsReady
 
-  globalThis.closeWsServer = closeWsServer
-  globalThis.closeDBClient = closeDBClient
-  globalThis.closeSessionStorageClient = closeSessionStorageClient
-}
-/**
- * Close apiApp / wsServer / dbClient / sessionStorageClient.
- */
-export async function closeApiAppForTest() {
-  await Promise.all([
-    globalThis.closeWsServer(),
-    globalThis.closeDBClient(),
-    globalThis.closeSessionStorageClient(),
-  ])
-}
-
-/**
- * Setup wsServer / sessionStorageClient.
- */
-export async function setupWsServerForTest() {
-  const { sessionStorageClient, closeSessionStorageClient, sessionStorageClientIsReady } = getSessionStorageClient()
-  const { wsServer, closeWsServer } = getWsServer(sessionStorageClient, sessionStorageClientIsReady)
-
-  globalThis.wsServer = wsServer
-  globalThis.sessionStorageClient = sessionStorageClient
-  globalThis.sessionStorageClientIsReady = sessionStorageClientIsReady
-
-  await sessionStorageClientIsReady
-
-  globalThis.closeWsServer = closeWsServer
-  globalThis.closeSessionStorageClient = closeSessionStorageClient
-}
-/**
- * Close wsServer / sessionStorageClient.
- */
-export async function closeWsServerForTest() {
-  await Promise.all([
-    globalThis.closeWsServer(),
-    globalThis.closeSessionStorageClient(),
-  ])
+    globalThis.closeWsServer = closeWsServer
+    globalThis.closeDBClient = closeDBClient
+    globalThis.closeSessionStorageClient = closeSessionStorageClient
+  },
+  close: async function () {
+    await Promise.all([
+      globalThis.closeWsServer(),
+      globalThis.closeDBClient(),
+      globalThis.closeSessionStorageClient(),
+    ])
+  }
 }
 
 /**
- * Setup dbClient.
+ * Setup/close wsServer / sessionStorageClient.
  */
-export async function setupDbClientForTest() {
-  const { dbClient, closeDBClient } = getDBClient()
-  globalThis.dbClient = dbClient
-  globalThis.sql = sql
+export const wsServerForTest = {
+  setup: async function () {
+    const { sessionStorageClient, closeSessionStorageClient, sessionStorageClientIsReady } = getSessionStorageClient()
+    const { wsServer, closeWsServer } = getWsServer(sessionStorageClient, sessionStorageClientIsReady)
 
-  globalThis.closeDBClient = closeDBClient
+    globalThis.wsServer = wsServer
+    globalThis.sessionStorageClient = sessionStorageClient
+    globalThis.sessionStorageClientIsReady = sessionStorageClientIsReady
+
+    await sessionStorageClientIsReady
+
+    globalThis.closeWsServer = closeWsServer
+    globalThis.closeSessionStorageClient = closeSessionStorageClient
+  },
+  close: async function () {
+    await Promise.all([
+      globalThis.closeWsServer(),
+      globalThis.closeSessionStorageClient(),
+    ])
+  }
 }
+
 /**
- * Close dbClient.
+ * Setup/close dbClient.
  */
-export async function closeDbClientForTest() {
-  await globalThis.closeDBClient()
+export const dbClientForTest = {
+  setup: async function () {
+    const { dbClient, closeDBClient } = getDBClient()
+    globalThis.dbClient = dbClient
+    globalThis.sql = sql
+
+    globalThis.closeDBClient = closeDBClient
+  },
+  close: async function () {
+    await globalThis.closeDBClient()
+  }
 }
 
 /**
- * Setup sessionStorageClient.
+ * Setup/close sessionStorageClient.
  */
-export async function setupRedisClientForTest() {
-  const { sessionStorageClient, closeSessionStorageClient, sessionStorageClientIsReady } = getSessionStorageClient()
+export const sessionStorageClientForTest = {
+  setup: async function () {
+    const { sessionStorageClient, closeSessionStorageClient, sessionStorageClientIsReady } = getSessionStorageClient()
 
-  globalThis.sessionStorageClient = sessionStorageClient
-  globalThis.sessionStorageClientIsReady = sessionStorageClientIsReady
+    globalThis.sessionStorageClient = sessionStorageClient
+    globalThis.sessionStorageClientIsReady = sessionStorageClientIsReady
 
-  await sessionStorageClientIsReady
+    await sessionStorageClientIsReady
 
-  globalThis.closeSessionStorageClient = closeSessionStorageClient
-}
-/**
- * Close sessionStorageClient.
- */
-export async function closeRedisClientForTest() {
-  await globalThis.closeSessionStorageClient()
+    globalThis.closeSessionStorageClient = closeSessionStorageClient
+  },
+  close: async function () {
+    await globalThis.closeSessionStorageClient()
+  }
 }
 
 export async function assertSession(res: request.Response, email: string) {
