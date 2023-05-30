@@ -71,7 +71,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -106,10 +106,10 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
     expect(result).toEqual([{
       id: expect.any(Number),
       email,
-      password: expect.any(String),
+      hashed_password: expect.any(String),
       is_activated: 0
     }])
-    const isRegisteredPassword = await bcrypt.compare(password, result[0].password)
+    const isRegisteredPassword = await bcrypt.compare(password, result[0].hashed_password)
     expect(isRegisteredPassword).toBe(true)
     // Make sure a signup confirmation email is sent.
     expect(mockMailServerSend).toBeCalledWith(email, expect.any(String), expect.any(String), expect.any(String))
@@ -126,7 +126,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -141,13 +141,13 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
       .send({email, password: password2})
     // Make sure the password is updated.
     const result = await dbClient.query(sql`
-      SELECT password
+      SELECT hashed_password
         FROM users
         WHERE email = ${email};
     `)
-    const isOriginalPassword = await bcrypt.compare(password1, result[0].password)
+    const isOriginalPassword = await bcrypt.compare(password1, result[0].hashed_password)
     expect(isOriginalPassword).toBe(false)
-    const isUpdatedPassword = await bcrypt.compare(password2, result[0].password)
+    const isUpdatedPassword = await bcrypt.compare(password2, result[0].hashed_password)
     expect(isUpdatedPassword).toBe(true)
     // Make sure a signup confirmation email is sent.
     expect(mockMailServerSend).toBeCalledWith(email, expect.any(String), expect.any(String), expect.any(String))
@@ -226,7 +226,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -256,7 +256,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -326,7 +326,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -352,7 +352,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -378,7 +378,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -408,7 +408,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -437,14 +437,14 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(resForEmptyArray.body.message).toBe('Access denied. Request is not authorized.')
     // Make sure email and password is not updated.
     const result = await dbClient.query(sql`
-      SELECT email, password
+      SELECT email, hashed_password
         FROM users
         WHERE id = ${id};
     `)
     expect(result[0].email).toBe(oldEmail)
-    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].hashed_password)
     expect(isOriginalPassword).toBe(true)
-    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].hashed_password)
     expect(isUpdatedPassword).toBe(false)
   })
 
@@ -459,7 +459,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -488,14 +488,14 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(resForEmptyArray.body.message).toBe('Access denied. Request is not authorized.')
     // Make sure email and password is not updated.
     const result = await dbClient.query(sql`
-      SELECT email, password
+      SELECT email, hashed_password
         FROM users
         WHERE id = ${id};
     `)
     expect(result[0].email).toBe(oldEmail)
-    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].hashed_password)
     expect(isOriginalPassword).toBe(true)
-    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].hashed_password)
     expect(isUpdatedPassword).toBe(false)
   })
 
@@ -510,7 +510,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -543,14 +543,14 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(res.body.message).toBe('Access denied. Request is not authorized.')
     // Make sure email and password is not updated.
     const result = await dbClient.query(sql`
-      SELECT email, password
+      SELECT email, hashed_password
         FROM users
         WHERE id = ${id};
     `)
     expect(result[0].email).toBe(oldEmail)
-    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].hashed_password)
     expect(isOriginalPassword).toBe(true)
-    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].hashed_password)
     expect(isUpdatedPassword).toBe(false)
   })
 
@@ -564,7 +564,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -599,14 +599,14 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(resForEmptyObject.body.message).toBe("\"value\" must have at least 1 key")
     // Make sure email and password is not updated.
     const result = await dbClient.query(sql`
-      SELECT email, password
+      SELECT email, hashed_password
         FROM users
         WHERE id = ${id};
     `)
     expect(result[0].email).toBe(oldEmail)
-    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].hashed_password)
     expect(isOriginalPassword).toBe(true)
-    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].hashed_password)
     expect(isUpdatedPassword).toBe(false)
   })
 
@@ -622,7 +622,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -651,14 +651,14 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(res.body.message).toBe(`Confirmation email was sent to ${newEmail}. Please check the inbox and confirm.`)
     // Make sure email is not updated yet and password is not updated.
     const result = await dbClient.query(sql`
-      SELECT email, password
+      SELECT email, hashed_password
         FROM users
         WHERE id = ${id};
     `)
     expect(result[0].email).toBe(oldEmail)
-    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].hashed_password)
     expect(isOriginalPassword).toBe(true)
-    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].hashed_password)
     expect(isUpdatedPassword).toBe(false)
   })
 
@@ -671,7 +671,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -697,14 +697,14 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(res.status).toBe(200)
     expect(res.body.message).toBe('Password update successful.')
     const result = await dbClient.query(sql`
-      SELECT email, password
+      SELECT email, hashed_password
         FROM users
         WHERE id = ${id};
     `)
     expect(result[0].email).toBe(email)
-    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].hashed_password)
     expect(isOriginalPassword).toBe(false)
-    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].hashed_password)
     expect(isUpdatedPassword).toBe(true)
   })
 
@@ -718,7 +718,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -747,14 +747,14 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(res.status).toBe(200)
     expect(res.body.message).toBe(`Confirmation email was sent to ${newEmail}. Please check the inbox and confirm.`)
     const result = await dbClient.query(sql`
-      SELECT email, password
+      SELECT email, hashed_password
         FROM users
         WHERE id = ${id};
     `)
     expect(result[0].email).toBe(oldEmail)
-    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].hashed_password)
     expect(isOriginalPassword).toBe(false)
-    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].hashed_password)
     expect(isUpdatedPassword).toBe(true)
   })
 })
@@ -792,7 +792,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -836,7 +836,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -880,7 +880,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -924,7 +924,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -968,7 +968,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -1024,7 +1024,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -1093,7 +1093,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -1134,7 +1134,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -1176,7 +1176,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -1244,7 +1244,7 @@ describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -1269,7 +1269,7 @@ describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -1319,7 +1319,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -1346,11 +1346,11 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     expect(res.body.message).toBe("\"password\" is required")
     // Make sure password is not updated.
     const result = await dbClient.query(sql`
-      SELECT password
+      SELECT hashed_password
         FROM users
         WHERE id = ${id};
     `)
-    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].hashed_password)
     expect(isOriginalPassword).toBe(true)
   })
 
@@ -1363,7 +1363,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -1390,13 +1390,13 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     expect(res.body.message).toBe('Invalid token.')
     // Make sure password is not updated.
     const result = await dbClient.query(sql`
-      SELECT password
+      SELECT hashed_password
         FROM users
         WHERE id = ${id};
     `)
-    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].hashed_password)
     expect(isOriginalPassword).toBe(true)
-    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].hashed_password)
     expect(isUpdatedPassword).toBe(false)
   })
 
@@ -1409,7 +1409,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -1436,13 +1436,13 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     expect(res.body.message).toBe('Invalid token.')
     // Make sure password is not updated.
     const result = await dbClient.query(sql`
-      SELECT password
+      SELECT hashed_password
         FROM users
         WHERE id = ${id};
     `)
-    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].hashed_password)
     expect(isOriginalPassword).toBe(true)
-    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].hashed_password)
     expect(isUpdatedPassword).toBe(false)
   })
 
@@ -1455,7 +1455,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -1482,13 +1482,13 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     expect(res.body.message).toBe('Invalid token.')
     // Make sure password is not updated.
     const result = await dbClient.query(sql`
-      SELECT password
+      SELECT hashed_password
         FROM users
         WHERE id = ${id};
     `)
-    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].hashed_password)
     expect(isOriginalPassword).toBe(true)
-    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].hashed_password)
     expect(isUpdatedPassword).toBe(false)
   })
 
@@ -1531,7 +1531,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -1558,13 +1558,13 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     expect(res.body.message).toBe(`User with email ${email} is not activated yet. Please activate then retry.`)
     // Make sure password is not updated.
     const result = await dbClient.query(sql`
-      SELECT password
+      SELECT hashed_password
         FROM users
         WHERE id = ${id};
     `)
-    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].hashed_password)
     expect(isOriginalPassword).toBe(true)
-    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].hashed_password)
     expect(isUpdatedPassword).toBe(false)
   })
 
@@ -1577,7 +1577,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -1604,13 +1604,13 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     expect(res.body.message).toBe('Password reset successful.')
     // Make sure password is updated.
     const result = await dbClient.query(sql`
-      SELECT password
+      SELECT hashed_password
         FROM users
         WHERE id = ${id};
     `)
-    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].password)
+    const isOriginalPassword = await bcrypt.compare(oldPassword, result[0].hashed_password)
     expect(isOriginalPassword).toBe(false)
-    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].password)
+    const isUpdatedPassword = await bcrypt.compare(newPassword, result[0].hashed_password)
     expect(isUpdatedPassword).toBe(true)
   })
 })
@@ -1625,7 +1625,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -1654,12 +1654,12 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     expect(resForEmptyArray.body.message).toBe('Access denied. Request is not authorized.')
     // Make sure email and password is not updated.
     const result = await dbClient.query(sql`
-      SELECT email, password
+      SELECT email, hashed_password
         FROM users
         WHERE id = ${id};
     `)
     expect(result[0].email).toBe(email)
-    const isOriginalPassword = await bcrypt.compare(password, result[0].password)
+    const isOriginalPassword = await bcrypt.compare(password, result[0].hashed_password)
     expect(isOriginalPassword).toBe(true)
   })
 
@@ -1672,7 +1672,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -1705,12 +1705,12 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     expect(res.body.message).toBe('Access denied. Request is not authorized.')
     // Make sure email and password is not updated.
     const result = await dbClient.query(sql`
-      SELECT email, password
+      SELECT email, hashed_password
         FROM users
         WHERE id = ${id};
     `)
     expect(result[0].email).toBe(email)
-    const isOriginalPassword = await bcrypt.compare(password, result[0].password)
+    const isOriginalPassword = await bcrypt.compare(password, result[0].hashed_password)
     expect(isOriginalPassword).toBe(true)
   })
 
@@ -1723,7 +1723,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (
@@ -1758,7 +1758,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     await dbClient.query(sql`
       INSERT INTO users (
         email,
-        password,
+        hashed_password,
         is_activated
       )
       VALUES (

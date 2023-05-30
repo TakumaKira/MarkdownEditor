@@ -20,16 +20,16 @@ const prepareUsers = async () => {
   const userWithoutAnyDocumentEmail = 'userWithoutAnyDocument@test.com'
   // Create users.
   await db.query(sql`
-    CALL create_user(${user1Email}, 'password1');
+    CALL create_user(${user1Email}, 'hashedPassword1');
   `)
   await db.query(sql`
-    CALL create_user(${user2Email}, 'password2');
+    CALL create_user(${user2Email}, 'hashedPassword2');
   `)
   await db.query(sql`
-    CALL create_user(${deletedUserEmail}, 'deletedPassword');
+    CALL create_user(${deletedUserEmail}, 'deletedHashedPassword');
   `)
   await db.query(sql`
-    CALL create_user(${userWithoutAnyDocumentEmail}, 'userWithoutAnyDocumentPassword');
+    CALL create_user(${userWithoutAnyDocumentEmail}, 'userWithoutAnyDocumentHashedPassword');
   `)
   // Get id.
   user1Id = (await db.query(sql`

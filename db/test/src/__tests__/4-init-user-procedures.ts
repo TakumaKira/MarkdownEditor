@@ -17,10 +17,10 @@ beforeEach(() => {
 describe('create_user', () => {
   test('creates un-activated user', async () => {
     const email = 'test@email.com'
-    const password = 'password'
+    const hashed_password = 'hashed_password'
     // TESTED PROCEDURE
     await db.query(sql`
-      CALL create_user(${email}, ${password});
+      CALL create_user(${email}, ${hashed_password});
     `)
     // EXPECTED RESULT
     const result = (await db.query(sql`
@@ -32,21 +32,21 @@ describe('create_user', () => {
       "id": expect.any(Number),
       "email": email,
       "is_activated": 0,
-      "password": password,
+      "hashed_password": hashed_password,
     })
   })
 
   test('overwrites the password if given email of un-activated user', async () => {
     const email = 'test@email.com'
-    const password1 = 'password1'
-    const password2 = 'password2'
+    const hashed_password1 = 'hashed_password1'
+    const hashed_password2 = 'hashed_password2'
     // Create a user.
     await db.query(sql`
-      CALL create_user(${email}, ${password1});
+      CALL create_user(${email}, ${hashed_password1});
     `)
     // TESTED PROCEDURE
     await db.query(sql`
-      CALL create_user(${email}, ${password2});
+      CALL create_user(${email}, ${hashed_password2});
     `)
     // EXPECTED RESULT
     const result = (await db.query(sql`
@@ -58,16 +58,16 @@ describe('create_user', () => {
       "id": expect.any(Number),
       "email": email,
       "is_activated": 0,
-      "password": password2,
+      "hashed_password": hashed_password2,
     })
   })
 
   test('returns error if given email of activated user', async () => {
     const email = 'test@email.com'
-    const password = 'password'
+    const hashed_password = 'hashed_password'
     // Create a user.
     await db.query(sql`
-      CALL create_user(${email}, ${password});
+      CALL create_user(${email}, ${hashed_password});
     `)
     // Activate the user.
     await db.query(sql`
@@ -75,7 +75,7 @@ describe('create_user', () => {
     `)
     // TESTED PROCEDURE/EXPECTED RESULT
     await expect(db.query(sql`
-      CALL create_user(${email}, ${password});
+      CALL create_user(${email}, ${hashed_password});
     `)).rejects.toEqual(new Error('Activated user with given email already exists.'))
   })
 })
@@ -83,10 +83,10 @@ describe('create_user', () => {
 describe('activate_user', () => {
   test('activate user if un-activated user exists with given email', async () => {
     const email = 'test@email.com'
-    const password = 'password'
+    const hashed_password = 'hashed_password'
     // Create a user.
     await db.query(sql`
-      CALL create_user(${email}, ${password});
+      CALL create_user(${email}, ${hashed_password});
     `)
     // TESTED PROCEDURE
     await db.query(sql`
@@ -102,7 +102,7 @@ describe('activate_user', () => {
       "id": expect.any(Number),
       "email": email,
       "is_activated": 1, // This is what we expect.
-      "password": password,
+      "hashed_password": hashed_password,
     })
   })
 
@@ -116,10 +116,10 @@ describe('activate_user', () => {
 
   test('returns error if activated user exists with given email', async () => {
     const email = 'test@email.com'
-    const password = 'password'
+    const hashed_password = 'hashed_password'
     // Create a user.
     await db.query(sql`
-      CALL create_user(${email}, ${password});
+      CALL create_user(${email}, ${hashed_password});
     `)
     // Activate the user.
     await db.query(sql`
@@ -135,10 +135,10 @@ describe('activate_user', () => {
 describe('get_user', () => {
   test('returns a user if the user with the given email exists', async () => {
     const email = 'test@email.com'
-    const password = 'password'
+    const hashed_password = 'hashed_password'
     // Create a user.
     await db.query(sql`
-      CALL create_user(${email}, ${password});
+      CALL create_user(${email}, ${hashed_password});
     `)
     // TESTED PROCEDURE
     const result = (await db.query(sql`
@@ -149,7 +149,7 @@ describe('get_user', () => {
       "id": expect.any(Number),
       "email": email,
       "is_activated": 0,
-      "password": password,
+      "hashed_password": hashed_password,
     }])
   })
 
@@ -168,10 +168,10 @@ describe('update_user', () => {
   test('updates email of the user with given id if new email is provided', async () => {
     const email1 = 'test1@email.com'
     const email2 = 'test2@email.com'
-    const password = 'password'
+    const hashed_password = 'hashed_password'
     // Create a user.
     await db.query(sql`
-      CALL create_user(${email1}, ${password});
+      CALL create_user(${email1}, ${hashed_password});
     `)
     // Get id.
     const createdId = (await db.query(sql`
@@ -193,11 +193,11 @@ describe('update_user', () => {
 
   test('updates password of the user with given id if new password is provided', async () => {
     const email = 'test@email.com'
-    const password1 = 'password1'
-    const password2 = 'password2'
+    const hashed_password1 = 'hashed_password1'
+    const hashed_password2 = 'hashed_password2'
     // Create a user.
     await db.query(sql`
-      CALL create_user(${email}, ${password1});
+      CALL create_user(${email}, ${hashed_password1});
     `)
     // Get id.
     const createdId = (await db.query(sql`
@@ -207,24 +207,24 @@ describe('update_user', () => {
     `))[0].id
     // TESTED PROCEDURE
     await db.query(sql`
-      CALL update_user(${createdId}, NULL, ${password2});
+      CALL update_user(${createdId}, NULL, ${hashed_password2});
     `)
     // EXPECTED RESULT
     expect((await db.query(sql`
-      SELECT password
+      SELECT hashed_password
         FROM users
         WHERE id = ${createdId};
-    `))[0].password).toBe(password2)
+    `))[0].hashed_password).toBe(hashed_password2)
   })
 })
 
 describe('delete_user', () => {
   test('deletes user with given id if exists', async () => {
     const email = 'test@email.com'
-    const password = 'password'
+    const hashed_password = 'hashed_password'
     // Create a user.
     await db.query(sql`
-      CALL create_user(${email}, ${password});
+      CALL create_user(${email}, ${hashed_password});
     `)
     // Get id.
     const createdId = (await db.query(sql`

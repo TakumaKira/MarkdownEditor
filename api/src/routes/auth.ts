@@ -134,7 +134,7 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
         return res.status(400).send({message: 'This user is not activated.'})
       }
 
-      const isValidPassword = await bcrypt.compare(password, user.password)
+      const isValidPassword = await bcrypt.compare(password, user.hashed_password)
       if (!isValidPassword) {
         await destroySession(req, sessionStorage)
         return res.status(400).send({message: 'Email/Password is incorrect.'})
@@ -231,7 +231,7 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
         return res.status(400).send({message: `User with email ${oldEmail} is not activated yet. Please activate then retry.`})
       }
 
-      const isValidPassword = await bcrypt.compare(password, user.password)
+      const isValidPassword = await bcrypt.compare(password, user.hashed_password)
       if (!isValidPassword) return res.status(400).send({message: 'Password is incorrect.'})
 
       await db.updateUserEmail(user.id, newEmail)

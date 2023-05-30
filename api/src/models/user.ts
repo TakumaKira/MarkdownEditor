@@ -1,6 +1,6 @@
 export interface UserInfoOnDB {
   id: number
   email: string
-  password: string
+  hashed_password: string
   is_activated: boolean
 }

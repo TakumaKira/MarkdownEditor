@@ -43,7 +43,7 @@ async function addUserToDatabase(email: string, password: string): Promise<numbe
   await dbClient.query(sql`
     INSERT INTO users (
       email,
-      password,
+      hashed_password,
       is_activated
     )
     VALUES (

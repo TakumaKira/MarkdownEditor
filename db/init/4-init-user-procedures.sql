@@ -14,7 +14,7 @@ DROP PROCEDURE IF EXISTS create_user;
 DELIMITER $$
 CREATE PROCEDURE create_user (
 	p_email VARCHAR(50),
-	p_password CHAR(60)
+	p_hashed_password CHAR(60)
 )
 BEGIN
 	IF (
@@ -26,13 +26,13 @@ BEGIN
 	ELSE
 		INSERT INTO users (
 			email,
-			password
+			hashed_password
 		)
 		VALUES (
 			p_email,
-			p_password
+			p_hashed_password
 		)
-    ON DUPLICATE KEY UPDATE password = p_password;
+    ON DUPLICATE KEY UPDATE hashed_password = p_hashed_password;
 	END IF;
 END $$
 DELIMITER ;
@@ -83,7 +83,7 @@ DELIMITER $$
 CREATE PROCEDURE update_user (
 	p_id INT,
 	p_email VARCHAR(50),
-	p_password CHAR(60)
+	p_hashed_password CHAR(60)
 )
 BEGIN
 	IF p_email IS NOT NULL THEN
@@ -91,9 +91,9 @@ BEGIN
 			SET email = p_email
 			WHERE id = p_id;
 	END IF;
-	IF p_password IS NOT NULL THEN
+	IF p_hashed_password IS NOT NULL THEN
 		UPDATE users
-			SET password = p_password
+			SET hashed_password = p_hashed_password
 			WHERE id = p_id;
 	END IF;
 END $$
