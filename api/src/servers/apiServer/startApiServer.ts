@@ -2,7 +2,7 @@ import { Server } from "socket.io"
 import getApiApp from "./apiApp"
 import { DatabaseClient } from "../../services/database/types"
 import { SessionStorageClient } from "../../services/sessionStorage/type"
-import { API_PORT } from "getEnvs"
+import { API_PORT } from "../../getEnvs"
 
 const startApiServer = (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => {
   const apiApp = getApiApp(wsServer, dbClient, sessionStorageClient, sessionStorageClientIsReady)
