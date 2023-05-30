@@ -1,6 +1,6 @@
 import { ConnectionPool, sql, SQLQuery } from '@databases/mysql';
-import { fromISOStringToDatetimeString } from "./utils"
-import { Document, DocumentFromDB } from "../../models/document"
+import { fromISOStringToDatetimeString } from "../utils"
+import { Document, DocumentFromDB } from "../../../models/document"
 import { v4 as uuidv4 } from 'uuid'
 
 export function _updateDocuments(db: ConnectionPool) {

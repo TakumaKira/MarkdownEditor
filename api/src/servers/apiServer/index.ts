@@ -1,16 +1,9 @@
-import { Server } from "http"
-import { Server as WSServer } from "socket.io"
-import { API_PORT } from "../../getEnvs";
+import { Server } from "socket.io"
 import startApiServer from "./startApiServer";
+import { DatabaseClient } from "../../services/database/types";
+import { SessionStorageClient } from "../../services/sessionStorage/type";
 
-let apiServer: Server
-let isReady: Promise<void>
-
-export default (wsServer: WSServer) => {
-  if (!apiServer) {
-    const { apiServer: _apiServer, isReady: _isReady } = startApiServer(API_PORT, wsServer)
-    apiServer = _apiServer
-    isReady = _isReady
-  }
-  return { apiServer, isReady }
+export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => {
+  const { apiServer, closeApiServer } = startApiServer(wsServer, dbClient, sessionStorageClient, sessionStorageClientIsReady)
+  return { apiServer, closeApiServer }
 }

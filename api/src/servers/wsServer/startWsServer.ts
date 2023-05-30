@@ -1,18 +1,15 @@
 import { Server } from "socket.io"
-import { FRONTEND_DOMAIN, FRONTEND_PROTOCOL, FRONTEND_PORT } from "../../getEnvs"
+import { FRONTEND_DOMAIN, FRONTEND_PROTOCOL, FRONTEND_PORT, WS_PORT } from "../../getEnvs"
 import setupWsServer from "./setupWsServer"
-import onExit from '../../onExit';
+import { SessionStorageClient } from "../../services/sessionStorage/type"
 
-let wsServer: Server
+const startWsServer = (sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => {
+  const wsServer = new Server(WS_PORT, {cors: {origin: `${FRONTEND_PROTOCOL}://${FRONTEND_DOMAIN}${FRONTEND_PORT ? ':' + FRONTEND_PORT : ''}`}})
+  console.info(`⚡️[server]: Websocket server is running at localhost:${WS_PORT}`)
 
-const startWsServer = (wsPort: number) => {
-  if (wsServer) {
-    console.error(new Error('wsServer is already running'))
-    return wsServer
-  }
-  wsServer = new Server(wsPort, {cors: {origin: `${FRONTEND_PROTOCOL}://${FRONTEND_DOMAIN}${FRONTEND_PORT ? ':' + FRONTEND_PORT : ''}`}})
-  setupWsServer(wsServer)
-  onExit.add(async () => {
+  setupWsServer(wsServer, sessionStorageClient, sessionStorageClientIsReady)
+
+  const closeWsServer = async () => {
     await new Promise<void>((resolve, reject) =>
       wsServer.close(err => {
         if (err) {
@@ -25,9 +22,7 @@ const startWsServer = (wsPort: number) => {
         resolve()
       })
     )
-  })
-
-  console.info(`⚡️[server]: Websocket server is running at localhost:${wsPort}`)
-  return wsServer
+  }
+  return { wsServer, closeWsServer }
 }
 export default startWsServer

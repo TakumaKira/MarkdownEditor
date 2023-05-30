@@ -1,12 +1,7 @@
-import { Server } from "socket.io"
-import { WS_PORT } from "../../getEnvs";
+import { SessionStorageClient } from "../../services/sessionStorage/type";
 import startWsServer from "./startWsServer";
 
-let wsServer: Server
-
-export default () => {
-  if (!wsServer) {
-    wsServer = startWsServer(WS_PORT)
-  }
-  return wsServer
+export default (sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => {
+  const { wsServer, closeWsServer } = startWsServer(sessionStorageClient, sessionStorageClientIsReady)
+  return { wsServer, closeWsServer }
 }

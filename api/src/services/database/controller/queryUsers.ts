@@ -1,5 +1,5 @@
 import { ConnectionPool, sql } from '@databases/mysql';
-import { UserInfoOnDB } from "../../models/user";
+import { UserInfoOnDB } from "../../../models/user";
 
 export function _createUser(db: ConnectionPool) {
   return async function createUser(email: string, hashedPassword: string): Promise<void> {

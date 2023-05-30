@@ -3,22 +3,26 @@ import { Router } from 'express'
 import { TokenExpiredError } from 'jsonwebtoken'
 import { API_PATHS, EMAIL_LENGTH_MAX, MIN_PASSWORD_LENGTH, WS_HANDSHAKE_TOKEN_KEY } from '../constants'
 import getConfirmationEmail from '../services/emailTemplates'
-import { JWT_SECRET_KEY, getMailServer } from '../getEnvs' // <- import is already done when setting up apiApp in global setup file before jest is ready, so there's no way to mock!
+import { JWT_SECRET_KEY } from '../getEnvs' // <- import is already done when setting up apiApp in global setup file before jest is ready, so there's no way to mock!
 import decodeToken from '../services/decodeToken'
 import { generateEmailConfirmationToken, generateEmailChangeToken } from '../services/encodeToken'
 import { getApiAuthMiddleware } from '../middlewares/auth'
 import Joi from 'joi'
-import { createUser, activateUser, getUser, updateUserPassword, updateUserEmail, deleteUser } from '../services/database';
 import { destroySession, regenerateSession } from '../services/sessionStorage/utils'
-import getSessionStorage from '../services/sessionStorage'
 import { Server } from 'socket.io'
+import DatabaseController from '../services/database/controller'
+import SessionStorageController from '../services/sessionStorage/controller'
+import getMailServer from '../services/mailServer'
+import { SessionStorageClient } from '../services/sessionStorage/type'
 
-export default (wsServer: Server) => {
-  const sessionStorage = getSessionStorage()
-
+export default (wsServer: Server, db: DatabaseController, sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => {
   const authApiRouter = Router()
 
   const apiAuthMiddleware = getApiAuthMiddleware()
+
+  const sessionStorage = new SessionStorageController(sessionStorageClient, sessionStorageClientIsReady)
+
+  const mailServer = getMailServer()
 
   const emailSchema = Joi.string().email().max(EMAIL_LENGTH_MAX)
   const passwordSchema = Joi.string().min(MIN_PASSWORD_LENGTH)
@@ -38,7 +42,7 @@ export default (wsServer: Server) => {
       const salt = await bcrypt.genSalt(10)
       const hashedPassword = await bcrypt.hash(password, salt)
       try {
-        await createUser(email, hashedPassword)
+        await db.createUser(email, hashedPassword)
       } catch (error: any) {
         if (error?.sqlState === '45012') {
           return res.status(409).send({message: 'Email is already registered and activated.'})
@@ -50,7 +54,7 @@ export default (wsServer: Server) => {
       const token = generateEmailConfirmationToken('SignupToken', email)
       const {subject, text, html} = getConfirmationEmail('signup', token)
 
-      await getMailServer().send(email, subject, text, html)
+      await mailServer.send(email, subject, text, html)
       res.send({message: 'Confirmation email was sent.'})
     } catch (e) {
       next(e)
@@ -81,7 +85,7 @@ export default (wsServer: Server) => {
       }
 
       try {
-        const {id, is_activated} = await activateUser(email)
+        const {id, is_activated} = await db.activateUser(email)
         if (!is_activated) {
           throw new Error(`User with email ${email} is not activated successfully. Please try again.`)
         }
@@ -116,7 +120,7 @@ export default (wsServer: Server) => {
       }
       const {email, password} = result.value
 
-      const user = await getUser(email)
+      const user = await db.getUser(email)
       if (!user) {
         await destroySession(req, sessionStorage)
         return res.status(400).send({message: 'Email/Password is incorrect.'})
@@ -170,12 +174,12 @@ export default (wsServer: Server) => {
       if (newPassword) {
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash(newPassword, salt)
-        await updateUserPassword(Number(id), hashedPassword)
+        await db.updateUserPassword(Number(id), hashedPassword)
       }
       if (newEmail) {
         const token = generateEmailChangeToken(oldEmail, newEmail, {expiresIn: '30m'})
         const {subject, text, html} = getConfirmationEmail('changeEmail', token)
-        await getMailServer().send(newEmail, subject, text, html)
+        await mailServer.send(newEmail, subject, text, html)
         await regenerateSession(req, sessionStorage, wsServer)
         res
           .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
@@ -218,7 +222,7 @@ export default (wsServer: Server) => {
         return res.status(400).send({message: 'Invalid token.'})
       }
 
-      const user = await getUser(oldEmail)
+      const user = await db.getUser(oldEmail)
       if (!user) return res.status(400).send({message: `User with email: ${oldEmail} does not exist.`})
       if (!user.is_activated) {
         return res.status(400).send({message: `User with email ${oldEmail} is not activated yet. Please activate then retry.`})
@@ -227,7 +231,7 @@ export default (wsServer: Server) => {
       const isValidPassword = await bcrypt.compare(password, user.password)
       if (!isValidPassword) return res.status(400).send({message: 'Password is incorrect.'})
 
-      await updateUserEmail(user.id, newEmail)
+      await db.updateUserEmail(user.id, newEmail)
       await regenerateSession(req, sessionStorage, wsServer, { email: newEmail })
       return res
         .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
@@ -248,14 +252,14 @@ export default (wsServer: Server) => {
       }
       const {email} = result.value
 
-      const user = await getUser(email)
+      const user = await db.getUser(email)
       if (!user) return res.status(400).send({message: `There is no user with email: ${email}`})
 
       if (!user.is_activated) return res.status(400).send({message: 'This user is not activated.'})
 
       const token = generateEmailConfirmationToken('ResetPasswordToken', email, {expiresIn: '30m'})
       const {subject, text, html} = getConfirmationEmail('resetPassword', token)
-      await getMailServer().send(email, subject, text, html)
+      await mailServer.send(email, subject, text, html)
       await regenerateSession(req, sessionStorage, wsServer)
       res
         .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
@@ -289,7 +293,7 @@ export default (wsServer: Server) => {
         return res.status(400).send({message: 'Invalid token.'})
       }
 
-      const user = await getUser(email)
+      const user = await db.getUser(email)
       if (!user) return res.status(400).send({message: `User with email: ${email} does not exist.`})
       if (!user.is_activated) {
         return res.status(400).send({message: `User with email ${email} is not activated yet. Please activate then retry.`})
@@ -297,7 +301,7 @@ export default (wsServer: Server) => {
 
       const salt = await bcrypt.genSalt(10)
       const hashedPassword = await bcrypt.hash(password, salt)
-      await updateUserPassword(user.id, hashedPassword)
+      await db.updateUserPassword(user.id, hashedPassword)
       await regenerateSession(req, sessionStorage, wsServer)
       return res
         .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
@@ -310,7 +314,7 @@ export default (wsServer: Server) => {
   authApiRouter.post(API_PATHS.AUTH.DELETE.dir, apiAuthMiddleware, async (req, res, next) => {
     try {
       try {
-        await deleteUser(Number(req.session.userId))
+        await db.deleteUser(Number(req.session.userId))
         await destroySession(req, sessionStorage)
         return res.send({message: 'User deleted successfully.'})
       } catch (error: any) {

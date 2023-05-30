@@ -3,18 +3,19 @@ import { DOCUMENT_UPDATED_WS_EVENT, WS_HANDSHAKE_TOKEN_KEY } from '../constants'
 import { getApiAuthMiddleware } from '../middlewares/auth'
 import { documentsRequestValidatorMiddleware } from '../middlewares/validator'
 import { DocumentsUpdateResponse, Document, DocumentUpdatedWsMessage } from '../models/document'
-import { getDocuments, getNewSafeId, getUserDocuments, normalizeDocument, updateDocuments } from '../services/database'
-import { fromUnixTimestampToISOString, trimMilliseconds } from '../services/database/utils'
+import { fromUnixTimestampToISOString, normalizeDocument, trimMilliseconds } from '../services/database/utils'
 import { regenerateSession } from '../services/sessionStorage/utils'
-import getSessionStorage from '../services/sessionStorage'
 import { Server } from 'socket.io'
+import DatabaseController from '../services/database/controller'
+import { SessionStorageClient } from '../services/sessionStorage/type'
+import SessionStorageController from '../services/sessionStorage/controller'
 
-export default (wsServer: Server) => {
-  const sessionStorage = getSessionStorage()
-
+export default (wsServer: Server, db: DatabaseController, sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => {
   const documentsRouter = Router()
 
   const apiAuthMiddleware = getApiAuthMiddleware()
+
+  const sessionStorage = new SessionStorageController(sessionStorageClient, sessionStorageClientIsReady)
 
   documentsRouter.post('/', apiAuthMiddleware, documentsRequestValidatorMiddleware, async (req, res, next) => {
     try {
@@ -32,7 +33,7 @@ export default (wsServer: Server) => {
        */
 
       // Get every document by id of updated from device.
-      const documentsOnDBToBeUpdated = await getDocuments(updatesFromDevice.map(({id}) => id))
+      const documentsOnDBToBeUpdated = await db.getDocuments(updatesFromDevice.map(({id}) => id))
 
       /**
        * Get now here and store it as saved_on_db_at.
@@ -71,7 +72,7 @@ export default (wsServer: Server) => {
           // duplicate conflicted one as new document
           const updateToDB: Document = {
             ...updateFromDevice,
-            id: await getNewSafeId(),
+            id: await db.getNewSafeId(),
             name: `[Conflicted]: ${updateFromDevice.name}`,
             updatedAt: savedOnDBAt,
             savedOnDBAt
@@ -98,7 +99,7 @@ export default (wsServer: Server) => {
           // Change id to new one
           const updateToDB: Document = {
             ...updateFromDevice,
-            id: await getNewSafeId(),
+            id: await db.getNewSafeId(),
             savedOnDBAt
           }
           updatesToDB.push(updateToDB)
@@ -116,11 +117,11 @@ export default (wsServer: Server) => {
 
       // Now all of updateFromDevice should be safe to update to database.
 
-      await updateDocuments(updatesToDB, Number(req.session.userId))
+      await db.updateDocuments(updatesToDB, Number(req.session.userId))
       // If the transaction was unsuccessful, above will throw and errorMiddleware will handled it.
 
       // If the transaction was successful, get every document of the user and return it and emit update event to the user to make other devices start update. No need to send updated document's id, just make them save editing document and start sync.
-      const allDocumentsOnDB = await getUserDocuments(Number(req.session.userId))
+      const allDocumentsOnDB = await db.getUserDocuments(Number(req.session.userId))
 
       const allDocuments: Document[] = allDocumentsOnDB.map(doc => normalizeDocument(doc))
 

@@ -1,20 +1,22 @@
 import getApiServer from './servers/apiServer'
 import getWsServer from './servers/wsServer'
-import onExit from './onExit'
+import getDBClient from './services/database/client'
+import getSessionStorageClient from './services/sessionStorage/client'
+import OnExitManager from './onExit'
 
-const wsServer = getWsServer()
-const { apiServer, isReady } = getApiServer(wsServer)
+const { sessionStorageClient, closeSessionStorageClient, sessionStorageClientIsReady } = getSessionStorageClient()
+const { wsServer, closeWsServer } = getWsServer(sessionStorageClient, sessionStorageClientIsReady)
+const { dbClient, closeDBClient } = getDBClient()
+const { apiServer, closeApiServer } = getApiServer(wsServer, dbClient, sessionStorageClient, sessionStorageClientIsReady)
+
+const onExit = new OnExitManager()
 onExit.add(async () => {
-  await new Promise<void>((resolve, reject) => apiServer.close(err => {
-    if (err) {
-      console.error('Failed to close API server.')
-      console.error(err)
-      reject()
-      return
-    }
-    console.info('API server closed.')
-    resolve()
-  }))
+  await Promise.all([
+    () => closeApiServer(),
+    () => closeWsServer(),
+    () => closeDBClient(),
+    () => closeSessionStorageClient(),
+  ])
 })
 
 process.on('SIGINT', handleExit)

@@ -8,16 +8,19 @@ import getDocumentsRouter from '../../routes/documents'
 import rootRouter from '../../routes/root'
 import getSessionMiddleware from '../../middlewares/session'
 import { Server } from 'socket.io'
+import { DatabaseClient } from '../../services/database/types'
+import { SessionStorageClient } from '../../services/sessionStorage/type'
+import getDatabaseController from '../../services/database'
 
-const setupApiRoutes = (apiApp: Express, frontendDomain: string, wsServer: Server) => {
+const setupApiRoutes = (apiApp: Express, frontendDomain: string, wsServer: Server, dbClient: DatabaseClient, sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => {
+  const dbController = getDatabaseController(dbClient)
   apiApp.use(cors({origin: `${FRONTEND_PROTOCOL}://${frontendDomain}${FRONTEND_PORT ? ':' + FRONTEND_PORT : ''}`}))
   apiApp.use(express.json())
-  const { sessionMiddleware, isReady } = getSessionMiddleware()
+  const sessionMiddleware = getSessionMiddleware(sessionStorageClient)
   apiApp.use(sessionMiddleware)
   apiApp.use(API_PATHS.ROOT.path, rootRouter)
-  apiApp.use(API_PATHS.AUTH.path, getAuthApiRouter(wsServer))
-  apiApp.use(API_PATHS.DOCUMENTS.path, getDocumentsRouter(wsServer))
+  apiApp.use(API_PATHS.AUTH.path, getAuthApiRouter(wsServer, dbController, sessionStorageClient, sessionStorageClientIsReady))
+  apiApp.use(API_PATHS.DOCUMENTS.path, getDocumentsRouter(wsServer, dbController, sessionStorageClient, sessionStorageClientIsReady))
   apiApp.use(errorMiddleware)
-  return isReady
 }
 export default setupApiRoutes

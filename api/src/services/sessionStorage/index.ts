@@ -1,19 +1,11 @@
-import onExit from '../../onExit'
-import Controller from './controller'
+import SessionStorageController from './controller'
+import { SessionStorageClient } from './type'
+import { getRedisKeyName, regenerateSession, destroySession } from './utils'
 
-let sessionStorage: Controller
+export default (sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => new SessionStorageController(sessionStorageClient, sessionStorageClientIsReady)
 
-export default () => {
-  if (!sessionStorage) {
-    sessionStorage = new Controller()
-    onExit.add(async () => {
-      await sessionStorage.destroy()
-        .then(() => console.info('Session controller destroyed.'))
-        .catch(err => {
-          console.error('Failed to destroy session controller.')
-          console.error(err)
-        })
-    })
-  }
-  return sessionStorage
+export {
+  getRedisKeyName,
+  regenerateSession,
+  destroySession,
 }

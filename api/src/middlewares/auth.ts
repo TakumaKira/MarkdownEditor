@@ -1,7 +1,8 @@
 import { RequestHandler } from 'express';
-import getSessionStorage from '../services/sessionStorage';
 import { Socket } from 'socket.io';
 import { ExtendedError } from 'socket.io/dist/namespace';
+import { SessionStorageClient } from '../services/sessionStorage/type';
+import SessionStorageController from 'services/sessionStorage/controller';
 
 const getApiAuthMiddleware: () => RequestHandler = () => {
   return (req, res, next) => {
@@ -15,9 +16,8 @@ const getApiAuthMiddleware: () => RequestHandler = () => {
     }
   }
 }
-const getWsAuthMiddleware = () => {
-  const sessionStorage = getSessionStorage()
-
+const getWsAuthMiddleware = (sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => {
+  const sessionStorage = new SessionStorageController(sessionStorageClient, sessionStorageClientIsReady)
   return async (socket: Socket, next: (err?: ExtendedError) => void): Promise<void> => {
     try {
       const { wsHandshakeToken } = socket.handshake.auth

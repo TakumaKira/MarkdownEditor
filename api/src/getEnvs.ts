@@ -1,5 +1,4 @@
 import dotenv from 'dotenv'
-import { MailServer, MailServerGmail, MailServerSendGrid, MailServerStandardMailServer } from './services/mailServer'
 
 dotenv.config()
 
@@ -26,8 +25,17 @@ const redisHost = process.env.REDIS_HOST
 // Confirmation email settings
 /** Needed to be set to the address you own. */
 const senderEmail = process.env.SENDER_EMAIL
-/** type = 'SendGrid' | 'StandardMailServer' | 'Gmail' */
-const confirmationMailServerType = process.env.CONFIRMATION_EMAIL_SERVER_TYPE
+const validateConfirmationMailServerType = (type: string | undefined): 'SendGrid' | 'StandardMailServer' | 'Gmail' | undefined => {
+  if (
+    type !== 'SendGrid'
+    && type !== 'StandardMailServer'
+    && type !== 'Gmail'
+  ) {
+    return undefined
+  }
+  return type
+}
+const confirmationMailServerType = validateConfirmationMailServerType(process.env.CONFIRMATION_EMAIL_SERVER_TYPE)
 
 // SendGrid settings
 const sendgridApiKey = process.env.SENDGRID_API_KEY
@@ -43,11 +51,10 @@ const oAuthClientId = process.env.OAUTH_CLIENT_ID
 const oAuthClientSecret = process.env.OAUTH_CLIENT_SECRET
 const oAuthRefreshToken = process.env.OAUTH_REFRESH_TOKEN
 
-let _mailServer: MailServer | undefined
-
 // Missing validations
 if (process.env.NODE_ENV !== 'test') {
-  // Validation
+
+  /** Validation checker flag */
   let isMissing = false
 
   // Network settings
@@ -114,11 +121,7 @@ if (process.env.NODE_ENV !== 'test') {
 
   if (confirmationMailServerType === 'SendGrid') {
     // SendGrid settings
-    if (sendgridApiKey) {
-      _mailServer = new MailServerSendGrid({
-        API_KEY: sendgridApiKey
-      }, senderEmail!)
-    } else {
+    if (!sendgridApiKey) {
       console.error('SENDGRID_API_KEY is not defined.')
 
       isMissing = true
@@ -126,16 +129,10 @@ if (process.env.NODE_ENV !== 'test') {
   } else if (confirmationMailServerType === 'StandardMailServer') {
     // Standard mail server settings
     if (
-      standardMailServerHost
-      && standardMailServerUser
-      && standardMailServerPass
+      !standardMailServerHost
+      || !standardMailServerUser
+      || !standardMailServerPass
     ) {
-      _mailServer = new MailServerStandardMailServer({
-        HOST: standardMailServerHost,
-        USER: standardMailServerUser,
-        PASS: standardMailServerPass,
-      }, senderEmail!)
-    } else {
       if (!standardMailServerHost) {
         console.error('STANDARD_MAIL_SERVER_HOST is not defined.')
       }
@@ -151,18 +148,11 @@ if (process.env.NODE_ENV !== 'test') {
   } else if (confirmationMailServerType === 'Gmail') {
     // Gmail using OAuth settings
     if (
-      oAuthUser
-      && oAuthClientId
-      && oAuthClientSecret
-      && oAuthRefreshToken
+      !oAuthUser
+      || !oAuthClientId
+      || !oAuthClientSecret
+      || !oAuthRefreshToken
     ) {
-      _mailServer = new MailServerGmail({
-        OAUTH_USER: oAuthUser,
-        OAUTH_CLIENT_ID: oAuthClientId,
-        OAUTH_CLIENT_SECRET: oAuthClientSecret,
-        OAUTH_REFRESH_TOKEN: oAuthRefreshToken,
-      }, senderEmail!)
-    } else {
       if (!oAuthUser) {
         console.error('OAUTH_USER is not defined.')
       }
@@ -210,4 +200,13 @@ export const MYSQL_USER = mysqlUser!
 export const MYSQL_PASSWORD = mysqlPassword!
 
 // Confirmation email settings
-export const getMailServer = () => _mailServer!
+export const SENDER_EMAIL = senderEmail!
+export const CONFIRMATION_MAIL_SERVER_TYPE = confirmationMailServerType!
+export const SENDGRID_API_KEY = sendgridApiKey!
+export const STANDARD_MAIL_SERVER_HOST = standardMailServerHost!
+export const STANDARD_MAIL_SERVER_USER = standardMailServerUser!
+export const STANDARD_MAIL_SERVER_PASS = standardMailServerPass!
+export const OAUTH_USER = oAuthUser!
+export const OAUTH_CLIENT_ID = oAuthClientId!
+export const OAUTH_CLIENT_SECRET = oAuthClientSecret!
+export const OAUTH_REFRESH_TOKEN = oAuthRefreshToken!

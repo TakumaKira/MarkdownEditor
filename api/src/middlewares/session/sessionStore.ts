@@ -1,15 +1,11 @@
 import RedisStore from 'connect-redis'
 import { getRedisKeyName } from '../../services/sessionStorage/utils'
 import { REDIS_KEYS } from '../../constants'
-import getClient from '../../services/sessionStorage/getClient'
+import { SessionStorageClient } from '../../services/sessionStorage/type'
 
-export default () => {
-  const { client, isReady } = getClient()
-  return {
-    sessionStore: new RedisStore({
-      client,
-      prefix: getRedisKeyName(`${REDIS_KEYS.SESSION}:`),
-    }),
-    isReady
-  }
+export default (sessionStorageClient: SessionStorageClient) => {
+  return new RedisStore({
+    client: sessionStorageClient,
+    prefix: getRedisKeyName(`${REDIS_KEYS.SESSION}:`),
+  })
 }
