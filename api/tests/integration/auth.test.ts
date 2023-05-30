@@ -1,24 +1,26 @@
 import request from 'supertest'
 import { API_PATHS, SESSION_SID_KEY } from '../../src/constants'
-import { JWT_SECRET_KEY, getMailServer } from '../../src/getEnvs'
+import { JWT_SECRET_KEY } from '../../src/getEnvs'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { v4 as uuidv4 } from 'uuid'
-import { assertSession, setupApiAppForTest } from '../utils'
+import { assertSession, closeApiAppForTest, setupApiAppForTest } from '../utils'
 import cookie from 'cookie'
+import getMailServer from '../../src/services/mailServer'
 
 beforeAll(async () => {
   await setupApiAppForTest()
   return
 })
 afterAll(async () => {
-  await destroyApiApp()
+  await closeApiAppForTest()
+  await new Promise(resolve => setTimeout(resolve, 100))
   return
 })
 
 beforeEach(async () => {
   // Initialize users table.
-  return await db.query(sql`
+  return await dbClient.query(sql`
     DELETE FROM users;
   `)
 })
@@ -54,7 +56,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
     expect(res.status).toBe(400)
     expect(res.body.message).toBe("\"password\" is required")
     // Make sure the user is not created.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT *
         FROM users
         WHERE email = ${email};
@@ -68,7 +70,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -98,7 +100,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({email, password})
     // Make sure if the un-activated user is created.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT *
         FROM users
         WHERE email = ${email};
@@ -123,7 +125,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
     const hashedPassword1 = await bcrypt.hash(password1, salt)
     const password2 = 'password2'
     // Create un-activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -140,7 +142,7 @@ describe(`POST ${API_PATHS.AUTH.SIGNUP.path}`, () => {
       .post(API_PATHS.AUTH.SIGNUP.path)
       .send({email, password: password2})
     // Make sure the password is updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT password
         FROM users
         WHERE email = ${email};
@@ -223,7 +225,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -253,7 +255,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     // Create un-activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -323,7 +325,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     // Create un-activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -349,7 +351,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -375,7 +377,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -405,7 +407,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -417,7 +419,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${oldEmail};
@@ -436,7 +438,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(resForEmptyArray.status).toBe(401)
     expect(resForEmptyArray.body.message).toBe('Access denied. Request is not authorized.')
     // Make sure email and password is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email, password
         FROM users
         WHERE id = ${id};
@@ -456,7 +458,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -468,7 +470,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${oldEmail};
@@ -487,7 +489,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(resForEmptyArray.status).toBe(401)
     expect(resForEmptyArray.body.message).toBe('Access denied. Request is not authorized.')
     // Make sure email and password is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email, password
         FROM users
         WHERE id = ${id};
@@ -507,7 +509,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -519,7 +521,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${oldEmail};
@@ -542,7 +544,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(res.status).toBe(401)
     expect(res.body.message).toBe('Access denied. Request is not authorized.')
     // Make sure email and password is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email, password
         FROM users
         WHERE id = ${id};
@@ -561,7 +563,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -573,7 +575,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${oldEmail};
@@ -598,7 +600,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(resForEmptyObject.status).toBe(400)
     expect(resForEmptyObject.body.message).toBe("\"value\" must have at least 1 key")
     // Make sure email and password is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email, password
         FROM users
         WHERE id = ${id};
@@ -619,7 +621,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -631,7 +633,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${oldEmail};
@@ -650,7 +652,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(res.status).toBe(200)
     expect(res.body.message).toBe(`Confirmation email was sent to ${newEmail}. Please check the inbox and confirm.`)
     // Make sure email is not updated yet and password is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email, password
         FROM users
         WHERE id = ${id};
@@ -668,7 +670,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -680,7 +682,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${email}
@@ -696,7 +698,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
       .send({password: newPassword})
     expect(res.status).toBe(200)
     expect(res.body.message).toBe('Password update successful.')
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email, password
         FROM users
         WHERE id = ${id};
@@ -715,7 +717,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -727,7 +729,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${oldEmail}
@@ -746,7 +748,7 @@ describe(`POST ${API_PATHS.AUTH.EDIT.path}`, () => {
     expect(mockMailServerSend).toBeCalledWith(newEmail, expect.any(String), expect.any(String), expect.any(String))
     expect(res.status).toBe(200)
     expect(res.body.message).toBe(`Confirmation email was sent to ${newEmail}. Please check the inbox and confirm.`)
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email, password
         FROM users
         WHERE id = ${id};
@@ -789,7 +791,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -801,7 +803,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${oldEmail}
@@ -818,7 +820,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     expect(res.status).toBe(400)
     expect(res.body.message).toBe("\"password\" is required")
     // Make sure email is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email
         FROM users
         WHERE id = ${id};
@@ -833,7 +835,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -845,7 +847,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${oldEmail}
@@ -862,7 +864,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     expect(res.status).toBe(400)
     expect(res.body.message).toBe('Token expired. Please try again.')
     // Make sure email is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email
         FROM users
         WHERE id = ${id};
@@ -877,7 +879,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -889,7 +891,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${oldEmail}
@@ -906,7 +908,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     expect(res.status).toBe(400)
     expect(res.body.message).toBe('Invalid token.')
     // Make sure email is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email
         FROM users
         WHERE id = ${id};
@@ -921,7 +923,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -933,7 +935,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${oldEmail}
@@ -950,7 +952,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     expect(res.status).toBe(400)
     expect(res.body.message).toBe('Invalid token.')
     // Make sure email is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email
         FROM users
         WHERE id = ${id};
@@ -965,7 +967,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -977,7 +979,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${oldEmail}
@@ -994,7 +996,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     expect(res.status).toBe(400)
     expect(res.body.message).toBe('Invalid token.')
     // Make sure email is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email
         FROM users
         WHERE id = ${id};
@@ -1021,7 +1023,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -1033,7 +1035,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${oldEmail}
@@ -1050,7 +1052,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     expect(res.status).toBe(400)
     expect(res.body.message).toBe('Invalid token.')
     // Make sure email is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email
         FROM users
         WHERE id = ${id};
@@ -1090,7 +1092,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     const password = 'password'
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -1102,7 +1104,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
         false
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${oldEmail}
@@ -1118,7 +1120,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     expect(res.status).toBe(400)
     expect(res.body.message).toBe(`User with email ${oldEmail} is not activated yet. Please activate then retry.`)
     // Make sure email is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email
         FROM users
         WHERE id = ${id};
@@ -1131,7 +1133,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     const password = 'password'
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -1143,7 +1145,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${oldEmail}
@@ -1159,7 +1161,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     expect(res.status).toBe(400)
     expect(res.body.message).toBe('Password is incorrect.')
     // Make sure email is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email
         FROM users
         WHERE id = ${id};
@@ -1173,7 +1175,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     const password = 'password'
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -1185,7 +1187,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${oldEmail}
@@ -1203,7 +1205,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     expect(res.body.message).toBe('Email change successful.')
     await assertSession(res, newEmail)
     // Make sure email is updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email
         FROM users
         WHERE id = ${id};
@@ -1241,7 +1243,7 @@ describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
     const password = 'password'
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -1266,7 +1268,7 @@ describe(`POST ${API_PATHS.AUTH.RESET_PASSWORD.path}`, () => {
     const password = 'password'
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -1316,7 +1318,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     const oldPassword = 'oldPassword'
     const salt = await bcrypt.genSalt(10)
     const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -1328,7 +1330,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${email}
@@ -1345,7 +1347,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     expect(res.status).toBe(400)
     expect(res.body.message).toBe("\"password\" is required")
     // Make sure password is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT password
         FROM users
         WHERE id = ${id};
@@ -1360,7 +1362,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     const newPassword = 'newPassword'
     const salt = await bcrypt.genSalt(10)
     const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -1372,7 +1374,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${email}
@@ -1389,7 +1391,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     expect(res.status).toBe(400)
     expect(res.body.message).toBe('Invalid token.')
     // Make sure password is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT password
         FROM users
         WHERE id = ${id};
@@ -1406,7 +1408,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     const newPassword = 'newPassword'
     const salt = await bcrypt.genSalt(10)
     const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -1418,7 +1420,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${email}
@@ -1435,7 +1437,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     expect(res.status).toBe(400)
     expect(res.body.message).toBe('Invalid token.')
     // Make sure password is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT password
         FROM users
         WHERE id = ${id};
@@ -1452,7 +1454,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     const newPassword = 'newPassword'
     const salt = await bcrypt.genSalt(10)
     const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -1464,7 +1466,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${email}
@@ -1481,7 +1483,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     expect(res.status).toBe(400)
     expect(res.body.message).toBe('Invalid token.')
     // Make sure password is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT password
         FROM users
         WHERE id = ${id};
@@ -1528,7 +1530,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     const newPassword = 'newPassword'
     const salt = await bcrypt.genSalt(10)
     const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -1540,7 +1542,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
         false
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${email}
@@ -1557,7 +1559,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     expect(res.status).toBe(400)
     expect(res.body.message).toBe(`User with email ${email} is not activated yet. Please activate then retry.`)
     // Make sure password is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT password
         FROM users
         WHERE id = ${id};
@@ -1574,7 +1576,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     const newPassword = 'newPassword'
     const salt = await bcrypt.genSalt(10)
     const hashedOldPassword = await bcrypt.hash(oldPassword, salt)
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -1586,7 +1588,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${email}
@@ -1603,7 +1605,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
     expect(res.status).toBe(200)
     expect(res.body.message).toBe('Password reset successful.')
     // Make sure password is updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT password
         FROM users
         WHERE id = ${id};
@@ -1622,7 +1624,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -1634,7 +1636,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${email};
@@ -1653,7 +1655,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     expect(resForEmptyArray.status).toBe(401)
     expect(resForEmptyArray.body.message).toBe('Access denied. Request is not authorized.')
     // Make sure email and password is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email, password
         FROM users
         WHERE id = ${id};
@@ -1669,7 +1671,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -1681,7 +1683,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
         true
       );
     `)
-    const id = (await db.query(sql`
+    const id = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${email};
@@ -1704,7 +1706,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     expect(res.status).toBe(401)
     expect(res.body.message).toBe('Access denied. Request is not authorized.')
     // Make sure email and password is not updated.
-    const result = await db.query(sql`
+    const result = await dbClient.query(sql`
       SELECT email, password
         FROM users
         WHERE id = ${id};
@@ -1720,7 +1722,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -1737,7 +1739,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
       .send({ email, password })
     const validCookie: string[] = resLogin.headers['set-cookie']
     // Delete the user.
-    await db.query(sql`
+    await dbClient.query(sql`
       DELETE FROM users
         WHERE email = ${email};
     `)
@@ -1755,7 +1757,7 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
     // Create activated user.
-    await db.query(sql`
+    await dbClient.query(sql`
       INSERT INTO users (
         email,
         password,
@@ -1767,14 +1769,14 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
         true
       );
     `)
-    const userId = (await db.query(sql`
+    const userId = (await dbClient.query(sql`
       SELECT id
         FROM users
         WHERE email = ${email};
     `))[0].id
     // Create document of the user.
     const documentId = uuidv4()
-    const documentInsertResult = await db.query(sql`
+    const documentInsertResult = await dbClient.query(sql`
       INSERT INTO documents (
         id,
         user_id,
@@ -1809,14 +1811,14 @@ describe(`POST ${API_PATHS.AUTH.DELETE.path}`, () => {
     expect(res.status).toBe(200)
     expect(res.body.message).toBe('User deleted successfully.')
     // Make sure user is deleted.
-    const resultForUserSelectQuery = await db.query(sql`
+    const resultForUserSelectQuery = await dbClient.query(sql`
       SELECT email
         FROM users
         WHERE id = ${userId};
     `)
     expect(resultForUserSelectQuery).toEqual([])
     // Make sure user's document is deleted.
-    const resultForDocumentSelectQuery = await db.query(sql`
+    const resultForDocumentSelectQuery = await dbClient.query(sql`
       SELECT *
         FROM documents
         WHERE id = ${documentId};

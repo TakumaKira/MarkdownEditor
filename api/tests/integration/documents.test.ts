@@ -13,7 +13,7 @@ import { API_PATHS, DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT, D
 import { DocumentFromDevice, DocumentFromDB, DocumentsUpdateRequest, DocumentsUpdateResponse, Document, DocumentUpdatedWsMessage } from '../../src/models/document'
 import { WS_PORT } from '../../src/getEnvs'
 import { regIsISODateString } from '../../src/middlewares/validator'
-import { setupApiAppForTest } from '../utils'
+import { closeApiAppForTest, setupApiAppForTest } from '../utils'
 
 beforeAll(async () => {
   await setupApiAppForTest()
@@ -22,7 +22,8 @@ beforeAll(async () => {
 })
 afterAll(async () => {
   await clearUsers()
-  await destroyApiApp()
+  await closeApiAppForTest()
+  await new Promise(resolve => setTimeout(resolve, 100))
   return
 })
 
@@ -41,7 +42,7 @@ async function generateUser(email: string, password: string): Promise<User> {
 async function addUserToDatabase(email: string, password: string): Promise<number> {
   const salt = await bcrypt.genSalt(10)
   const hashedUser1Password = await bcrypt.hash(password, salt)
-  await db.query(sql`
+  await dbClient.query(sql`
     INSERT INTO users (
       email,
       password,
@@ -53,21 +54,21 @@ async function addUserToDatabase(email: string, password: string): Promise<numbe
       true
     );
   `)
-  return (await db.query(sql`
+  return (await dbClient.query(sql`
     SELECT id
       FROM users
       WHERE email = ${email};
   `))[0].id
 }
 const clearUsers = async () => {
-  db.query(sql`
+  dbClient.query(sql`
     DELETE FROM users;
   `)
 }
 
 beforeEach(() => {
   // Initialize documents table.
-  return db.query(sql`
+  return dbClient.query(sql`
     DELETE FROM documents;
   `)
 })
@@ -142,7 +143,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ]
       }
       // Add new document from other device beforehand.
-      await db.query(sql`
+      await dbClient.query(sql`
         INSERT INTO documents (
           id,
           user_id,
@@ -173,7 +174,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       expect(res.status).toBe(401)
       expect(res.body.message).toBe('Access denied. Request is not authorized.')
       // Check database.
-      const result = await db.query(sql`
+      const result = await dbClient.query(sql`
         SELECT id
           FROM documents
           WHERE user_id = ${mainUser.id};
@@ -302,7 +303,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ]
       }
       // Add new document from other device beforehand.
-      await db.query(sql`
+      await dbClient.query(sql`
         INSERT INTO documents (
           id,
           user_id,
@@ -333,7 +334,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       expect(res.status).toBe(400)
       expect(res.body.message).toBe("\"updates[0].updatedAt\" with value \"2000-01-02T00:00:00.000\" fails to match the required pattern: /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/")
       // Check database.
-      const result = await db.query(sql`
+      const result = await dbClient.query(sql`
         SELECT id
           FROM documents
           WHERE user_id = ${mainUser.id};
@@ -397,7 +398,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       expect(res.status).toBe(400)
       expect(res.body.message).toBe("\"updates[0].name\" length must be less than or equal to 50 characters long")
       // Check database.
-      const result = await db.query(sql`
+      const result = await dbClient.query(sql`
         SELECT id
           FROM documents
           WHERE user_id = ${mainUser.id};
@@ -470,7 +471,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       expect(res.status).toBe(200)
       expect(res.body).toEqual(documentsUploadResponse)
       // Check database.
-      const result = await db.query(sql`
+      const result = await dbClient.query(sql`
         SELECT id
           FROM documents
           WHERE user_id = ${mainUser.id};
@@ -535,7 +536,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       expect(res.status).toBe(400)
       expect(res.body.message).toBe("\"updates[0].content\" length must be less than or equal to 20000 characters long")
       // Check database.
-      const result = await db.query(sql`
+      const result = await dbClient.query(sql`
         SELECT id
           FROM documents
           WHERE user_id = ${mainUser.id};
@@ -608,7 +609,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       expect(res.status).toBe(200)
       expect(res.body).toEqual(documentsUploadResponse)
       // Check database.
-      const result = await db.query(sql`
+      const result = await dbClient.query(sql`
         SELECT id
           FROM documents
           WHERE user_id = ${mainUser.id};
@@ -659,7 +660,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         savedOnDBAt: '2000-01-01T00:00:01.000Z',
         isDeleted: false,
       }
-      await db.query(sql`
+      await dbClient.query(sql`
         INSERT INTO documents (
           id,
           user_id,
@@ -724,7 +725,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       expect(response.allDocuments[0].id).not.toBe(mainUsersNewDocument.id)
       expect(response.updatedIdsAsUnavailable[0].to).toBe(response.allDocuments[0].id)
       // Check database.
-      const result = await db.query(sql`
+      const result = await dbClient.query(sql`
         SELECT id
           FROM documents
           WHERE user_id = ${mainUser.id};
@@ -766,7 +767,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         savedOnDBAt: '2000-01-01T00:00:01.000Z',
         isDeleted: false,
       }
-      await db.query(sql`
+      await dbClient.query(sql`
         INSERT INTO documents (
           id,
           user_id,
@@ -832,7 +833,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       expect(response.allDocuments[0].id).not.toBe(newDocument.id)
       expect(response.updatedIdsAsUnavailable[0].to).toBe(response.allDocuments[0].id)
       // Check database.
-      const result = await db.query(sql`
+      const result = await dbClient.query(sql`
         SELECT id
           FROM documents
           WHERE user_id = ${mainUser.id}
@@ -908,7 +909,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       expect(res.status).toBe(200)
       expect(res.body).toEqual(documentsUploadResponse)
       // Check database.
-      const result = await db.query(sql`
+      const result = await dbClient.query(sql`
         SELECT id
           FROM documents
           WHERE user_id = ${mainUser.id};
@@ -969,7 +970,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         isDeleted: false,
       }
       // Add documents from other device beforehand.
-      await db.query(sql`
+      await dbClient.query(sql`
         INSERT INTO documents (
           id,
           user_id,
@@ -991,7 +992,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
           ${oldDocumentFromDatabase.isDeleted}
         );
       `)
-      await db.query(sql`
+      await dbClient.query(sql`
         INSERT INTO documents (
           id,
           user_id,
@@ -1091,7 +1092,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         isDeleted: false,
       }
       // Add documents from other device beforehand.
-      await db.query(sql`
+      await dbClient.query(sql`
         INSERT INTO documents (
           id,
           user_id,
@@ -1190,7 +1191,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         updatedAt: '2000-01-03T00:00:00.000Z',
       }
       // Add documents from other device beforehand.
-      await db.query(sql`
+      await dbClient.query(sql`
         INSERT INTO documents (
           id,
           user_id,
@@ -1368,7 +1369,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       }
       // Prepare database.
       // Synched before this time.
-      await db.query(sql`
+      await dbClient.query(sql`
         INSERT INTO documents (
           id,
           user_id,
@@ -1390,7 +1391,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
           false
         );
       `)
-      await db.query(sql`
+      await dbClient.query(sql`
         INSERT INTO documents (
           id,
           user_id,
@@ -1413,7 +1414,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         );
       `)
       // Deleted.
-      await db.query(sql`
+      await dbClient.query(sql`
         INSERT INTO documents (
           id,
           user_id,
@@ -1436,7 +1437,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         );
       `)
       // Modified.
-      await db.query(sql`
+      await dbClient.query(sql`
         INSERT INTO documents (
           id,
           user_id,
@@ -1459,7 +1460,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         );
       `)
       // Added.
-      await db.query(sql`
+      await dbClient.query(sql`
         INSERT INTO documents (
           id,
           user_id,
@@ -1543,7 +1544,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       expect(res.body).toEqual(documentsUploadResponse)
       expect(copiedOnConflictDuplication.id).not.toBe(conflictedAsBeingModifiedOnDevice.id)
       expect(conflictedAsBeingModifiedOnDevice.updatedAt < copiedOnConflictDuplication.updatedAt).toBe(true)
-      const onDatabase = (await db.query(sql`
+      const onDatabase = (await dbClient.query(sql`
         SELECT
           *,
           UNIX_TIMESTAMP(created_at) AS created_at,

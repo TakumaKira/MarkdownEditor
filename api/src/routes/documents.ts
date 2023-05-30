@@ -6,14 +6,17 @@ import { DocumentsUpdateResponse, Document, DocumentUpdatedWsMessage } from '../
 import { fromUnixTimestampToISOString, normalizeDocument, trimMilliseconds } from '../services/database/utils'
 import { regenerateSession } from '../services/sessionStorage/utils'
 import { Server } from 'socket.io'
-import DatabaseController from '../services/database/controller'
 import { SessionStorageClient } from '../services/sessionStorage/type'
 import SessionStorageController from '../services/sessionStorage/controller'
+import { DatabaseClient } from '../services/database/types'
+import getDatabaseController from '../services/database'
 
-export default (wsServer: Server, db: DatabaseController, sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => {
+export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => {
   const documentsRouter = Router()
 
   const apiAuthMiddleware = getApiAuthMiddleware()
+
+  const db = getDatabaseController(dbClient)
 
   const sessionStorage = new SessionStorageController(sessionStorageClient, sessionStorageClientIsReady)
 

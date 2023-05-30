@@ -2,7 +2,7 @@ import { RequestHandler } from 'express';
 import { Socket } from 'socket.io';
 import { ExtendedError } from 'socket.io/dist/namespace';
 import { SessionStorageClient } from '../services/sessionStorage/type';
-import SessionStorageController from 'services/sessionStorage/controller';
+import SessionStorageController from '../services/sessionStorage/controller';
 
 const getApiAuthMiddleware: () => RequestHandler = () => {
   return (req, res, next) => {

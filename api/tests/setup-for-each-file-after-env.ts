@@ -5,12 +5,9 @@ afterAll in this file runs before each test file's afterAll.
 */
 
 const mockSend = jest.fn()
-jest.mock('../src/getEnvs', () => ({
-  ...jest.requireActual('../src/getEnvs'),
-  getMailServer: () => ({
-    send: mockSend
-  })
-}))
+const mockGetMailServer = jest.fn()
+mockGetMailServer.mockReturnValue({send: mockSend})
+jest.mock('../src/services/mailServer', () => mockGetMailServer)
 
 beforeAll(async () => {
   // Global set ups
@@ -19,6 +16,5 @@ beforeAll(async () => {
 
 afterAll(async () => {
   // Global tear downs
-  await new Promise(setImmediate)
   return
 })

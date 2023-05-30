@@ -10,15 +10,18 @@ import { getApiAuthMiddleware } from '../middlewares/auth'
 import Joi from 'joi'
 import { destroySession, regenerateSession } from '../services/sessionStorage/utils'
 import { Server } from 'socket.io'
-import DatabaseController from '../services/database/controller'
 import SessionStorageController from '../services/sessionStorage/controller'
 import getMailServer from '../services/mailServer'
 import { SessionStorageClient } from '../services/sessionStorage/type'
+import getDatabaseController from '../services/database'
+import { DatabaseClient } from '../services/database/types'
 
-export default (wsServer: Server, db: DatabaseController, sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => {
+export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => {
   const authApiRouter = Router()
 
   const apiAuthMiddleware = getApiAuthMiddleware()
+
+  const db = getDatabaseController(dbClient)
 
   const sessionStorage = new SessionStorageController(sessionStorageClient, sessionStorageClientIsReady)
 
