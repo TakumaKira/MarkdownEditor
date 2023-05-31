@@ -22,7 +22,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await clearUsers()
   await apiAppForTest.close()
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await new Promise(setImmediate)
 })
 
 type User = { id: number, email: string, password: string }

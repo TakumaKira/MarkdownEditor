@@ -22,20 +22,18 @@ const getWsAuthMiddleware = (sessionStorageClient: SessionStorageClient, session
     try {
       const { wsHandshakeToken } = socket.handshake.auth
       if (!wsHandshakeToken) {
-        socket.conn.send(JSON.stringify({message: 'Access denied. Handshake request does not have valid token.'}), undefined)
-        socket.conn.close(true)
-        return
+        setTimeout(() => socket.conn.close(true))
+        return next(new Error('Access denied. Handshake request does not have valid token.'))
       }
       const session = await sessionStorage.getSession(wsHandshakeToken)
       if (session === null) {
-        socket.conn.send(JSON.stringify({message: 'Access denied. Handshake request does not have valid token.'}), undefined)
-        socket.conn.close(true)
-        return
+        setTimeout(() => socket.conn.close(true))
+        return next(new Error('Access denied. Handshake request does not have valid token.'))
       }
       if (session.userId === undefined) {
         throw new Error('Session does not have userId.')
       }
-      socket.join(session.userId.toString())
+      socket.join(session.userId)
       next()
     } catch (e) {
       console.error(e)

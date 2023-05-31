@@ -13,7 +13,7 @@ beforeAll(async () => {
 })
 afterAll(async () => {
   await apiAppForTest.close()
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await new Promise(setImmediate)
 })
 
 beforeEach(async () => {
