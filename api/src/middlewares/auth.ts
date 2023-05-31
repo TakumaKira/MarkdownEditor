@@ -22,11 +22,13 @@ const getWsAuthMiddleware = (sessionStorageClient: SessionStorageClient, session
     try {
       const { wsHandshakeToken } = socket.handshake.auth
       if (!wsHandshakeToken) {
+        // This line below won't affect wsServer tests, but you can see this line works by commenting this out and trying to connect the WebSocket without token.
         setTimeout(() => socket.conn.close(true))
         return next(new Error('Access denied. Handshake request does not have valid token.'))
       }
       const session = await sessionStorage.getSession(wsHandshakeToken)
       if (session === null) {
+        // This line below won't affect wsServer tests, but you can see this line works by commenting this out and trying to connect the WebSocket with invalid token.
         setTimeout(() => socket.conn.close(true))
         return next(new Error('Access denied. Handshake request does not have valid token.'))
       }

@@ -37,52 +37,86 @@ afterAll(async () => {
 })
 
 describe('wsServer', () => {
-  test('emits connect_error when no AuthToken is provided', done => {
+  test('emits connect_error when no wsHandshakeToken is provided', done => {
+    expect.assertions(5)
     const clientSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false})
+    const onConnect = jest.fn()
+    clientSocket.on('connect', () => {
+      onConnect()
+    })
     clientSocket.on('connect_error', err => {
       expect(err instanceof Error).toBe(true)
       expect(err.message).toBe('Access denied. Handshake request does not have valid token.')
-      console.log('TODO: Assert disconnected.')
-      clientSocket.close()
+      expect(clientSocket.active).toBe(false)
+      expect(clientSocket.disconnected).toBe(true)
+      expect(onConnect).not.toHaveBeenCalled()
       done()
     })
+    // clientSocket.on('disconnect', reason => {}) callback does not work.
     clientSocket.connect()
   })
 
   test('emits connect_error when invalid wsHandshakeToken is provided', done => {
+    expect.assertions(5)
     const clientSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: `${mainUser.wsHandshakeToken}1`}})
+    const onConnect = jest.fn()
+    clientSocket.on('connect', () => {
+      onConnect()
+    })
     clientSocket.on('connect_error', err => {
       expect(err instanceof Error).toBe(true)
       expect(err.message).toBe('Access denied. Handshake request does not have valid token.')
-      console.log('TODO: Assert disconnected.')
-      clientSocket.close()
+      expect(clientSocket.active).toBe(false)
+      expect(clientSocket.disconnected).toBe(true)
+      expect(onConnect).not.toHaveBeenCalled()
       done()
     })
     clientSocket.connect()
   })
 
   test('cannot get message if client did not provide valid wsHandshakeToken', done => {
-    const testFn = jest.fn()
+    expect.assertions(6)
     const clientSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: `${mainUser.wsHandshakeToken}1`}})
+    const onConnect = jest.fn()
+    clientSocket.on('connect', () => {
+      onConnect()
+    })
+    clientSocket.on('connect_error', err => {
+      expect(err instanceof Error).toBe(true)
+      expect(err.message).toBe('Access denied. Handshake request does not have valid token.')
+      expect(clientSocket.active).toBe(false)
+      expect(clientSocket.disconnected).toBe(true)
+      expect(onConnect).not.toHaveBeenCalled()
+    })
     const eventName = 'test'
     const message = 'test message'
+    const testFn = jest.fn()
     clientSocket.on(eventName, arg => testFn(arg))
     clientSocket.connect()
     setTimeout(() => {
       wsServer.to(mainUser.session.userId).emit(eventName, message)
       setTimeout(() => {
         expect(testFn).not.toBeCalled()
-        clientSocket.close()
         done()
       }, 100)
     }, 100)
   })
 
   test('cannot get message if the message emitted to another user', done => {
-    const testFn = jest.fn()
+    expect.assertions(4)
     const clientSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: mainUser.wsHandshakeToken}})
+    const onConnectError = jest.fn()
+    clientSocket.on('connect', () => {
+      expect(clientSocket.active).toBe(true)
+      expect(clientSocket.connected).toBe(true)
+      expect(onConnectError).not.toHaveBeenCalled()
+    })
+    clientSocket.on('connect_error', err => {
+      onConnectError()
+    })
     const eventName = 'test'
     const message = 'test message'
+    const testFn = jest.fn()
     clientSocket.on(eventName, arg => testFn(arg))
     clientSocket.connect()
     setTimeout(() => {
@@ -96,10 +130,20 @@ describe('wsServer', () => {
   })
 
   test('gets message if the message emitted to the user', done => {
-    const testFn = jest.fn()
+    expect.assertions(4)
     const clientSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: mainUser.wsHandshakeToken}})
+    const onConnectError = jest.fn()
+    clientSocket.on('connect', () => {
+      expect(clientSocket.active).toBe(true)
+      expect(clientSocket.connected).toBe(true)
+      expect(onConnectError).not.toHaveBeenCalled()
+    })
+    clientSocket.on('connect_error', err => {
+      onConnectError()
+    })
     const eventName = 'test'
     const message = 'test message'
+    const testFn = jest.fn()
     clientSocket.on(eventName, arg => testFn(arg))
     clientSocket.connect()
     setTimeout(() => {
