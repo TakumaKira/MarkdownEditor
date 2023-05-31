@@ -23,6 +23,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await clearUsers()
   await dbClientForTest.close()
+  await new Promise(resolve => setTimeout(resolve, 100))
 })
 
 type User = { id: number, email: string, password: string }

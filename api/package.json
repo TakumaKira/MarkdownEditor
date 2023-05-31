@@ -7,8 +7,8 @@
     "prestart": "yarn build",
     "build": "npx tsc -p tsconfig.build.json",
     "dev": "npx nodemon ./src/index.ts",
-    "test": "jest --watchAll --coverage",
-    "test:ci": "jest"
+    "test": "jest --runInBand --watchAll --coverage",
+    "test:ci": "jest --runInBand"
   },
   "dependencies": {
     "@databases/mysql": "^5.2.1",

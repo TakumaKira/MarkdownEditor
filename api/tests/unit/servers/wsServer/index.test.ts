@@ -33,7 +33,7 @@ beforeAll(async () => {
 })
 afterAll(async () => {
   await wsServerForTest.close()
-  await new Promise(setImmediate)
+  await new Promise(resolve => setTimeout(resolve, 100))
 })
 
 describe('wsServer', () => {

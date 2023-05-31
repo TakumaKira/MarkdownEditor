@@ -23,7 +23,7 @@ beforeAll(async () => {
 })
 afterAll(async () => {
   await sessionStorageClientForTest.close()
-  await new Promise(setImmediate)
+  await new Promise(resolve => setTimeout(resolve, 100))
 })
 
 describe('apiAuthMiddleware', () => {

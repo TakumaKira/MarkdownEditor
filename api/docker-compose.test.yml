@@ -31,10 +31,11 @@ services:
       MYSQL_PASSWORD: password
       REDIS_HOST: redis
     command: dockerize
-      -wait tcp://db:3306 -timeout 60s
+      -wait tcp://db:3306 -wait tcp://redis:6379 -timeout 60s
       sh -c "yarn test:ci"
     depends_on:
       - db
+      - redis
 
 volumes:
   db:
