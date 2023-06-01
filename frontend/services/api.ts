@@ -17,6 +17,7 @@ if (!API_PORT) {
   throw new Error('API_PORT is not defined.')
 }
 axios.defaults.baseURL = `${API_PROTOCOL}://${API_DOMAIN}:${API_PORT}`
+axios.defaults.withCredentials = true
 
 axios.interceptors.response.use(
   response => response,

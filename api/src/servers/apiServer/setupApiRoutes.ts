@@ -14,6 +14,7 @@ import { SessionStorageClient } from '../../services/sessionStorage/type'
 const setupApiRoutes = (apiApp: Express, frontendDomain: string, wsServer: Server, dbClient: DatabaseClient, sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => {
   apiApp.use(cors({
     origin: `${FRONTEND_PROTOCOL}://${frontendDomain}${FRONTEND_PORT ? ':' + FRONTEND_PORT : ''}`,
+    credentials: true,
     exposedHeaders: [WS_HANDSHAKE_TOKEN_KEY],
   }))
   apiApp.use(express.json())
