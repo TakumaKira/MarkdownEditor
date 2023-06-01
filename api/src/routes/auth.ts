@@ -95,7 +95,7 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
         await regenerateSession(req, sessionStorage, wsServer, { id: String(id), email })
         return res
           .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
-          .send({message: 'Confirmation successful.'})
+          .send({message: 'Confirmation successful.', email})
       } catch (error: any) {
         if (error?.sqlState === '45011') {
           return res.status(400).send({message: 'The email you are trying to confirm does not exist on database.'})
@@ -238,7 +238,7 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
       await regenerateSession(req, sessionStorage, wsServer, { email: newEmail })
       return res
         .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
-        .send({message: 'Email change successful.'})
+        .send({message: 'Email change successful.', email: newEmail})
     } catch (e) {
       next(e)
     }
@@ -308,7 +308,7 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
       await regenerateSession(req, sessionStorage, wsServer)
       return res
         .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
-        .send({message: 'Password reset successful.'})
+        .send({message: 'Password reset successful.', email})
     } catch (e) {
       next(e)
     }

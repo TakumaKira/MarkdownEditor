@@ -3,7 +3,6 @@ import React from "react"
 import { io, Socket } from 'socket.io-client'
 import { DOCUMENT_UPDATED_WS_EVENT } from "../constants"
 import env from '../env'
-import { setTokenToRequestHeader } from '../services/api'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { askServerUpdate } from '../store/slices/document'
 
@@ -11,7 +10,7 @@ import { askServerUpdate } from '../store/slices/document'
 const useApiAuth = (): void => {
   const storeInitializationIsDone = useAppSelector(state => state.storeInitializationIsDone)
   const documentState = useAppSelector(state => state.document)
-  const isLoggedIn = useAppSelector(state => !!state.user.token)
+  const isLoggedIn = useAppSelector(state => !!state.user.email)
   const userState = useAppSelector(state => state.user)
   const dispatch = useAppDispatch()
 
@@ -21,19 +20,33 @@ const useApiAuth = (): void => {
     if (!storeInitializationIsDone) {
       return
     }
-    const {token} = userState
-    setTokenToRequestHeader(token)
-    if (token) {
-      getSocket(token)
-      dispatch(askServerUpdate(documentState))
+    const {wsHandshakeToken} = userState
+    if (wsHandshakeToken) {
+      if (!socket) {
+        getSocket(wsHandshakeToken)
+        dispatch(askServerUpdate(documentState))
+      } else {
+        updateSocketToken(wsHandshakeToken)
+      }
     } else {
       disposeSocket()
     }
-  }, [storeInitializationIsDone, userState.token])
+  }, [storeInitializationIsDone, userState.wsHandshakeToken])
 
-  const getSocket = (token: string) => {
-    const socket = io(`${env.WS_PROTOCOL}://${env.API_DOMAIN}:${env.WS_PORT}`, {auth: {token}})
+  const getSocket = (wsHandshakeToken: string) => {
+    const socket = io(`${env.WS_PROTOCOL}://${env.API_DOMAIN}:${env.WS_PORT}`, {auth: {wsHandshakeToken}})
     setSocket(socket)
+  }
+  const updateSocketToken = (wsHandshakeToken: string) => {
+    if (!socket) {
+      console.error(new Error('Missing socket.'))
+      return
+    }
+    if (typeof socket.auth === 'function') {
+      console.error(new Error('socket.auth must be a object.'))
+      return
+    }
+    socket.auth.wsHandshakeToken = wsHandshakeToken
   }
   const disposeSocket = () => {
     socket?.off(DOCUMENT_UPDATED_WS_EVENT, documentsUpdated)

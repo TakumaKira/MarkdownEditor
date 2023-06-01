@@ -1,13 +1,12 @@
-import { UserInfoOnAuthToken } from "@api/user";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import decodeToken from "../../helpers/decodeToken";
 import { confirmChangeEmail, confirmResetPassword, confirmSignupEmail, deleteUser, editUser, login, resetPassword, signup } from "../../services/api";
 import { getData } from "../../services/asyncStorage";
 import { AuthStateConfirmChangeEmail, AuthStateConfirmResetPassword, AuthStateConfirmSignupEmail, AuthStateDelete, AuthStateEdit, AuthStateLogin, AuthStateResetPassword, AuthStateSignup, UserState } from "../models/user";
+import { WS_HANDSHAKE_TOKEN_KEY } from "../../constants";
 
 const initialState: UserState = {
-  token: null,
   email: null,
+  wsHandshakeToken: null,
   authState: null,
   restoreIsDone: false
 }
@@ -98,7 +97,7 @@ export const askServerSignup = createAsyncThunk('user/askServerSignup', async (p
 export const askServerConfirmSignupEmail = createAsyncThunk('user/askServerConfirmSignupEmail', async (payload: {token: string}) => {
   try {
     const response = await confirmSignupEmail(payload)
-    return {successMessage: response.data.message, token: response.data.token}
+    return {successMessage: response.data.message, email: response.data.email, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
   } catch (err) {
     return Promise.reject(err)
   }
@@ -106,7 +105,7 @@ export const askServerConfirmSignupEmail = createAsyncThunk('user/askServerConfi
 export const askServerLogin = createAsyncThunk('user/askServerLogin', async (payload: {email: string, password: string}) => {
   try {
     const response = await login(payload)
-    return {token: response.data.token}
+    return {email: payload.email, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
   } catch (err) {
     return Promise.reject(err)
   }
@@ -114,7 +113,7 @@ export const askServerLogin = createAsyncThunk('user/askServerLogin', async (pay
 export const askServerEdit = createAsyncThunk('user/askServerEdit', async (payload: {email?: string, password?: string}) => {
   try {
     const response = await editUser(payload)
-    return {successMessage: response.data.message}
+    return {successMessage: response.data.message, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
   } catch (err) {
     return Promise.reject(err)
   }
@@ -122,7 +121,7 @@ export const askServerEdit = createAsyncThunk('user/askServerEdit', async (paylo
 export const askServerConfirmChangeEmail = createAsyncThunk('user/askServerConfirmChangeEmail', async (payload: {token: string, password: string}) => {
   try {
     const response = await confirmChangeEmail(payload)
-    return {successMessage: response.data.message, token: response.data.token}
+    return {successMessage: response.data.message, email: response.data.email, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
   } catch (err) {
     return Promise.reject(err)
   }
@@ -130,7 +129,7 @@ export const askServerConfirmChangeEmail = createAsyncThunk('user/askServerConfi
 export const askServerResetPassword = createAsyncThunk('user/askServerResetPassword', async (payload: {email: string}) => {
   try {
     const response = await resetPassword(payload)
-    return {successMessage: response.data.message}
+    return {successMessage: response.data.message, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
   } catch (err) {
     return Promise.reject(err)
   }
@@ -138,7 +137,7 @@ export const askServerResetPassword = createAsyncThunk('user/askServerResetPassw
 export const askServerConfirmResetPassword = createAsyncThunk('user/askServerConfirmResetPassword', async (payload: {token: string, password: string}) => {
   try {
     const response = await confirmResetPassword(payload)
-    return {successMessage: response.data.message, token: response.data.token}
+    return {successMessage: response.data.message, email: response.data.email, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
   } catch (err) {
     return Promise.reject(err)
   }
@@ -235,8 +234,10 @@ const userSlice = createSlice({
         }
       }
     },
+    updateWsHandshakeToken: (state, action: PayloadAction<{wsHandshakeToken: string}>) => {
+      state.wsHandshakeToken = action.payload.wsHandshakeToken
+    },
     removeLoginToken: state => {
-      state.token = null
       state.email = null
     },
   },
@@ -245,7 +246,6 @@ const userSlice = createSlice({
       const restored = action.payload
       if (restored) {
         try {
-          state.token = restored.token
           state.email = restored.email
         } catch (err) {
           console.error(err)
@@ -272,17 +272,12 @@ const userSlice = createSlice({
       }
     })
     builder.addCase(askServerConfirmSignupEmail.fulfilled, (state, action) => {
-      const token = action.payload.token as string
-      try {
-        const {email} = decodeToken<UserInfoOnAuthToken>(token)
-        state.token = token
-        state.email = email
-        if (state.authState) {
-          state.authState.isLoading = false
-          state.authState.isDone = true
-        }
-      } catch (err) {
-        console.log(err)
+      const { email, wsHandshakeToken } = action.payload
+      state.email = email
+      state.wsHandshakeToken = wsHandshakeToken
+      if (state.authState) {
+        state.authState.isLoading = false
+        state.authState.isDone = true
       }
     })
     builder.addCase(askServerConfirmSignupEmail.rejected, (state, action) => {
@@ -299,17 +294,12 @@ const userSlice = createSlice({
       }
     })
     builder.addCase(askServerLogin.fulfilled, (state, action) => {
-      const token = action.payload.token as string
-      try {
-        const {email} = decodeToken<UserInfoOnAuthToken>(token)
-        state.token = token
-        state.email = email
-        if (state.authState) {
-          state.authState.isLoading = false
-          state.authState.isDone = true
-        }
-      } catch (err) {
-        console.log(err)
+      const { email, wsHandshakeToken } = action.payload
+      state.email = email
+      state.wsHandshakeToken = wsHandshakeToken
+      if (state.authState) {
+        state.authState.isLoading = false
+        state.authState.isDone = true
       }
     })
     builder.addCase(askServerLogin.rejected, (state, action) => {
@@ -324,7 +314,9 @@ const userSlice = createSlice({
         state.authState.isLoading = true
       }
     })
-    builder.addCase(askServerEdit.fulfilled, state => {
+    builder.addCase(askServerEdit.fulfilled, (state, action) => {
+      const { wsHandshakeToken } = action.payload
+      state.wsHandshakeToken = wsHandshakeToken
       if (state.authState) {
         state.authState.isLoading = false
         state.authState.isDone = true
@@ -343,17 +335,12 @@ const userSlice = createSlice({
       }
     })
     builder.addCase(askServerConfirmChangeEmail.fulfilled, (state, action) => {
-      const token = action.payload.token as string
-      try {
-        const {email} = decodeToken<UserInfoOnAuthToken>(token)
-        state.token = token
-        state.email = email
-        if (state.authState) {
-          state.authState.isLoading = false
-          state.authState.isDone = true
-        }
-      } catch (err) {
-        console.log(err)
+      const { email, wsHandshakeToken } = action.payload
+      state.email = email
+      state.wsHandshakeToken = wsHandshakeToken
+      if (state.authState) {
+        state.authState.isLoading = false
+        state.authState.isDone = true
       }
     })
     builder.addCase(askServerConfirmChangeEmail.rejected, (state, action) => {
@@ -369,7 +356,9 @@ const userSlice = createSlice({
         state.authState.isLoading = true
       }
     })
-    builder.addCase(askServerResetPassword.fulfilled, state => {
+    builder.addCase(askServerResetPassword.fulfilled, (state, action) => {
+      const { wsHandshakeToken } = action.payload
+      state.wsHandshakeToken = wsHandshakeToken
       if (state.authState) {
         state.authState.isLoading = false
         state.authState.isDone = true
@@ -388,17 +377,12 @@ const userSlice = createSlice({
       }
     })
     builder.addCase(askServerConfirmResetPassword.fulfilled, (state, action) => {
-      const token = action.payload.token as string
-      try {
-        const {email} = decodeToken<UserInfoOnAuthToken>(token)
-        state.token = token
-        state.email = email
-        if (state.authState) {
-          state.authState.isLoading = false
-          state.authState.isDone = true
-        }
-      } catch (err) {
-        console.log(err)
+      const { email, wsHandshakeToken } = action.payload
+      state.email = email
+      state.wsHandshakeToken = wsHandshakeToken
+      if (state.authState) {
+        state.authState.isLoading = false
+        state.authState.isDone = true
       }
     })
     builder.addCase(askServerConfirmResetPassword.rejected, (state, action) => {
@@ -414,8 +398,8 @@ const userSlice = createSlice({
       }
     })
     builder.addCase(askServerDeleteAccount.fulfilled, state => {
-      state.token = null
       state.email = null
+      state.wsHandshakeToken = null
       if (state.authState) {
         state.authState.isLoading = false
         state.authState.isDone = true
@@ -442,6 +426,7 @@ export const {
   submitResetPassword,
   submitNewPassword,
   validationError,
+  updateWsHandshakeToken,
   removeLoginToken,
 } = userSlice.actions
 

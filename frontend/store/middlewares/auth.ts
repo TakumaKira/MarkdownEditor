@@ -36,6 +36,8 @@ export const authMiddleware: ThunkMiddleware<RootState, AnyAction> = store => ne
     const _action = action as ReturnType<typeof callAuthModal>
     if (_action.payload.authStateType === AuthStateTypes.CONFIRM_SIGNUP_EMAIL) {
       store.dispatch(askServerConfirmSignupEmail({token: _action.payload.token}))
+    } else {
+      console.error(new Error('authStateType does not match.'), action.payload.authStateType, _action.payload.authStateType)
     }
   }
 

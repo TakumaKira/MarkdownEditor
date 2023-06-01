@@ -7,6 +7,7 @@ import { sortDocumentsFromNewest } from '../../helpers/sortDocuments'
 import { upload } from '../../services/api'
 import { getData } from '../../services/asyncStorage'
 import { DocumentOnDevice, DocumentOnEdit, DocumentState } from '../models/document'
+import { WS_HANDSHAKE_TOKEN_KEY } from '../../constants'
 
 const generateNewDocument = (): DocumentOnDevice => ({
   id: uuidv4(),
@@ -36,9 +37,10 @@ export const restoreDocument = createAsyncThunk('document/restoreDocument', () =
   return getData('document')
 })
 
-export const askServerUpdate: AsyncThunk<DocumentsUpdateResponse | null, DocumentState, {}> = createAsyncThunk('document/askServerUpdate', (documentState: DocumentState) => {
+export const askServerUpdate: AsyncThunk<{response: DocumentsUpdateResponse, wsHandshakeToken: string} | null, DocumentState, {}> = createAsyncThunk('document/askServerUpdate', async (documentState: DocumentState) => {
   try {
-    return upload(documentState)
+    const response = await upload(documentState)
+    return { response: response.data, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY] }
   } catch (err) {
     console.error(err)
     return null

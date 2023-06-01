@@ -274,6 +274,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
       .post(API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path)
       .send({token})
     expect(res.status).toBe(200)
+    expect(res.body.email).toBe(email)
     await assertSession(res, email)
   })
 })
@@ -1201,6 +1202,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
       .send({token, password})
     expect(res.status).toBe(200)
     expect(res.body.message).toBe('Email change successful.')
+    expect(res.body.email).toBe(newEmail)
     await assertSession(res, newEmail)
     // Make sure email is updated.
     const result = await dbClient.query(sql`
@@ -1602,6 +1604,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.path}`, () => {
       .send({token, password: newPassword})
     expect(res.status).toBe(200)
     expect(res.body.message).toBe('Password reset successful.')
+    expect(res.body.email).toBe(email)
     // Make sure password is updated.
     const result = await dbClient.query(sql`
       SELECT hashed_password

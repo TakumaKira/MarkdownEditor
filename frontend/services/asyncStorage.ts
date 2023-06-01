@@ -27,7 +27,6 @@ export const getData = async <Key extends keyof RootStateRestore>(key: Key): Pro
 export function filterUserStateToRestore(user: UserState): UserStateOnAsyncStorage {
   return {
     email: user.email,
-    token: user.token,
   }
 }
 export function filterDocumentStateToRestore(document: DocumentState): DocumentStateOnAsyncStorage {

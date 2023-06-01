@@ -2,6 +2,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { ThunkMiddleware } from 'redux-thunk';
 import { RootState } from "..";
 import { acceptServerResponse, askServerUpdate, deleteSelectedDocument, newDocument, restoreDocument, saveDocument, selectLatestDocument } from "../slices/document";
+import { updateWsHandshakeToken } from '../slices/user';
 
 export const apiMiddleware: ThunkMiddleware<RootState, AnyAction> = store => next => action => {
   next(action)
@@ -12,7 +13,7 @@ export const apiMiddleware: ThunkMiddleware<RootState, AnyAction> = store => nex
     || action.type === deleteSelectedDocument.type
   ) {
     const state = store.getState()
-    const isLoggedIn = !!state.user.token
+    const isLoggedIn = !!state.user.email
     if (isLoggedIn) {
       store.dispatch(askServerUpdate(state.document))
     }
@@ -23,7 +24,8 @@ export const apiMiddleware: ThunkMiddleware<RootState, AnyAction> = store => nex
   ) {
     const { payload } = action as ReturnType<typeof askServerUpdate.fulfilled>
     if (payload) {
-      store.dispatch(acceptServerResponse(payload))
+      store.dispatch(updateWsHandshakeToken({wsHandshakeToken: payload.wsHandshakeToken}))
+      store.dispatch(acceptServerResponse(payload.response))
     }
   }
 

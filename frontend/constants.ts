@@ -1,4 +1,4 @@
-export const AUTH_TOKEN_KEY = 'x-auth-token'
+export const WS_HANDSHAKE_TOKEN_KEY = 'ws-handshake-token'
 export const DOCUMENT_UPDATED_WS_EVENT = 'documents_updated'
 export const DOCUMENT_NAME_LENGTH_LIMIT = 50
 export const DOCUMENT_CONTENT_LENGTH_LIMIT = 20000

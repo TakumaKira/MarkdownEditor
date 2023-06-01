@@ -45,12 +45,11 @@ export interface AuthStateDelete extends AuthStateBase {
   type: AuthStateTypes.DELETE
 }
 export interface UserState {
-  token: string | null
   email: string | null
+  wsHandshakeToken: string | null
   authState: null | AuthStateSignup | AuthStateConfirmSignupEmail | AuthStateLogin | AuthStateEdit | AuthStateConfirmChangeEmail | AuthStateResetPassword | AuthStateConfirmResetPassword | AuthStateDelete
   restoreIsDone: boolean
 }
 export interface UserStateOnAsyncStorage {
-  token: string | null
   email: string | null
 }
