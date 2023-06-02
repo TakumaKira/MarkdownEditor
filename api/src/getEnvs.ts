@@ -110,6 +110,15 @@ if (process.env.NODE_ENV !== 'test') {
     isMissing = true
   }
 
+  // Redis settings
+  if (
+    !redisHost
+  ) {
+    console.error('REDIS_HOST is not defined.')
+
+    isMissing = true
+  }
+
   // Confirmation email settings
   if (
     !senderEmail

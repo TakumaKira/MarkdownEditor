@@ -17,6 +17,7 @@ services:
   api:
     depends_on:
       - db
+      - redis
     build: ./api
     environment:
       API_PORT: 3000
@@ -25,6 +26,7 @@ services:
       DATABASE_HOST: db
       MYSQL_DATABASE: markdown_editor
       MYSQL_USER: markdown_editor_app
+      REDIS_HOST: redis
     env_file:
       - docker-compose-api-secrets.env
     ports:
@@ -43,5 +45,11 @@ services:
     volumes:
       - db:/var/lib/mysql
       - ./db/init:/docker-entrypoint-initdb.d
+
+  redis:
+    image: redis:6.2.12
+    expose:
+      - 6379
+
 volumes:
   db:
