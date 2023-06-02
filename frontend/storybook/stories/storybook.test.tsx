@@ -9,4 +9,4 @@ import ShallowRenderer from 'react-test-renderer/shallow';
 //     }, module),
 // })
 
-xtest('this is dummy just to avoid extra failure message', () => {})
+test('this is dummy just to avoid extra failure message', () => {})
