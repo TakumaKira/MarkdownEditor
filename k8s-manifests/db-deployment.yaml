@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    kompose.cmd: kompose convert
+    kompose.cmd: kompose convert -o k8s-manifests
     kompose.version: 1.26.1 (HEAD)
   creationTimestamp: null
   labels:
@@ -18,7 +18,7 @@ spec:
   template:
     metadata:
       annotations:
-        kompose.cmd: kompose convert
+        kompose.cmd: kompose convert -o k8s-manifests
         kompose.version: 1.26.1 (HEAD)
       creationTimestamp: null
       labels:
@@ -43,12 +43,12 @@ spec:
           resources: {}
           volumeMounts:
             - mountPath: /var/lib/mysql
-              name: db-pvc
+              name: db
             - mountPath: /docker-entrypoint-initdb.d
               name: db-init
       restartPolicy: Always
       volumes:
-        - name: db-pvc
+        - name: db
           persistentVolumeClaim:
             claimName: db-pvc
         - name: db-init

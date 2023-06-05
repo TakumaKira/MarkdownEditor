@@ -6,15 +6,15 @@ metadata:
     kompose.version: 1.26.1 (HEAD)
   creationTimestamp: null
   labels:
-    io.kompose.service: db
-  name: db
+    io.kompose.service: redis
+  name: redis
 spec:
   ports:
-    - name: mysql
-      port: 3306
-      targetPort: 3306
+    - name: redis
+      port: 6379
+      targetPort: 6379
   selector:
-    io.kompose.service: db
+    io.kompose.service: redis
   type: LoadBalancer
 status:
   loadBalancer: {}

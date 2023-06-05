@@ -151,7 +151,7 @@ Then, just run ``skaffold dev --port-forward`` and your terminal will tell you t
 
 I used [kompose](https://kompose.io/) to generate the base of kubernetes configuration files from `docker-compose.yaml` in this directory. If you want to try this step, follow the instruction below.
 
-Run ``kompose convert`` to generate yaml files to apply to Kubernetes.
+Run ``kompose convert -o k8s-manifests`` to generate yaml files to apply to Kubernetes.
 If you check the diff between its result and what `k8s-manifests` directory has, you can see some modifications I applied. I'm not going to explain every one of them, but point out what I wanted to do.
 
 - Modified how to reference environment variables, which contains configurations and secrets. I modified it as it reads configurations from `api-configmap`, expects `db-secret` and `api-secret`(mentioned above) are generated adequately beforehand and uses database initialization scripts through `ConfigMap`.
