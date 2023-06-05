@@ -8,8 +8,8 @@ data:
   MYSQL_DATABASE: markdown_editor
   MYSQL_USER: markdown_editor_app
   REDIS_HOST: redis
-  SENDER_EMAIL: confirmation@markdown.com
-  CONFIRMATION_EMAIL_SERVER_TYPE: StandardMailServer # Other options: SendGrid | Gmail
+  SENDER_EMAIL: markdown@kirakiraworx.com
+  CONFIRMATION_EMAIL_SERVER_TYPE: SendGrid # Options: StandardMailServer | SendGrid | Gmail
 kind: ConfigMap
 metadata:
   creationTimestamp: null

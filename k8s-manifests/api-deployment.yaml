@@ -70,26 +70,29 @@ spec:
                 configMapKeyRef:
                   key: MYSQL_USER
                   name: api-configmap
-            - name: OAUTH_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  key: OAUTH_CLIENT_ID
-                  name: api-secret
-            - name: OAUTH_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  key: OAUTH_CLIENT_SECRET
-                  name: api-secret
-            - name: OAUTH_REFRESH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  key: OAUTH_REFRESH_TOKEN
-                  name: api-secret
-            - name: OAUTH_USER
-              valueFrom:
-                secretKeyRef:
-                  key: OAUTH_USER
-                  name: api-secret
+
+            # Uncomment below when CONFIRMATION_EMAIL_SERVER_TYPE=Gmail
+            # - name: OAUTH_CLIENT_ID
+            #   valueFrom:
+            #     secretKeyRef:
+            #       key: OAUTH_CLIENT_ID
+            #       name: api-secret
+            # - name: OAUTH_CLIENT_SECRET
+            #   valueFrom:
+            #     secretKeyRef:
+            #       key: OAUTH_CLIENT_SECRET
+            #       name: api-secret
+            # - name: OAUTH_REFRESH_TOKEN
+            #   valueFrom:
+            #     secretKeyRef:
+            #       key: OAUTH_REFRESH_TOKEN
+            #       name: api-secret
+            # - name: OAUTH_USER
+            #   valueFrom:
+            #     secretKeyRef:
+            #       key: OAUTH_USER
+            #       name: api-secret
+
             - name: REDIS_HOST
               valueFrom:
                 configMapKeyRef:
@@ -100,26 +103,31 @@ spec:
                 configMapKeyRef:
                   key: SENDER_EMAIL
                   name: api-configmap
+
+            # Uncomment below when CONFIRMATION_EMAIL_SERVER_TYPE=SendGrid
             - name: SENDGRID_API_KEY
               valueFrom:
                 secretKeyRef:
                   key: SENDGRID_API_KEY
                   name: api-secret
-            - name: STANDARD_MAIL_SERVER_HOST
-              valueFrom:
-                secretKeyRef:
-                  key: STANDARD_MAIL_SERVER_HOST
-                  name: api-secret
-            - name: STANDARD_MAIL_SERVER_PASS
-              valueFrom:
-                secretKeyRef:
-                  key: STANDARD_MAIL_SERVER_PASS
-                  name: api-secret
-            - name: STANDARD_MAIL_SERVER_USER
-              valueFrom:
-                secretKeyRef:
-                  key: STANDARD_MAIL_SERVER_USER
-                  name: api-secret
+
+            # Uncomment below when CONFIRMATION_EMAIL_SERVER_TYPE=StandardMailServer
+            # - name: STANDARD_MAIL_SERVER_HOST
+            #   valueFrom:
+            #     secretKeyRef:
+            #       key: STANDARD_MAIL_SERVER_HOST
+            #       name: api-secret
+            # - name: STANDARD_MAIL_SERVER_PASS
+            #   valueFrom:
+            #     secretKeyRef:
+            #       key: STANDARD_MAIL_SERVER_PASS
+            #       name: api-secret
+            # - name: STANDARD_MAIL_SERVER_USER
+            #   valueFrom:
+            #     secretKeyRef:
+            #       key: STANDARD_MAIL_SERVER_USER
+            #       name: api-secret
+
             - name: WS_PORT
               valueFrom:
                 configMapKeyRef:
