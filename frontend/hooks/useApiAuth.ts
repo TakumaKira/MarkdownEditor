@@ -16,27 +16,99 @@ const useApiAuth = (): void => {
 
   const [socket, setSocket] = React.useState<Socket | null>(null)
 
+  const [shouldGetSocket, setShouldGetSocket] = React.useState(false)
+
+  const [shouldGetSocketAfterDelay, setShouldGetSocketAfterDelay] = React.useState(false)
+
+  const [retryFlag, setRetryFlag] = React.useState(false)
+
+  const [lastWsHandshakeToken, setLastWsHandshakeToken] = React.useState<string | null>(null)
+
+  // Sync document initially.
   React.useEffect(() => {
     if (!storeInitializationIsDone) {
       return
     }
+    if (!userState.email) {
+      return
+    }
+    dispatch(askServerUpdate(documentState))
+  }, [storeInitializationIsDone, userState.email])
+
+  // Manage websocket.
+  React.useEffect(() => {
     const {wsHandshakeToken} = userState
     if (wsHandshakeToken) {
       if (!socket) {
-        getSocket(wsHandshakeToken)
-        dispatch(askServerUpdate(documentState))
+        // getSocket(wsHandshakeToken)
+        setShouldGetSocketAfterDelay(true)
       } else {
         updateSocketToken(wsHandshakeToken)
       }
     } else {
       disposeSocket()
     }
-  }, [storeInitializationIsDone, userState.wsHandshakeToken])
+  }, [userState.wsHandshakeToken])
 
-  const getSocket = (wsHandshakeToken: string) => {
-    const socket = io(`${env.WS_PROTOCOL}://${env.API_DOMAIN}:${env.WS_PORT}`, {auth: {wsHandshakeToken}})
+  // Retry establish websocket connection.
+  React.useEffect(() => {
+    if (!retryFlag) {
+      return
+    }
+    if (!userState.wsHandshakeToken) {
+      return
+    }
+    if (userState.wsHandshakeToken === lastWsHandshakeToken) {
+      return
+    }
+    // Trigger below only when wsHandshakeToken is updated from the last time.
+    setShouldGetSocketAfterDelay(true)
+    setRetryFlag(false)
+  }, [retryFlag, userState.wsHandshakeToken])
+
+  // Delay to get socket to avoid frequent wsHandshakeToken update right after API request.
+  React.useEffect(() => {
+    if (!shouldGetSocketAfterDelay) {
+      return
+    }
+    setTimeout(() => {
+      setShouldGetSocket(true)
+      setShouldGetSocketAfterDelay(false)
+    }, 1000)
+  }, [shouldGetSocketAfterDelay])
+
+  // Get socket.
+  React.useEffect(() => {
+    if (!shouldGetSocket) {
+      return
+    }
+
+    const socket = io(`${env.WS_PROTOCOL}://${env.API_DOMAIN}:${env.WS_PORT}`, {
+      auth: { wsHandshakeToken: userState.wsHandshakeToken },
+      withCredentials: true,
+      autoConnect: false,
+    })
+    setLastWsHandshakeToken(userState.wsHandshakeToken)
+    /**
+     * Socket keeps polling after being disconnected by the server when wsHandshakeToken is updated on the server but not on the client polling request and it results in unhandled 400.
+     * To fix this, this should close the socket when being disconnected by the server and create new socket if this has new wsHandshakeToken to try.
+     */
+    socket.on('connect_error', error => {
+      console.error(error);
+      disposeSocket()
+      setRetryFlag(true)
+    })
+    socket.on('disconnect', reason => {
+      console.log(reason);
+      disposeSocket()
+      setRetryFlag(true)
+    })
+    socket.connect()
     setSocket(socket)
-  }
+
+    setShouldGetSocket(false)
+  }, [shouldGetSocket])
+
   const updateSocketToken = (wsHandshakeToken: string) => {
     if (!socket) {
       console.error(new Error('Missing socket.'))
@@ -50,6 +122,7 @@ const useApiAuth = (): void => {
   }
   const disposeSocket = () => {
     socket?.off(DOCUMENT_UPDATED_WS_EVENT, documentsUpdated)
+    socket?.disconnect()
     setSocket(null)
   }
 

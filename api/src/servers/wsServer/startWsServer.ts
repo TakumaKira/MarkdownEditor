@@ -4,7 +4,13 @@ import setupWsServer from "./setupWsServer"
 import { SessionStorageClient } from "../../services/sessionStorage/type"
 
 const startWsServer = (sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => {
-  const wsServer = new Server(WS_PORT, {cors: {origin: `${FRONTEND_PROTOCOL}://${FRONTEND_DOMAIN}${FRONTEND_PORT ? ':' + FRONTEND_PORT : ''}`}})
+  const wsServer = new Server(WS_PORT, {
+    cors: {
+      origin: `${FRONTEND_PROTOCOL}://${FRONTEND_DOMAIN}${FRONTEND_PORT ? ':' + FRONTEND_PORT : ''}`,
+      credentials: true,
+    },
+    cookie: true,
+  })
   console.info(`⚡️[server]: Websocket server is running at localhost:${WS_PORT}`)
 
   setupWsServer(wsServer, sessionStorageClient, sessionStorageClientIsReady)
