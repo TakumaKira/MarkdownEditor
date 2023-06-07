@@ -1,7 +1,7 @@
 import cors from 'cors'
 import express, { Express } from 'express'
 import { API_PATHS, WS_HANDSHAKE_TOKEN_KEY } from '../../constants'
-import { FRONTEND_PORT, FRONTEND_PROTOCOL } from '../../getEnvs'
+import { FRONTEND_DOMAIN, FRONTEND_PORT, FRONTEND_PROTOCOL } from '../../getEnvs'
 import errorMiddleware from '../../middlewares/error'
 import getAuthApiRouter from '../../routes/auth'
 import getDocumentsRouter from '../../routes/documents'
@@ -11,9 +11,9 @@ import { Server } from 'socket.io'
 import { DatabaseClient } from '../../services/database/types'
 import { SessionStorageClient } from '../../services/sessionStorage/type'
 
-const setupApiRoutes = (apiApp: Express, frontendDomain: string, wsServer: Server, dbClient: DatabaseClient, sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => {
+const setupApiRoutes = (apiApp: Express, wsServer: Server, dbClient: DatabaseClient, sessionStorageClient: SessionStorageClient, sessionStorageClientIsReady: Promise<void>) => {
   apiApp.use(cors({
-    origin: `${FRONTEND_PROTOCOL}://${frontendDomain}${FRONTEND_PORT ? ':' + FRONTEND_PORT : ''}`,
+    origin: `${FRONTEND_PROTOCOL}://${FRONTEND_DOMAIN}${FRONTEND_PORT ? ':' + FRONTEND_PORT : ''}`,
     credentials: true,
     exposedHeaders: [WS_HANDSHAKE_TOKEN_KEY],
   }))
