@@ -113,13 +113,11 @@ const useApiAuth = (): void => {
      * To fix this, this should close the socket when being disconnected by the server and create new socket if this has new wsHandshakeToken to try.
      */
     socket.on('connect_error', error => {
-      console.error(error);
       disposeSocket()
       setRetryFlag(true)
       setRetryCount(c => ++c)
     })
     socket.on('disconnect', reason => {
-      console.log(reason);
       disposeSocket()
       setRetryFlag(true)
       setRetryCount(c => ++c)
