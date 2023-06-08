@@ -8,7 +8,8 @@ const initialState: UserState = {
   email: null,
   wsHandshakeToken: null,
   authState: null,
-  restoreIsDone: false
+  restoreIsDone: false,
+  firstSyncIsDone: false,
 }
 export enum AuthStateTypes {
   SIGNUP = 'signup',
@@ -234,11 +235,16 @@ const userSlice = createSlice({
         }
       }
     },
-    updateWsHandshakeToken: (state, action: PayloadAction<{wsHandshakeToken: string}>) => {
+    updateWsHandshakeToken: (state, action: PayloadAction<{wsHandshakeToken: string, isFirstAfterLogin: boolean | undefined}>) => {
       state.wsHandshakeToken = action.payload.wsHandshakeToken
     },
-    removeLoginToken: state => {
+    firstSyncIsDone: state => {
+      state.firstSyncIsDone = true
+    },
+    logout: state => {
       state.email = null
+      state.wsHandshakeToken = null
+      state.firstSyncIsDone = false
     },
   },
   extraReducers: builder => {
@@ -427,7 +433,8 @@ export const {
   submitNewPassword,
   validationError,
   updateWsHandshakeToken,
-  removeLoginToken,
+  firstSyncIsDone,
+  logout,
 } = userSlice.actions
 
 export default userSlice.reducer

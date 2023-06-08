@@ -37,10 +37,10 @@ export const restoreDocument = createAsyncThunk('document/restoreDocument', () =
   return getData('document')
 })
 
-export const askServerUpdate: AsyncThunk<{response: DocumentsUpdateResponse, wsHandshakeToken: string} | null, DocumentState, {}> = createAsyncThunk('document/askServerUpdate', async (documentState: DocumentState) => {
+export const askServerUpdate: AsyncThunk<{response: DocumentsUpdateResponse, wsHandshakeToken: string, isFirstAfterLogin: boolean | undefined} | null, {documentState: DocumentState, isFirstAfterLogin?: boolean}, {}> = createAsyncThunk('document/askServerUpdate', async ({documentState, isFirstAfterLogin}: {documentState: DocumentState, isFirstAfterLogin?: boolean}) => {
   try {
     const response = await upload(documentState)
-    return { response: response.data, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY] }
+    return { response: response.data, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY] as string, isFirstAfterLogin }
   } catch (err) {
     console.error(err)
     return null

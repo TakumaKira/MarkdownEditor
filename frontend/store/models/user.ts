@@ -49,7 +49,9 @@ export interface UserState {
   wsHandshakeToken: string | null
   authState: null | AuthStateSignup | AuthStateConfirmSignupEmail | AuthStateLogin | AuthStateEdit | AuthStateConfirmChangeEmail | AuthStateResetPassword | AuthStateConfirmResetPassword | AuthStateDelete
   restoreIsDone: boolean
+  firstSyncIsDone: boolean
 }
 export interface UserStateOnAsyncStorage {
   email: string | null
+  wsHandshakeToken: string | null
 }

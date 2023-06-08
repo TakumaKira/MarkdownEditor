@@ -18,7 +18,8 @@ const useApiAuth = (): void => {
 
   const [shouldGetSocket, setShouldGetSocket] = React.useState(false)
 
-  const [shouldGetSocketAfterDelay, setShouldGetSocketAfterDelay] = React.useState(false)
+  const [shouldGetSocketAfterDelay, setShouldGetSocketAfterDelay] = React.useState<number | null>(null)
+  const [shouldGetSocketAfterDelayTimeoutId, setShouldGetSocketAfterDelayTimeoutId] = React.useState<NodeJS.Timeout | null>(null)
 
   const [retryFlag, setRetryFlag] = React.useState(false)
 
@@ -29,26 +30,30 @@ const useApiAuth = (): void => {
     if (!storeInitializationIsDone) {
       return
     }
+    if (userState.firstSyncIsDone) {
+      return
+    }
     if (!userState.email) {
       return
     }
-    dispatch(askServerUpdate(documentState))
+    dispatch(askServerUpdate({documentState, isFirstAfterLogin: true}))
   }, [storeInitializationIsDone, userState.email])
 
   // Manage websocket.
   React.useEffect(() => {
-    const {wsHandshakeToken} = userState
+    const {wsHandshakeToken, firstSyncIsDone} = userState
     if (wsHandshakeToken) {
       if (!socket) {
-        // getSocket(wsHandshakeToken)
-        setShouldGetSocketAfterDelay(true)
+        if (firstSyncIsDone) {
+          setShouldGetSocket(true)
+        }
       } else {
         updateSocketToken(wsHandshakeToken)
       }
     } else {
       disposeSocket()
     }
-  }, [userState.wsHandshakeToken])
+  }, [userState.wsHandshakeToken, userState.firstSyncIsDone])
 
   // Retry establish websocket connection.
   React.useEffect(() => {
@@ -62,19 +67,23 @@ const useApiAuth = (): void => {
       return
     }
     // Trigger below only when wsHandshakeToken is updated from the last time.
-    setShouldGetSocketAfterDelay(true)
+    setShouldGetSocketAfterDelay(1000)
     setRetryFlag(false)
   }, [retryFlag, userState.wsHandshakeToken])
 
-  // Delay to get socket to avoid frequent wsHandshakeToken update right after API request.
+  // Delay to get socket to avoid frequent wsHandshakeToken update right after preceding API request.
   React.useEffect(() => {
     if (!shouldGetSocketAfterDelay) {
       return
     }
-    setTimeout(() => {
+    if (shouldGetSocketAfterDelayTimeoutId) {
+      clearTimeout(shouldGetSocketAfterDelayTimeoutId)
+    }
+    setShouldGetSocketAfterDelayTimeoutId(setTimeout(() => {
       setShouldGetSocket(true)
-      setShouldGetSocketAfterDelay(false)
-    }, 1000)
+      setShouldGetSocketAfterDelay(null)
+      setShouldGetSocketAfterDelayTimeoutId(null)
+    }, shouldGetSocketAfterDelay))
   }, [shouldGetSocketAfterDelay])
 
   // Get socket.
@@ -137,7 +146,7 @@ const useApiAuth = (): void => {
 
   React.useEffect(() => {
     if (shouldCheckUpdate && !documentState.isAskingUpdate && (documentState.lastSyncWithDBAt !== null && documentState.lastSyncWithDBAt !== shouldCheckUpdate.savedOnDBAt)) {
-      dispatch(askServerUpdate(documentState))
+      dispatch(askServerUpdate({documentState}))
       setShouldCheckUpdate(null)
     }
   }, [shouldCheckUpdate, documentState.isAskingUpdate, shouldCheckUpdate])

@@ -11,7 +11,7 @@ import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { confirmationStateChanged, newDocument, selectDocument, selectLiveDocumentList, selectSelectedDocumentHasEdit, selectSelectedDocumentOnEdit } from '../store/slices/document'
 import { toggleTheme } from '../store/slices/theme'
-import { AuthStateTypes, callAuthModal, removeLoginToken } from '../store/slices/user'
+import { AuthStateTypes, callAuthModal, logout } from '../store/slices/user'
 import colors from '../theme/colors'
 import fonts from '../theme/fonts'
 import textStyles from '../theme/textStyles'
@@ -295,7 +295,7 @@ const Auth = () => {
         </ButtonWithHoverColorAnimation>
       </View>
       <ButtonWithHoverColorAnimation
-        onPress={() => dispatch(removeLoginToken())}
+        onPress={() => dispatch(logout())}
         offBgColorRGB={colors.Orange}
         onBgColorRGB={colors.OrangeHover}
         style={[styles.authButton]}

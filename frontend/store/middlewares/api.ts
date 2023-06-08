@@ -2,7 +2,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { ThunkMiddleware } from 'redux-thunk';
 import { RootState } from "..";
 import { acceptServerResponse, askServerUpdate, deleteSelectedDocument, newDocument, restoreDocument, saveDocument, selectLatestDocument } from "../slices/document";
-import { updateWsHandshakeToken } from '../slices/user';
+import { firstSyncIsDone, updateWsHandshakeToken } from '../slices/user';
 
 export const apiMiddleware: ThunkMiddleware<RootState, AnyAction> = store => next => action => {
   next(action)
@@ -15,7 +15,7 @@ export const apiMiddleware: ThunkMiddleware<RootState, AnyAction> = store => nex
     const state = store.getState()
     const isLoggedIn = !!state.user.email
     if (isLoggedIn) {
-      store.dispatch(askServerUpdate(state.document))
+      store.dispatch(askServerUpdate({documentState: state.document}))
     }
   }
 
@@ -24,8 +24,18 @@ export const apiMiddleware: ThunkMiddleware<RootState, AnyAction> = store => nex
   ) {
     const { payload } = action as ReturnType<typeof askServerUpdate.fulfilled>
     if (payload) {
-      store.dispatch(updateWsHandshakeToken({wsHandshakeToken: payload.wsHandshakeToken}))
+      const {wsHandshakeToken, isFirstAfterLogin} = payload
+      store.dispatch(updateWsHandshakeToken({wsHandshakeToken, isFirstAfterLogin}))
       store.dispatch(acceptServerResponse(payload.response))
+    }
+  }
+
+  if (
+    action.type === updateWsHandshakeToken.type
+  ) {
+    const _action = action as ReturnType<typeof updateWsHandshakeToken>
+    if (_action.payload.isFirstAfterLogin) {
+      store.dispatch(firstSyncIsDone())
     }
   }
 
