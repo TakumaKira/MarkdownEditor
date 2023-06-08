@@ -1,7 +1,7 @@
 import { DocumentUpdatedWsMessage } from "@api/document"
 import React from "react"
 import { io, Socket } from 'socket.io-client'
-import { DOCUMENT_UPDATED_WS_EVENT } from "../constants"
+import { DOCUMENT_UPDATED_WS_EVENT, WS_RETRY_DURATIONS } from "../constants"
 import env from '../env'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { askServerUpdate } from '../store/slices/document'
@@ -22,6 +22,8 @@ const useApiAuth = (): void => {
   const [shouldGetSocketAfterDelayTimeoutId, setShouldGetSocketAfterDelayTimeoutId] = React.useState<NodeJS.Timeout | null>(null)
 
   const [retryFlag, setRetryFlag] = React.useState(false)
+  const [retryCount, setRetryCount] = React.useState(0)
+  // TODO: Prepare tests for retry mechanism.
 
   const [lastWsHandshakeToken, setLastWsHandshakeToken] = React.useState<string | null>(null)
 
@@ -67,7 +69,12 @@ const useApiAuth = (): void => {
       return
     }
     // Trigger below only when wsHandshakeToken is updated from the last time.
-    setShouldGetSocketAfterDelay(1000)
+    if (retryCount < WS_RETRY_DURATIONS.length) {
+      setShouldGetSocketAfterDelay(WS_RETRY_DURATIONS[retryCount])
+    } else {
+      setRetryCount(0)
+      console.error('WebSocket handshake retry is aborted.')
+    }
     setRetryFlag(false)
   }, [retryFlag, userState.wsHandshakeToken])
 
@@ -98,6 +105,9 @@ const useApiAuth = (): void => {
       autoConnect: false,
     })
     setLastWsHandshakeToken(userState.wsHandshakeToken)
+    socket.on('connect', () => {
+      setRetryCount(0)
+    })
     /**
      * Socket keeps polling after being disconnected by the server when wsHandshakeToken is updated on the server but not on the client polling request and it results in unhandled 400.
      * To fix this, this should close the socket when being disconnected by the server and create new socket if this has new wsHandshakeToken to try.
@@ -106,11 +116,13 @@ const useApiAuth = (): void => {
       console.error(error);
       disposeSocket()
       setRetryFlag(true)
+      setRetryCount(c => ++c)
     })
     socket.on('disconnect', reason => {
       console.log(reason);
       disposeSocket()
       setRetryFlag(true)
+      setRetryCount(c => ++c)
     })
     socket.connect()
     setSocket(socket)

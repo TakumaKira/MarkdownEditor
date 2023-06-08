@@ -1,4 +1,5 @@
 export const WS_HANDSHAKE_TOKEN_KEY = 'ws-handshake-token'
+export const WS_RETRY_DURATIONS = [ 1000, 3000, 5000, 10000, 30000 ]
 export const DOCUMENT_UPDATED_WS_EVENT = 'documents_updated'
 export const DOCUMENT_NAME_LENGTH_LIMIT = 50
 export const DOCUMENT_CONTENT_LENGTH_LIMIT = 20000
