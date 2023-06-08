@@ -8,27 +8,40 @@ export default class SessionStorageController {
     private clientIsReady: Promise<void>
   ) {}
 
+  async getSession(sessionId: string): Promise<Express.Request['session'] | null> {
+    await this.clientIsReady
+    const sessionStr = await this.client.get(getRedisKeyName(REDIS_KEYS.SESSION, sessionId))
+    if (sessionStr === null) return null
+    const session: Express.Request['session'] = JSON.parse(sessionStr)
+    return session
+  }
+
+  async getSessionId(wsHandshakeToken: string): Promise<string | null> {
+    await this.clientIsReady
+    return await this.client.get(getRedisKeyName(REDIS_KEYS.WS_HANDSHAKE_TOKEN, wsHandshakeToken))
+  }
+
   async saveWsHandshakeToken(sessionId: string, wsHandshakeToken: string): Promise<void> {
     await this.clientIsReady
     await this.client.set(getRedisKeyName(REDIS_KEYS.WS_HANDSHAKE_TOKEN, wsHandshakeToken), sessionId)
   }
 
-  async removeWsHandshakeToken(sessionId: string): Promise<void> {
+  async removeWsHandshakeToken(wsHandshakeToken: string): Promise<void> {
     await this.clientIsReady
-    const sessionStr = await this.client.get(getRedisKeyName(REDIS_KEYS.SESSION, sessionId))
-    if (sessionStr === null) return
-    const session: Express.Request['session'] = JSON.parse(sessionStr)
-    if (session.wsHandshakeToken === undefined) return
-    await this.client.del(getRedisKeyName(REDIS_KEYS.WS_HANDSHAKE_TOKEN, session.wsHandshakeToken))
+    await this.client.del(getRedisKeyName(REDIS_KEYS.WS_HANDSHAKE_TOKEN, wsHandshakeToken))
   }
 
-  async getSession(wsHandshakeToken: string): Promise<Express.Request['session'] | null> {
+  /** For debugging */
+  async checkAllKeys(message: string): Promise<void> {
+    const results: string[] = []
+    results.push('')
+    results.push(message)
     await this.clientIsReady
-    const sessionId = await this.client.get(getRedisKeyName(REDIS_KEYS.WS_HANDSHAKE_TOKEN, wsHandshakeToken))
-    if (sessionId === null) return null
-    const sessionStr = await this.client.get(getRedisKeyName(REDIS_KEYS.SESSION, sessionId))
-    if (sessionStr === null) return null
-    const session: Express.Request['session'] = JSON.parse(sessionStr)
-    return session
+    for await (const key of this.client.scanIterator()) {
+      const value = await this.client.get(key);
+      results.push(`${key} / ${value}`)
+    }
+    results.push('')
+    console.log(results.join('\n'))
   }
 }

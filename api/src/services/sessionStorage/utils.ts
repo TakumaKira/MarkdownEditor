@@ -15,15 +15,18 @@ export function regenerateSession(req: Express.Request, sessionStorage: SessionS
   return new Promise((resolve, reject) => {
     const { id: newUserId, email: newUserEmail } = newUserData || {}
     const { userId: oldUserId, userEmail: oldUserEmail, wsHandshakeToken: oldWsHandshakeToken } = req.session
-    sessionStorage.removeWsHandshakeToken(req.session.id)
+    if (oldWsHandshakeToken) {
+      sessionStorage.removeWsHandshakeToken(oldWsHandshakeToken)
+    }
     req.session.regenerate(err => {
       if (err) return reject(err)
+      const { id: newSessionId } = req.session
       req.session.userId = newUserId || oldUserId
       req.session.userEmail = newUserEmail || oldUserEmail
       const newWsHandshakeToken = uid.sync(24)
       // wsHandshakeToken should also be regenerated here.
       req.session.wsHandshakeToken = newWsHandshakeToken
-      sessionStorage.saveWsHandshakeToken(req.session.id, newWsHandshakeToken)
+      sessionStorage.saveWsHandshakeToken(newSessionId, newWsHandshakeToken)
       webSocketServer.fetchSockets()
         .then(sockets => {
           const socket = sockets.find(socket => socket.handshake.auth.wsHandshakeToken === oldWsHandshakeToken)
@@ -38,7 +41,10 @@ export function regenerateSession(req: Express.Request, sessionStorage: SessionS
 
 export function destroySession(req: Express.Request, sessionStorage: SessionStorageController): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    sessionStorage.removeWsHandshakeToken(req.session.id)
+    const { wsHandshakeToken: oldWsHandshakeToken } = req.session
+    if (oldWsHandshakeToken) {
+      sessionStorage.removeWsHandshakeToken(oldWsHandshakeToken)
+    }
     req.session.destroy(err => {
       if (err) return reject(err)
       resolve()
