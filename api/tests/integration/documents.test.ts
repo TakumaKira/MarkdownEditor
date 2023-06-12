@@ -13,7 +13,7 @@ import { API_PATHS, DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT, D
 import { DocumentFromDevice, DocumentFromDB, DocumentsUpdateRequest, DocumentsUpdateResponse, Document, DocumentUpdatedWsMessage } from '../../src/models/document'
 import { WS_PORT } from '../../src/getEnvs'
 import { regIsISODateString } from '../../src/middlewares/validator'
-import { apiAppForTest } from '../utils'
+import { apiAppForTest, sleep, waitForShutdown } from '../utils'
 
 beforeAll(async () => {
   await apiAppForTest.setup()
@@ -22,7 +22,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await clearUsers()
   await apiAppForTest.close()
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await waitForShutdown()
 })
 
 type User = { id: number, email: string, password: string }
@@ -181,7 +181,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         {id: newDocumentFromDatabase.id},
       ])
       // Check no event on websocket.
-      await new Promise<void>(resolve => setTimeout(resolve, 100))
+      await sleep(100)
       expect(mainUserCallback).not.toBeCalled()
       expect(otherUserCallback).not.toBeCalled()
     } catch (e) {
@@ -238,7 +238,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     try {
       mainUserSocketWithOldToken.connect()
       mainUserSocketWithNewToken.connect()
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await sleep(1000)
       expect(mainUserSocketWithOldToken.disconnected).toBe(true)
       expect(mainUserSocketWithNewToken.disconnected).toBe(false)
     } catch (e) {
@@ -341,7 +341,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         {id: newDocumentFromDatabase.id},
       ])
       // Check no event on websocket.
-      await new Promise<void>(resolve => setTimeout(resolve, 100))
+      await sleep(100)
       expect(mainUserCallback).not.toBeCalled()
       expect(otherUserCallback).not.toBeCalled()
     } catch (e) {
@@ -403,7 +403,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       `)
       expect(result).toEqual([])
       // Check no event on websocket.
-      await new Promise<void>(resolve => setTimeout(resolve, 100))
+      await sleep(100)
       expect(mainUserCallback).not.toBeCalled()
       expect(otherUserCallback).not.toBeCalled()
     } catch (e) {
@@ -478,7 +478,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         {id: newDocumentWithNotTooLongNameFromDevice.id},
       ])
       // Check no event on websocket.
-      await new Promise<void>(resolve => setTimeout(resolve, 100))
+      await sleep(100)
       const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
       expect(mainUserCallback).toBeCalledWith(message)
       expect(otherUserCallback).not.toBeCalled()
@@ -541,7 +541,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       `)
       expect(result).toEqual([])
       // Check no event on websocket.
-      await new Promise<void>(resolve => setTimeout(resolve, 100))
+      await sleep(100)
       expect(mainUserCallback).not.toBeCalled()
       expect(otherUserCallback).not.toBeCalled()
     } catch (e) {
@@ -616,7 +616,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         {id: newDocumentWithNotTooLongContentFromDevice.id},
       ])
       // Check no event on websocket.
-      await new Promise<void>(resolve => setTimeout(resolve, 100))
+      await sleep(100)
       const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
       expect(mainUserCallback).toBeCalledWith(message)
       expect(otherUserCallback).not.toBeCalled()
@@ -732,7 +732,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         {id: mainUsersNewDocument.id},
       ])
       // Check no event on websocket.
-      await new Promise<void>(resolve => setTimeout(resolve, 100))
+      await sleep(100)
       const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
       expect(mainUserCallback).toBeCalledWith(message)
       expect(otherUserCallback).not.toBeCalled()
@@ -840,7 +840,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       expect(result[0].id).not.toEqual(newDocument.id)
       expect(result[1].id).toEqual(newDocument.id)
       // Check no event on websocket.
-      await new Promise<void>(resolve => setTimeout(resolve, 100))
+      await sleep(100)
       const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
       expect(mainUserCallback).toBeCalledWith(message)
     } catch (e) {
@@ -916,7 +916,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         {id: newDocumentFromDevice.id},
       ])
       // Check no event on websocket.
-      await new Promise<void>(resolve => setTimeout(resolve, 100))
+      await sleep(100)
       const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
       expect(mainUserCallback).toBeCalledWith(message)
       expect(otherUserCallback).not.toBeCalled()
@@ -1039,7 +1039,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       expect(res.status).toBe(200)
       expect(res.body).toEqual(documentsUploadResponse)
       // Check no event on websocket.
-      await new Promise<void>(resolve => setTimeout(resolve, 100))
+      await sleep(100)
       expect(mainUserCallback).not.toBeCalled()
       expect(otherUserCallback).not.toBeCalled()
     } catch (e) {
@@ -1137,7 +1137,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       expect(res.status).toBe(200)
       expect(res.body).toEqual(documentsUploadResponse)
       // Check no event on websocket.
-      await new Promise<void>(resolve => setTimeout(resolve, 100))
+      await sleep(100)
       const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
       expect(mainUserCallback).toBeCalledWith(message)
       expect(otherUserCallback).not.toBeCalled()
@@ -1246,7 +1246,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       expect(res.status).toBe(200)
       expect(res.body).toEqual(documentsUploadResponse)
       // Check no event on websocket.
-      await new Promise<void>(resolve => setTimeout(resolve, 100))
+      await sleep(100)
       const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
       expect(mainUserCallback).toBeCalledWith(message)
       expect(otherUserCallback).not.toBeCalled()
@@ -1553,7 +1553,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         ORDER BY updated_at DESC, saved_on_db_at DESC, created_at DESC;
       `)) as DocumentFromDB[]
       expect(onDatabase.map(document => normalizeDocument(document))).toEqual(documentsUploadResponse.allDocuments)
-      await new Promise<void>(resolve => setTimeout(resolve, 100))
+      await sleep(100)
       const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
       expect(mainUserCallback).toBeCalledWith(message)
       expect(otherUserCallback).not.toBeCalled()

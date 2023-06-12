@@ -6,7 +6,7 @@ import { Document, DocumentFromDB } from '../../../../src/models/document'
 import { DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT } from '../../../../src/constants'
 import DatabaseController from '../../../../src/services/database/controller'
 import getDatabaseController from '../../../../src/services/database'
-import { dbClientForTest } from '../../../utils'
+import { dbClientForTest, waitForShutdown } from '../../../utils'
 
 jest.mock('uuid', () => ({
   __esModule: true,
@@ -23,7 +23,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await clearUsers()
   await dbClientForTest.close()
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await waitForShutdown()
 })
 
 type User = { id: number, email: string, password: string }

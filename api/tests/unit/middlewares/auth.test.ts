@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import { Socket } from 'socket.io'
 import uid from 'uid-safe'
 import { getApiAuthMiddleware, getWsAuthMiddleware } from "../../../src/middlewares/auth"
-import { sessionStorageClientForTest } from '../../utils'
+import { sessionStorageClientForTest, sleep, waitForShutdown } from '../../utils'
 import { getRedisKeyName } from '../../../src/services/sessionStorage'
 import { REDIS_KEYS } from '../../../src/constants'
 
@@ -23,7 +23,7 @@ beforeAll(async () => {
 })
 afterAll(async () => {
   await sessionStorageClientForTest.close()
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await waitForShutdown()
 })
 
 describe('apiAuthMiddleware', () => {
@@ -69,7 +69,7 @@ describe('wsAuthMiddleware', () => {
     await getWsAuthMiddleware(sessionStorageClient, sessionStorageClientIsReady)(socket, next)
     expect(next).toBeCalledWith()
     expect(join).toBeCalledWith(validSession.session.userId)
-    await new Promise(resolve => setTimeout(resolve, 10))
+    await sleep(10)
     expect(close).not.toBeCalled()
   })
 
@@ -86,7 +86,7 @@ describe('wsAuthMiddleware', () => {
     await getWsAuthMiddleware(sessionStorageClient, sessionStorageClientIsReady)(socket, next)
     expect(next).toBeCalledWith(new Error('Access denied. Handshake request does not have valid token.'))
     expect(join).not.toBeCalled()
-    await new Promise(resolve => setTimeout(resolve, 10))
+    await sleep(10)
     expect(close).toBeCalled()
   })
 
@@ -102,7 +102,7 @@ describe('wsAuthMiddleware', () => {
     await getWsAuthMiddleware(sessionStorageClient, sessionStorageClientIsReady)(socket, next)
     expect(next).toBeCalledWith(new Error('Access denied. Handshake request does not have valid token.'))
     expect(join).not.toBeCalled()
-    await new Promise(resolve => setTimeout(resolve, 10))
+    await sleep(10)
     expect(close).toBeCalled()
   })
 })

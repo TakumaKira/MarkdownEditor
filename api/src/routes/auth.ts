@@ -149,7 +149,7 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
     }
   })
 
-  authApiRouter.get(API_PATHS.AUTH.LOGOUT.dir, apiAuthMiddleware, async (req, res, next) => {
+  authApiRouter.post(API_PATHS.AUTH.LOGOUT.dir, apiAuthMiddleware, async (req, res, next) => {
     try {
       await destroySession(req, sessionStorage)
       res.send({message: 'Logout successful.'})

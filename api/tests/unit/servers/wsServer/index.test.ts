@@ -1,11 +1,11 @@
 import { io } from 'socket.io-client'
 import uid from 'uid-safe'
-import { WS_PORT } from "../../../../src/getEnvs"
-import { wsServerForTest } from '../../../utils'
+import { waitForShutdown, wsServerForTest } from '../../../utils'
 import { getRedisKeyName } from '../../../../src/services/sessionStorage'
 import { REDIS_KEYS } from '../../../../src/constants'
+import { TESTING_WS_SERVER_AP } from '../../../constants'
 
-const TESTING_WS_SERVER_AP = `ws://localhost:${WS_PORT}`
+const WAIT_DURATION = 500
 
 const mainUser = {
   sessionId: uid.sync(24),
@@ -33,7 +33,7 @@ beforeAll(async () => {
 })
 afterAll(async () => {
   await wsServerForTest.close()
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await waitForShutdown()
 })
 
 describe('wsServer', () => {
@@ -98,8 +98,8 @@ describe('wsServer', () => {
       setTimeout(() => {
         expect(testFn).not.toBeCalled()
         done()
-      }, 100)
-    }, 100)
+      }, WAIT_DURATION)
+    }, WAIT_DURATION)
   })
 
   test('cannot get message if the message emitted to another user', done => {
@@ -125,8 +125,8 @@ describe('wsServer', () => {
         expect(testFn).not.toBeCalled()
         clientSocket.close()
         done()
-      }, 100)
-    }, 100)
+      }, WAIT_DURATION)
+    }, WAIT_DURATION)
   })
 
   test('gets message if the message emitted to the user', done => {
@@ -152,7 +152,7 @@ describe('wsServer', () => {
         expect(testFn).toBeCalledWith(message)
         clientSocket.close()
         done()
-      }, 100)
-    }, 100)
+      }, WAIT_DURATION)
+    }, WAIT_DURATION)
   })
 })

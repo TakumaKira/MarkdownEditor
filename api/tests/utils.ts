@@ -125,6 +125,14 @@ export async function assertSession(res: request.Response, email: string) {
   expect(res.headers[WS_HANDSHAKE_TOKEN_KEY]).toBe(session.wsHandshakeToken)
 }
 
-function retrieveSessionId(connectSid: string | undefined): string | undefined {
+export function retrieveSessionId(connectSid: string | undefined): string | undefined {
   return connectSid?.match(/s:([^\.]+)/)?.[1]
+}
+
+export function waitForShutdown(): Promise<void> {
+  return sleep(100)
+}
+
+export function sleep(duration: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, duration))
 }

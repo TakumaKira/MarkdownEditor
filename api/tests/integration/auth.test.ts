@@ -1,19 +1,23 @@
 import request from 'supertest'
-import { API_PATHS, SESSION_SID_KEY } from '../../src/constants'
+import { API_PATHS, REDIS_KEYS, SESSION_SID_KEY, WS_HANDSHAKE_TOKEN_KEY } from '../../src/constants'
 import { JWT_SECRET_KEY } from '../../src/getEnvs'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { v4 as uuidv4 } from 'uuid'
-import { assertSession, apiAppForTest } from '../utils'
+import { assertSession, apiAppForTest, retrieveSessionId, waitForShutdown, sleep } from '../utils'
 import cookie from 'cookie'
 import getMailServer from '../../src/services/mailServer'
+import { getRedisKeyName } from '../../src/services/sessionStorage'
+import { DocumentsUpdateRequest } from '../../src/models/document'
+import { io } from 'socket.io-client'
+import { TESTING_WS_SERVER_AP } from '../constants'
 
 beforeAll(async () => {
   await apiAppForTest.setup()
 })
 afterAll(async () => {
   await apiAppForTest.close()
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await waitForShutdown()
 })
 
 beforeEach(async () => {
@@ -394,6 +398,90 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
       .send({ email, password })
     expect(res.status).toBe(200)
     await assertSession(res, email)
+    // Send next request with gotten session cookie
+    const nextRequestRes = await request(apiApp)
+      .post(API_PATHS.DOCUMENTS.path)
+      .set('Cookie', res.headers['set-cookie'])
+      .send({ updates: [] } as DocumentsUpdateRequest)
+    expect(nextRequestRes.status).toBe(200)
+    // Connect WebSocket server with gotten wsHandshakeToken
+    const wsClientSocket = io(TESTING_WS_SERVER_AP, {
+      autoConnect: false,
+      auth: {wsHandshakeToken: nextRequestRes.headers[WS_HANDSHAKE_TOKEN_KEY]}
+    })
+    const onConnect = jest.fn()
+    wsClientSocket.on('connect', onConnect)
+    wsClientSocket.connect()
+    await sleep(500)
+    try {
+      expect(onConnect).toHaveBeenCalled()
+    } finally {
+      wsClientSocket.disconnect()
+    }
+  })
+})
+
+describe(`POST ${API_PATHS.AUTH.LOGOUT.path}`, () => {
+  test('returns 200 while deleting the session', async () => {
+    const email = 'test@email.com'
+    const password = 'password'
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    // Create activated user.
+    await dbClient.query(sql`
+      INSERT INTO users (
+        email,
+        hashed_password,
+        is_activated
+      )
+      VALUES (
+        ${email},
+        ${hashedPassword},
+        true
+      );
+    `)
+    const loginRes = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGIN.path)
+      .send({ email, password })
+    const setCookieHeaders: string[] = loginRes.headers['set-cookie']
+    const cookies = setCookieHeaders.map(headerValue => cookie.parse(headerValue))
+    const sessionCookieIndex = cookies.findIndex((cookie: any) => cookie.hasOwnProperty(SESSION_SID_KEY))
+    const connectSid: string | undefined = cookies[sessionCookieIndex]?.[SESSION_SID_KEY]
+    const sessionId = retrieveSessionId(connectSid)
+    expect(sessionId).toBeTruthy()
+    const wsHandshakeToken = loginRes.headers[WS_HANDSHAKE_TOKEN_KEY]
+    expect(wsHandshakeToken).toBeTruthy()
+    const sessionStrInSessionStorage = await sessionStorageClient.get(getRedisKeyName(REDIS_KEYS.SESSION, sessionId!))
+    expect(sessionStrInSessionStorage).toBeTruthy()
+    const wsHandshakeTokenToSessionIdMapValueInSessionStorage = await sessionStorageClient.get(getRedisKeyName(REDIS_KEYS.WS_HANDSHAKE_TOKEN, wsHandshakeToken!))
+    expect(wsHandshakeTokenToSessionIdMapValueInSessionStorage).toBeTruthy()
+    const logoutRes = await request(apiApp)
+      .post(API_PATHS.AUTH.LOGOUT.path)
+      .set('Cookie', setCookieHeaders)
+    expect(logoutRes.status).toBe(200)
+    const sessionStrInSessionStorageAfterLogout = await sessionStorageClient.get(getRedisKeyName(REDIS_KEYS.SESSION, sessionId!))
+    expect(sessionStrInSessionStorageAfterLogout).toBeFalsy()
+    const wsHandshakeTokenToSessionIdMapValueInSessionStorageAfterLogout = await sessionStorageClient.get(getRedisKeyName(REDIS_KEYS.WS_HANDSHAKE_TOKEN, wsHandshakeToken!))
+    expect(wsHandshakeTokenToSessionIdMapValueInSessionStorageAfterLogout).toBeFalsy()
+    // Make sure the previous session and wsHandshakeToken does not work anymore.
+    const nextRequestRes = await request(apiApp)
+      .post(API_PATHS.DOCUMENTS.path)
+      .set('Cookie', setCookieHeaders)
+      .send({ updates: [] } as DocumentsUpdateRequest)
+    expect(nextRequestRes.status).toBe(401)
+    const wsClientSocket = io(TESTING_WS_SERVER_AP, {
+      autoConnect: false,
+      auth: {wsHandshakeToken: loginRes.headers[WS_HANDSHAKE_TOKEN_KEY]}
+    })
+    const onConnectError = jest.fn()
+    wsClientSocket.on('connect_error', onConnectError)
+    wsClientSocket.connect()
+    await sleep(500)
+    try {
+      expect(onConnectError).toHaveBeenCalledWith(new Error('Access denied. Handshake request does not have valid token.'))
+    } finally {
+      wsClientSocket.disconnect()
+    }
   })
 })
 
