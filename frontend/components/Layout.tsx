@@ -1,15 +1,17 @@
 import React from 'react'
 import { useAppSelector } from '../store/hooks'
 import AuthModal from './AuthModal'
-import ConfirmationModal from './ConfirmationModal'
+import { DocumentConfirmationModal } from './MessageModal'
 import Frame from './Frame'
 import MainView from './MainView'
 import SafeArea from './SafeArea'
 import SideBar from './SideBar'
+import { AuthConfirmationModal } from './MessageModal'
 
 const Layout = () => {
   const authState = useAppSelector(state => state.user.authState)
-  const confirmationState = useAppSelector(state => state.document.confirmationState)
+  const authConfirmationState = useAppSelector(state => state.user.confirmationState)
+  const documentConfirmationState = useAppSelector(state => state.document.confirmationState)
 
   return (
     <SafeArea>
@@ -17,11 +19,14 @@ const Layout = () => {
         sidebar={SideBar}
         main={MainView}
       />
-      {confirmationState &&
-        <ConfirmationModal confirmationState={confirmationState} />
-      }
       {authState &&
         <AuthModal />
+      }
+      {authConfirmationState &&
+        <AuthConfirmationModal confirmationState={authConfirmationState} />
+      }
+      {documentConfirmationState &&
+        <DocumentConfirmationModal confirmationState={documentConfirmationState} />
       }
     </SafeArea>
   )

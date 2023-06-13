@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { confirmChangeEmail, confirmResetPassword, confirmSignupEmail, deleteUser, editUser, login, resetPassword, signup } from "../../services/api";
+import { confirmChangeEmail, confirmResetPassword, confirmSignupEmail, deleteUser, editUser, login, logout, resetPassword, signup } from "../../services/api";
 import { getData } from "../../services/asyncStorage";
 import { AuthStateConfirmChangeEmail, AuthStateConfirmResetPassword, AuthStateConfirmSignupEmail, AuthStateDelete, AuthStateEdit, AuthStateLogin, AuthStateResetPassword, AuthStateSignup, UserState } from "../models/user";
 import { WS_HANDSHAKE_TOKEN_KEY } from "../../constants";
@@ -8,6 +8,7 @@ const initialState: UserState = {
   email: null,
   wsHandshakeToken: null,
   authState: null,
+  confirmationState: null,
   restoreIsDone: false,
   firstSyncIsDone: false,
 }
@@ -84,73 +85,112 @@ const initialAuthStateDelete: AuthStateDelete = {
   isDone: false
 }
 
-export const restoreUser = createAsyncThunk('user/restoreUser', () => {
-  return getData('user')
-})
-export const askServerSignup = createAsyncThunk('user/askServerSignup', async (payload: {email: string, password: string}) => {
-  try {
-    const response = await signup(payload)
-    return {successMessage: response.data.message}
-  } catch (err) {
-    return Promise.reject(err)
+export const restoreUser = createAsyncThunk(
+  'user/restoreUser',
+  async () => {
+    return await getData('user')
   }
-})
-export const askServerConfirmSignupEmail = createAsyncThunk('user/askServerConfirmSignupEmail', async (payload: {token: string}) => {
-  try {
-    const response = await confirmSignupEmail(payload)
-    return {successMessage: response.data.message, email: response.data.email, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
-  } catch (err) {
-    return Promise.reject(err)
+)
+export const askServerSignup = createAsyncThunk(
+  'user/askServerSignup',
+  async (payload: {email: string, password: string}) => {
+    try {
+      const response = await signup(payload)
+      return {successMessage: response.data.message}
+    } catch (err) {
+      return Promise.reject(err)
+    }
   }
-})
-export const askServerLogin = createAsyncThunk('user/askServerLogin', async (payload: {email: string, password: string}) => {
-  try {
-    const response = await login(payload)
-    return {email: payload.email, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
-  } catch (err) {
-    return Promise.reject(err)
+)
+export const askServerConfirmSignupEmail = createAsyncThunk(
+  'user/askServerConfirmSignupEmail',
+  async (payload: {token: string}) => {
+    try {
+      const response = await confirmSignupEmail(payload)
+      return {successMessage: response.data.message, email: response.data.email, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
+    } catch (err) {
+      return Promise.reject(err)
+    }
   }
-})
-export const askServerEdit = createAsyncThunk('user/askServerEdit', async (payload: {email?: string, password?: string}) => {
-  try {
-    const response = await editUser(payload)
-    return {successMessage: response.data.message, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
-  } catch (err) {
-    return Promise.reject(err)
+)
+export const askServerLogin = createAsyncThunk(
+  'user/askServerLogin',
+  async (payload: {email: string, password: string}) => {
+    try {
+      const response = await login(payload)
+      return {email: payload.email, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
+    } catch (err) {
+      return Promise.reject(err)
+    }
   }
-})
-export const askServerConfirmChangeEmail = createAsyncThunk('user/askServerConfirmChangeEmail', async (payload: {token: string, password: string}) => {
-  try {
-    const response = await confirmChangeEmail(payload)
-    return {successMessage: response.data.message, email: response.data.email, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
-  } catch (err) {
-    return Promise.reject(err)
+)
+export const askServerLogout = createAsyncThunk(
+  'user/askServerLogout',
+  async () => {
+    try {
+      const response = await logout()
+      return {successMessage: response.data.message}
+    } catch (err) {
+      console.error('Logout request failed.', err)
+      return Promise.reject(err)
+    }
   }
-})
-export const askServerResetPassword = createAsyncThunk('user/askServerResetPassword', async (payload: {email: string}) => {
-  try {
-    const response = await resetPassword(payload)
-    return {successMessage: response.data.message, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
-  } catch (err) {
-    return Promise.reject(err)
+)
+export const askServerEdit = createAsyncThunk(
+  'user/askServerEdit',
+  async (payload: {email?: string, password?: string}) => {
+    try {
+      const response = await editUser(payload)
+      return {successMessage: response.data.message, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
+    } catch (err) {
+      return Promise.reject(err)
+    }
   }
-})
-export const askServerConfirmResetPassword = createAsyncThunk('user/askServerConfirmResetPassword', async (payload: {token: string, password: string}) => {
-  try {
-    const response = await confirmResetPassword(payload)
-    return {successMessage: response.data.message, email: response.data.email, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
-  } catch (err) {
-    return Promise.reject(err)
+)
+export const askServerConfirmChangeEmail = createAsyncThunk(
+  'user/askServerConfirmChangeEmail',
+  async (payload: {token: string, password: string}) => {
+    try {
+      const response = await confirmChangeEmail(payload)
+      return {successMessage: response.data.message, email: response.data.email, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
+    } catch (err) {
+      return Promise.reject(err)
+    }
   }
-})
-export const askServerDeleteAccount = createAsyncThunk('user/askServerDeleteAccount', async () => {
-  try {
-    const response = await deleteUser()
-    return {successMessage: response.data.message}
-  } catch (err) {
-    return Promise.reject(err)
+)
+export const askServerResetPassword = createAsyncThunk(
+  'user/askServerResetPassword',
+  async (payload: {email: string}) => {
+    try {
+      const response = await resetPassword(payload)
+      return {successMessage: response.data.message, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
+    } catch (err) {
+      return Promise.reject(err)
+    }
   }
-})
+)
+export const askServerConfirmResetPassword = createAsyncThunk(
+  'user/askServerConfirmResetPassword',
+  async (payload: {token: string, password: string}) => {
+    try {
+      const response = await confirmResetPassword(payload)
+      return {successMessage: response.data.message, email: response.data.email, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
+    } catch (err) {
+      return Promise.reject(err)
+    }
+  }
+)
+export const askServerDeleteAccount = createAsyncThunk(
+  'user/askServerDeleteAccount',
+  async () => {
+    try {
+      const response = await deleteUser()
+      return {successMessage: response.data.message}
+    } catch (err) {
+      return Promise.reject(err)
+    }
+  }
+)
 
 const userSlice = createSlice({
   name: 'user',
@@ -216,6 +256,7 @@ const userSlice = createSlice({
     },
     submitSignup: (state, action: PayloadAction<{email: string, password: string, passwordConfirm: string}>) => {},
     submitLogin: (state, action: PayloadAction<{email: string, password: string}>) => {},
+    submitLogout: state => {},
     submitEdit: (state, action: PayloadAction<{email: string, password: string, passwordConfirm: string}>) => {},
     submitConfirmNewEmail: (state, action: PayloadAction<{password: string}>) => {},
     submitResetPassword: (state, action: PayloadAction<{email: string}>) => {},
@@ -241,10 +282,13 @@ const userSlice = createSlice({
     firstSyncIsDone: state => {
       state.firstSyncIsDone = true
     },
-    logout: state => {
+    removeAuth: state => {
       state.email = null
       state.wsHandshakeToken = null
       state.firstSyncIsDone = false
+    },
+    authConfirmationStateChanged: (state, action: PayloadAction<UserState['confirmationState']>) => {
+      state.confirmationState = action.payload
     },
   },
   extraReducers: builder => {
@@ -427,6 +471,7 @@ export const {
   resetErrorMessage,
   submitSignup,
   submitLogin,
+  submitLogout,
   submitEdit,
   submitConfirmNewEmail,
   submitResetPassword,
@@ -434,7 +479,8 @@ export const {
   validationError,
   updateWsHandshakeToken,
   firstSyncIsDone,
-  logout,
+  removeAuth,
+  authConfirmationStateChanged,
 } = userSlice.actions
 
 export default userSlice.reducer

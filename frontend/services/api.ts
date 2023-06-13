@@ -19,18 +19,24 @@ if (!API_PORT) {
 axios.defaults.baseURL = `${API_PROTOCOL}://${API_DOMAIN}:${API_PORT}`
 axios.defaults.withCredentials = true
 
+export class ApiError extends Error {
+  constructor(public message: string, public originalError: AxiosError) {
+    super()
+  }
+}
+
 axios.interceptors.response.use(
   response => response,
-  error => {
+  (error: AxiosError) => {
     if ((error as AxiosError<{message: string}>).response?.data.message) {
       // API server respond with error message.
-      return Promise.reject(error.response.data.message)
+      return Promise.reject(new ApiError(error.response?.data.message, error))
     }
     if (error.request?.status === 0) {
       // Network error(Server not respond).
-      return Promise.reject('Server not respond. Please check internet connection and try again later.')
+      return Promise.reject(new ApiError('Server not respond. Please check internet connection and try again later.', error))
     }
-    return Promise.reject('Something went wrong.')
+    return Promise.reject(new ApiError('Something went wrong.', error))
   }
 )
 
@@ -42,6 +48,9 @@ export const confirmSignupEmail = async (credentials: {token: string}): Promise<
 }
 export const login = async (credentials: {email: string, password: string}): Promise<AxiosResponse<{message: string}>> => {
   return await axios.post<{message: string}>(API_PATHS.AUTH.LOGIN.path, credentials)
+}
+export const logout = async (): Promise<AxiosResponse<{message: string}>> => {
+  return await axios.post<{message: string}>(API_PATHS.AUTH.LOGOUT.path)
 }
 export const editUser = async (credentials: {email?: string, password?: string}): Promise<AxiosResponse<{message: string}>> => {
   return await axios.post<{message: string}>(API_PATHS.AUTH.EDIT.path, credentials)

@@ -22,6 +22,9 @@ export const API_PATHS = {
     LOGIN: {
       path: '/api/auth/login', dir: '/login',
     },
+    LOGOUT: {
+      path: '/api/auth/logout', dir: '/logout',
+    },
     EDIT: {
       path: '/api/auth/edit', dir: '/edit',
     },

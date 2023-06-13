@@ -1,8 +1,9 @@
 import { AnyAction } from '@reduxjs/toolkit';
 import { ThunkMiddleware } from 'redux-thunk';
 import { RootState } from "..";
-import { acceptServerResponse, askServerUpdate, deleteSelectedDocument, newDocument, restoreDocument, saveDocument, selectLatestDocument } from "../slices/document";
-import { firstSyncIsDone, updateWsHandshakeToken } from '../slices/user';
+import { SESSION_UNAUTHORIZED_ERROR, acceptServerResponse, askServerUpdate, deleteSelectedDocument, newDocument, saveDocument, selectLatestDocument } from "../slices/document";
+import { authConfirmationStateChanged, firstSyncIsDone, removeAuth, updateWsHandshakeToken } from '../slices/user';
+import { AuthConfirmationStateTypes } from '../../constants/authConfirmationMessages';
 
 export const apiMiddleware: ThunkMiddleware<RootState, AnyAction> = store => next => action => {
   next(action)
@@ -28,6 +29,23 @@ export const apiMiddleware: ThunkMiddleware<RootState, AnyAction> = store => nex
       store.dispatch(updateWsHandshakeToken({wsHandshakeToken, isFirstAfterLogin}))
       store.dispatch(acceptServerResponse(payload.response))
     }
+  }
+
+  if (
+    action.type === askServerUpdate.rejected.type
+  ) {
+    const _action = action as ReturnType<typeof askServerUpdate.rejected>
+    if (_action.payload === SESSION_UNAUTHORIZED_ERROR) {
+      store.dispatch(authConfirmationStateChanged({type: AuthConfirmationStateTypes.SESSION_UNAUTHORIZED, email: store.getState().user.email}))
+    } else {
+      console.error(_action.error.message)
+    }
+  }
+
+  if (
+    action.type === authConfirmationStateChanged.type
+  ) {
+    store.dispatch(removeAuth())
   }
 
   if (

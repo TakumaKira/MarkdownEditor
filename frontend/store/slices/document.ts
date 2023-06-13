@@ -2,9 +2,9 @@ import { Document, DocumentsUpdateResponse } from '@api/document'
 import { AsyncThunk, createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 import env from '../../env'
-import { ConfirmationStateTypes } from '../../constants/confirmationMessages'
+import { DocumentConfirmationStateTypes } from '../../constants/documentConfirmationMessages'
 import { sortDocumentsFromNewest } from '../../helpers/sortDocuments'
-import { upload } from '../../services/api'
+import { ApiError, upload } from '../../services/api'
 import { getData } from '../../services/asyncStorage'
 import { DocumentOnDevice, DocumentOnEdit, DocumentState } from '../models/document'
 import { WS_HANDSHAKE_TOKEN_KEY } from '../../constants'
@@ -33,19 +33,28 @@ const initialState: DocumentState = {
   isAskingUpdate: false,
 }
 
-export const restoreDocument = createAsyncThunk('document/restoreDocument', () => {
-  return getData('document')
-})
-
-export const askServerUpdate: AsyncThunk<{response: DocumentsUpdateResponse, wsHandshakeToken: string, isFirstAfterLogin: boolean | undefined} | null, {documentState: DocumentState, isFirstAfterLogin?: boolean}, {}> = createAsyncThunk('document/askServerUpdate', async ({documentState, isFirstAfterLogin}: {documentState: DocumentState, isFirstAfterLogin?: boolean}) => {
-  try {
-    const response = await upload(documentState)
-    return { response: response.data, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY] as string, isFirstAfterLogin }
-  } catch (err) {
-    console.error(err)
-    return null
+export const restoreDocument = createAsyncThunk(
+  'document/restoreDocument',
+  async () => {
+    return await getData('document')
   }
-})
+)
+
+export const SESSION_UNAUTHORIZED_ERROR = 'SESSION_UNAUTHORIZED_ERROR'
+export const askServerUpdate = createAsyncThunk(
+  'document/askServerUpdate',
+  async ({documentState, isFirstAfterLogin}: {documentState: DocumentState, isFirstAfterLogin?: boolean}, {rejectWithValue}) => {
+    try {
+      const response = await upload(documentState)
+      return { response: response.data, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY] as string, isFirstAfterLogin }
+    } catch (err: any) {
+      if ((err as ApiError).originalError.response?.status === 401) {
+        return rejectWithValue(SESSION_UNAUTHORIZED_ERROR)
+      }
+      return Promise.reject(err)
+    }
+  }
+) as AsyncThunk<{response: DocumentsUpdateResponse, wsHandshakeToken: string, isFirstAfterLogin: boolean | undefined}, {documentState: DocumentState, isFirstAfterLogin?: boolean}, {rejectValue: typeof SESSION_UNAUTHORIZED_ERROR}>
 
 const documentSlice = createSlice({
   name: 'document',
@@ -102,7 +111,8 @@ const documentSlice = createSlice({
       }
     },
     deleteSelectedDocument: state => {
-      if (state.documentOnEdit.id === null) {
+      const selectedDocumentId = state.documentOnEdit.id
+      if (selectedDocumentId === null) {
         // documentOnEdit is from input params and not saved.
         const sorted = sortDocumentsFromNewest(state.documentList).filter(({isDeleted}) => !isDeleted)
         const latestDocument = sorted[0] || generateNewDocument()
@@ -123,14 +133,6 @@ const documentSlice = createSlice({
           state.documentOnEdit.titleInput = env.NEW_DOCUMENT_TITLE
           state.documentOnEdit.mainInput = ''
         } else {
-          const toBeDeletedDocument = state.documentList.find(({id}) => id === state.documentOnEdit.id)
-          if (toBeDeletedDocument) {
-            toBeDeletedDocument.name = null
-            toBeDeletedDocument.content = null
-            toBeDeletedDocument.updatedAt = new Date().toISOString()
-            toBeDeletedDocument.isDeleted = true
-            toBeDeletedDocument.isUploaded = false
-          }
           if (notDeletedDocuments.length <= 1) {
             const nextSelectedDocument = generateNewDocument()
             state.documentList.push(nextSelectedDocument)
@@ -138,13 +140,21 @@ const documentSlice = createSlice({
             state.documentOnEdit.titleInput = nextSelectedDocument.name ?? ''
             state.documentOnEdit.mainInput = nextSelectedDocument.content ?? ''
           } else {
-            const sorted = sortDocumentsFromNewest(state.documentList)
-            const selectedDocumentIndex = sorted.findIndex(({id}) => id === state.documentOnEdit.id)
-            const nextSelectedDocumentIndex = selectedDocumentIndex === sorted.length - 1 ? selectedDocumentIndex - 1 : selectedDocumentIndex + 1
+            const sorted = sortDocumentsFromNewest(notDeletedDocuments)
+            const selectedDocumentIndex = sorted.findIndex(({id}) => id === selectedDocumentId)
+            const nextSelectedDocumentIndex = selectedDocumentIndex === 0 ? selectedDocumentIndex + 1 : selectedDocumentIndex - 1
             const nextSelectedDocument = sorted[nextSelectedDocumentIndex]
             state.documentOnEdit.id = nextSelectedDocument.id
             state.documentOnEdit.titleInput = nextSelectedDocument.name ?? ''
             state.documentOnEdit.mainInput = nextSelectedDocument.content ?? ''
+          }
+          const toBeDeletedDocument = state.documentList.find(({id}) => id === selectedDocumentId)
+          if (toBeDeletedDocument) {
+            toBeDeletedDocument.name = null
+            toBeDeletedDocument.content = null
+            toBeDeletedDocument.updatedAt = new Date().toISOString()
+            toBeDeletedDocument.isDeleted = true
+            toBeDeletedDocument.isUploaded = false
           }
         }
       }
@@ -202,7 +212,7 @@ const documentSlice = createSlice({
         newDocument.content = state.documentOnEdit.mainInput
         state.documentList.push(newDocument)
         state.documentOnEdit.id = newDocument.id
-        state.confirmationState = {type: ConfirmationStateTypes.UNSAVED_DOCUMENT_CONFLICTED}
+        state.confirmationState = {type: DocumentConfirmationStateTypes.UNSAVED_DOCUMENT_CONFLICTED}
       }
 
       // Replace all the documents.
@@ -220,7 +230,7 @@ const documentSlice = createSlice({
           && documentOnDevice.updatedAt === documentFromDB.updatedAt
       }
     },
-    confirmationStateChanged: (state, action: PayloadAction<DocumentState['confirmationState']>) => {
+    documentConfirmationStateChanged: (state, action: PayloadAction<DocumentState['confirmationState']>) => {
       state.confirmationState = action.payload
     },
   },
@@ -270,7 +280,7 @@ export const {
   deleteSelectedDocument,
   selectLatestDocument,
   acceptServerResponse,
-  confirmationStateChanged,
+  documentConfirmationStateChanged,
 } = documentSlice.actions
 
 export const selectSelectedDocumentOnList = (state: {document: DocumentState}): DocumentOnDevice | null =>

@@ -7,14 +7,14 @@ import { ThemeState } from "../models/theme";
 import { UserState } from "../models/user";
 import { acceptServerResponse, addDocuments, deleteSelectedDocument, newDocument, restoreDocument, saveDocument, selectDocument, selectLatestDocument } from "../slices/document";
 import { restoreTheme, toggleTheme } from "../slices/theme";
-import { askServerLogin, logout, restoreUser } from "../slices/user";
+import { askServerLogin, removeAuth, restoreUser } from "../slices/user";
 
 export const asyncStorageMiddleware: ThunkMiddleware<RootState, AnyAction> = store => next => action => {
   next(action)
 
   if (
     action.type === askServerLogin.fulfilled.type
-    || action.type === logout.type
+    || action.type === removeAuth.type
     || action.type === restoreUser.fulfilled.type && (action as PayloadAction<UserState | null>).payload === null
   ) {
     storeData('user', filterUserStateToRestore(store.getState().user))

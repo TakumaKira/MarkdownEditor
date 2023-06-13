@@ -1,4 +1,4 @@
-import { REDIS_KEYS } from "../../constants";
+import { REDIS_KEYS, SESSION_MAX_AGE } from "../../constants";
 import { SessionStorageClient } from "./type";
 import { getRedisKeyName } from "./utils";
 
@@ -24,6 +24,7 @@ export default class SessionStorageController {
   async saveWsHandshakeToken(sessionId: string, wsHandshakeToken: string): Promise<void> {
     await this.clientIsReady
     await this.client.set(getRedisKeyName(REDIS_KEYS.WS_HANDSHAKE_TOKEN, wsHandshakeToken), sessionId)
+    await this.client.expire(getRedisKeyName(REDIS_KEYS.WS_HANDSHAKE_TOKEN, wsHandshakeToken), SESSION_MAX_AGE / 1000)
   }
 
   async removeWsHandshakeToken(wsHandshakeToken: string): Promise<void> {

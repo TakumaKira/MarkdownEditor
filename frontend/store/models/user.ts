@@ -1,3 +1,4 @@
+import { AuthConfirmationStateTypes } from "../../constants/authConfirmationMessages"
 import { AuthStateTypes } from "../slices/user"
 
 interface AuthStateBase {
@@ -44,14 +45,22 @@ export interface AuthStateConfirmResetPassword extends AuthStateBase {
 export interface AuthStateDelete extends AuthStateBase {
   type: AuthStateTypes.DELETE
 }
-export interface UserState {
+export type AuthConfirmationState = {
+  type: AuthConfirmationStateTypes
+}
+export type AuthConfirmationStateWithEmail = {
+  type: AuthConfirmationStateTypes.SESSION_UNAUTHORIZED
+  email: string | null
+}
+interface UserStateBase {
   email: string | null
   wsHandshakeToken: string | null
+}
+export interface UserState extends UserStateBase {
   authState: null | AuthStateSignup | AuthStateConfirmSignupEmail | AuthStateLogin | AuthStateEdit | AuthStateConfirmChangeEmail | AuthStateResetPassword | AuthStateConfirmResetPassword | AuthStateDelete
+  confirmationState: null | AuthConfirmationState | AuthConfirmationStateWithEmail
   restoreIsDone: boolean
   firstSyncIsDone: boolean
 }
-export interface UserStateOnAsyncStorage {
-  email: string | null
-  wsHandshakeToken: string | null
+export interface UserStateOnAsyncStorage extends UserStateBase {
 }

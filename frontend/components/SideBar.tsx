@@ -5,13 +5,13 @@ import DarkIcon from '../assets/icon-dark-mode.svg'
 import DocumentIcon from '../assets/icon-document.svg'
 import LightIconHighlight from '../assets/icon-light-mode-highlight.svg'
 import LightIcon from '../assets/icon-light-mode.svg'
-import { ConfirmationStateTypes } from '../constants/confirmationMessages'
+import { DocumentConfirmationStateTypes } from '../constants/documentConfirmationMessages'
 import { sortDocumentsFromNewest } from '../helpers/sortDocuments'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { confirmationStateChanged, newDocument, selectDocument, selectLiveDocumentList, selectSelectedDocumentHasEdit, selectSelectedDocumentOnEdit } from '../store/slices/document'
+import { documentConfirmationStateChanged, newDocument, selectDocument, selectLiveDocumentList, selectSelectedDocumentHasEdit, selectSelectedDocumentOnEdit } from '../store/slices/document'
 import { toggleTheme } from '../store/slices/theme'
-import { AuthStateTypes, callAuthModal, logout } from '../store/slices/user'
+import { AuthStateTypes, callAuthModal, submitLogout } from '../store/slices/user'
 import colors from '../theme/colors'
 import fonts from '../theme/fonts'
 import textStyles from '../theme/textStyles'
@@ -162,7 +162,7 @@ const SideBar = (props: {
 
   const handlePressDocument = (id: string) => {
     if (hasEdit) {
-      dispatch(confirmationStateChanged({type: ConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT, nextId: id}))
+      dispatch(documentConfirmationStateChanged({type: DocumentConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT, nextId: id}))
     } else {
       dispatch(selectDocument(id))
     }
@@ -295,14 +295,16 @@ const Auth = () => {
         </ButtonWithHoverColorAnimation>
       </View>
       <ButtonWithHoverColorAnimation
-        onPress={() => dispatch(logout())}
+        onPress={() => dispatch(submitLogout())}
         offBgColorRGB={colors.Orange}
         onBgColorRGB={colors.OrangeHover}
         style={[styles.authButton]}
         childrenWrapperStyle={styles.authButtonContents}
         testID="sidebar-logout-button"
       >
-        <Text style={[styles.authButtonLabel]}>Logout</Text>
+        <Text style={[styles.authButtonLabel]}>
+          Logout
+        </Text>
       </ButtonWithHoverColorAnimation>
     </View>
   )

@@ -1,12 +1,10 @@
-import { action } from '@storybook/addon-actions';
 import { boolean, text } from '@storybook/addon-knobs';
 import { storiesOf } from '@storybook/react-native';
 import React from 'react';
 import { View } from 'react-native';
 import { Provider } from 'react-redux';
-import ConfirmationModal from '../../components/ConfirmationModal';
-import { confirmationMessages, ConfirmationStateTypes } from '../../constants/confirmationMessages';
-import { LONG_TEXT, LONG_TITLE } from '../utils/constants';
+import { DocumentConfirmationModal } from '../../components/MessageModal';
+import { DocumentConfirmationStateTypes } from '../../constants/documentConfirmationMessages';
 import getMockStore from '../utils/getMockStore';
 import MockText from '../utils/MockText';
 import utilStyles from '../utils/styles';
@@ -30,16 +28,16 @@ storiesOf('ConfirmationModal', module)
     </Provider>
   )
   .add('Delete', () =>
-    <ConfirmationModal
+    <DocumentConfirmationModal
       confirmationState={{
-        type: ConfirmationStateTypes.DELETE
+        type: DocumentConfirmationStateTypes.DELETE
       }}
     />
   )
   .add('Leaved unsaved document', () =>
-    <ConfirmationModal
+    <DocumentConfirmationModal
       confirmationState={{
-        type: ConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT,
+        type: DocumentConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT,
         nextId: ''
       }}
     />

@@ -3,7 +3,7 @@ import { ThunkMiddleware } from 'redux-thunk';
 import { RootState } from "..";
 import { MIN_PASSWORD_LENGTH } from '../../constants';
 import { AuthStateConfirmChangeEmail, AuthStateConfirmResetPassword } from '../models/user';
-import { askServerConfirmChangeEmail, askServerConfirmResetPassword, askServerConfirmSignupEmail, askServerEdit, askServerLogin, askServerResetPassword, askServerSignup, AuthStateTypes, callAuthModal, submitConfirmNewEmail, submitEdit, submitLogin, submitNewPassword, submitResetPassword, submitSignup, validationError } from '../slices/user';
+import { askServerConfirmChangeEmail, askServerConfirmResetPassword, askServerConfirmSignupEmail, askServerEdit, askServerLogin, askServerLogout, askServerResetPassword, askServerSignup, AuthStateTypes, callAuthModal, removeAuth, submitConfirmNewEmail, submitEdit, submitLogin, submitLogout, submitNewPassword, submitResetPassword, submitSignup, validationError } from '../slices/user';
 
 enum SubmitTypes {
   SIGNUP = 'signup',
@@ -52,6 +52,13 @@ export const authMiddleware: ThunkMiddleware<RootState, AnyAction> = store => ne
     } else {
       store.dispatch(askServerLogin(_action.payload))
     }
+  }
+
+  if (
+    action.type === submitLogout.type
+  ) {
+    store.dispatch(removeAuth())
+    store.dispatch(askServerLogout())
   }
 
   if (

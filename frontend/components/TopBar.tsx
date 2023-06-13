@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction } from 'react'
+import React from 'react'
 import { Animated, Platform, StyleSheet, View } from 'react-native'
 import env from '../env'
 import CloseIcon from '../assets/icon-close.svg'
@@ -6,11 +6,11 @@ import DeleteIcon from '../assets/icon-delete.svg'
 import DocumentIcon from '../assets/icon-document.svg'
 import HamburgerIcon from '../assets/icon-menu.svg'
 import SaveIcon from '../assets/icon-save.svg'
-import { ConfirmationStateTypes } from '../constants/confirmationMessages'
+import { DocumentConfirmationStateTypes } from '../constants/documentConfirmationMessages'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import useWindowDimensions from '../hooks/useWindowDimensions'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
-import { confirmationStateChanged, saveDocument, selectSelectedDocumentOnEdit, updateTitleInput } from '../store/slices/document'
+import { documentConfirmationStateChanged, saveDocument, selectSelectedDocumentOnEdit, updateTitleInput } from '../store/slices/document'
 import { selectColorScheme } from '../store/slices/theme'
 import colors from '../theme/colors'
 import textStyles from '../theme/textStyles'
@@ -146,7 +146,7 @@ const TopBar = (props: {
         <DocumentTitle checkLayout={checkLayout} mockWindowWidth={mockWindowWidth} />
       </View>
       <View style={styles.rightContainer}>
-        <DeleteButton onPress={() => dispatch(confirmationStateChanged({type: ConfirmationStateTypes.DELETE}))} />
+        <DeleteButton onPress={() => dispatch(documentConfirmationStateChanged({type: DocumentConfirmationStateTypes.DELETE}))} />
         <SaveButton onPress={() => dispatch(saveDocument())} mockWindowWidth={mockWindowWidth} />
       </View>
     </View>

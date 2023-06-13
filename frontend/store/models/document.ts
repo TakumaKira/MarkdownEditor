@@ -1,5 +1,5 @@
 import { DocumentFromDevice as DocumentToApi } from '@api/document'
-import { ConfirmationStateTypes } from "../../constants/confirmationMessages"
+import { DocumentConfirmationStateTypes } from "../../constants/documentConfirmationMessages"
 
 export interface DocumentOnDevice extends DocumentToApi {
   isUploaded: boolean
@@ -12,11 +12,11 @@ export interface DocumentOnEdit {
 export interface DocumentOnEditOnAsyncStorage {
   id: string | null
 }
-export type ConfirmationState = {
-  type: ConfirmationStateTypes.DELETE | ConfirmationStateTypes.UNSAVED_DOCUMENT_CONFLICTED
+export type DocumentConfirmationState = {
+  type: DocumentConfirmationStateTypes.DELETE | DocumentConfirmationStateTypes.UNSAVED_DOCUMENT_CONFLICTED
 }
-export interface ConfirmationStateWithNextId {
-  type: ConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT
+export interface DocumentConfirmationStateWithNextId {
+  type: DocumentConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT
   nextId: string
 }
 interface DocumentStateBase {
@@ -26,7 +26,7 @@ interface DocumentStateBase {
 }
 export interface DocumentState extends DocumentStateBase {
   documentOnEdit: DocumentOnEdit
-  confirmationState: null | ConfirmationState | ConfirmationStateWithNextId
+  confirmationState: null | DocumentConfirmationState | DocumentConfirmationStateWithNextId
   restoreFromAsyncStorageIsDone: boolean
   isAskingUpdate: boolean
 }
