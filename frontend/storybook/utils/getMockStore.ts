@@ -11,9 +11,10 @@ const defaultPreloadedState: RootState = {
       titleInput: '',
       mainInput: '',
     },
-    latestUpdatedDocumentFromDBAt: null,
+    lastSyncWithDBAt: null,
     confirmationState: null,
     restoreFromAsyncStorageIsDone: true,
+    isAskingUpdate: false,
   },
   theme: {
     deviceColorSchemeIsDark: false,
@@ -21,10 +22,12 @@ const defaultPreloadedState: RootState = {
     restoreIsDone: true,
   },
   user: {
-    token: null,
     email: null,
+    wsHandshakeToken: null,
     authState: null,
+    confirmationState: null,
     restoreIsDone: true,
+    firstSyncIsDone: false,
   },
   storeInitializationIsDone: true,
 }
@@ -36,9 +39,10 @@ export const preloadedStateInDarkScheme: RootState = {
       titleInput: '',
       mainInput: '',
     },
-    latestUpdatedDocumentFromDBAt: null,
+    lastSyncWithDBAt: null,
     confirmationState: null,
     restoreFromAsyncStorageIsDone: true,
+    isAskingUpdate: false,
   },
   theme: {
     deviceColorSchemeIsDark: true, // This will be reset on initialization.
@@ -46,10 +50,12 @@ export const preloadedStateInDarkScheme: RootState = {
     restoreIsDone: true,
   },
   user: {
-    token: null,
     email: null,
+    wsHandshakeToken: null,
     authState: null,
+    confirmationState: null,
     restoreIsDone: true,
+    firstSyncIsDone: false,
   },
   storeInitializationIsDone: true,
 }
