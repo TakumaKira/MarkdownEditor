@@ -1,4 +1,4 @@
-import { AuthConfirmationStateTypes } from "../../constants/authConfirmationMessages"
+import AuthConfirmationStateTypes from "../../types/AuthConfirmationStateTypes"
 import { AuthStateTypes } from "../slices/user"
 
 interface AuthStateBase {

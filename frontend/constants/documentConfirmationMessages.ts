@@ -1,14 +1,9 @@
 import { AnyAction } from "@reduxjs/toolkit"
 import { deleteSelectedDocument, selectDocument } from "../store/slices/document"
 import { DocumentConfirmationStateWithNextId, DocumentState } from "../store/models/document"
+import DocumentConfirmationStateTypes from "../types/DocumentConfirmationStateTypes"
 
-export enum DocumentConfirmationStateTypes {
-  DELETE = 'delete',
-  LEAVE_UNSAVED_DOCUMENT = 'leaveUnsavedDocument',
-  UNSAVED_DOCUMENT_CONFLICTED = 'unsavedDocumentConflicted',
-}
-
-export const documentConfirmationMessages: {[key in DocumentConfirmationStateTypes]: {
+const documentConfirmationMessages: {[key in DocumentConfirmationStateTypes]: {
   title: string
   getMessage: (titleInput: string) => string
   buttonLabel: string
@@ -18,7 +13,7 @@ export const documentConfirmationMessages: {[key in DocumentConfirmationStateTyp
     title: 'Delete this document?',
     getMessage: (titleInput: string) => "Are you sure you want to delete the ‘" + titleInput + "’ document and its contents? This action cannot be reversed.",
     buttonLabel: 'Confirm & Delete',
-    getButtonAction: () => deleteSelectedDocument()
+    getButtonAction: (confirmationState: DocumentState['confirmationState']) => deleteSelectedDocument()
   },
   [DocumentConfirmationStateTypes.LEAVE_UNSAVED_DOCUMENT]: {
     title: 'Leave this document?',
@@ -32,3 +27,4 @@ export const documentConfirmationMessages: {[key in DocumentConfirmationStateTyp
     buttonLabel: 'Confirm',
   },
 }
+export default documentConfirmationMessages

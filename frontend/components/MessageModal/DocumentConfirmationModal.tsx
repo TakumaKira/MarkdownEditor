@@ -1,5 +1,5 @@
 import React from 'react'
-import { documentConfirmationMessages } from '../../constants/documentConfirmationMessages'
+import documentConfirmationMessages from '../../constants/documentConfirmationMessages'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { DocumentConfirmationState, DocumentConfirmationStateWithNextId } from '../../store/models/document'
 import { documentConfirmationStateChanged, selectSelectedDocumentOnEdit } from '../../store/slices/document'

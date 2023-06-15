@@ -2,7 +2,7 @@ import React from 'react'
 import { useAppDispatch } from '../../store/hooks'
 import MessageModalBase from './MessageModalBase'
 import { AuthConfirmationState } from '../../store/models/user'
-import { authConfirmationMessages } from '../../constants/authConfirmationMessages'
+import authConfirmationMessages from '../../constants/authConfirmationMessages'
 import { authConfirmationStateChanged } from '../../store/slices/user'
 
 const AuthConfirmationModal = ({

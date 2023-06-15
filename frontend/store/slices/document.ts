@@ -2,12 +2,12 @@ import { Document, DocumentsUpdateResponse } from '@api/document'
 import { AsyncThunk, createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 import env from '../../env'
-import { DocumentConfirmationStateTypes } from '../../constants/documentConfirmationMessages'
 import { sortDocumentsFromNewest } from '../../helpers/sortDocuments'
 import { ApiError, upload } from '../../services/api'
 import { getData } from '../../services/asyncStorage'
 import { DocumentOnDevice, DocumentOnEdit, DocumentState } from '../models/document'
 import { WS_HANDSHAKE_TOKEN_KEY } from '../../constants'
+import DocumentConfirmationStateTypes from '../../types/DocumentConfirmationStateTypes'
 
 const generateNewDocument = (): DocumentOnDevice => ({
   id: uuidv4(),

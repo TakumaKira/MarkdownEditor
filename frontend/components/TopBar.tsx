@@ -6,7 +6,6 @@ import DeleteIcon from '../assets/icon-delete.svg'
 import DocumentIcon from '../assets/icon-document.svg'
 import HamburgerIcon from '../assets/icon-menu.svg'
 import SaveIcon from '../assets/icon-save.svg'
-import { DocumentConfirmationStateTypes } from '../constants/documentConfirmationMessages'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import useWindowDimensions from '../hooks/useWindowDimensions'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
@@ -19,6 +18,7 @@ import ButtonWithHoverColorAnimation from './common/ButtonWithHoverColorAnimatio
 import SvgWrapper from './common/SvgWrapper'
 import { Text, TextInput } from './common/withCustomFont'
 import Title from './Title'
+import DocumentConfirmationStateTypes from '../types/DocumentConfirmationStateTypes'
 
 export const TOP_BAR_HEIGHT = 72
 

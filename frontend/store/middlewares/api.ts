@@ -3,7 +3,7 @@ import { ThunkMiddleware } from 'redux-thunk';
 import { RootState } from "..";
 import { SESSION_UNAUTHORIZED_ERROR, acceptServerResponse, askServerUpdate, deleteSelectedDocument, newDocument, saveDocument, selectLatestDocument } from "../slices/document";
 import { authConfirmationStateChanged, firstSyncIsDone, removeAuth, updateWsHandshakeToken } from '../slices/user';
-import { AuthConfirmationStateTypes } from '../../constants/authConfirmationMessages';
+import AuthConfirmationStateTypes from '../../types/AuthConfirmationStateTypes';
 
 export const apiMiddleware: ThunkMiddleware<RootState, AnyAction> = store => next => action => {
   next(action)

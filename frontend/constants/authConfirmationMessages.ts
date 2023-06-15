@@ -1,10 +1,7 @@
 import { AuthConfirmationStateWithEmail, UserState } from "../store/models/user"
+import AuthConfirmationStateTypes from "../types/AuthConfirmationStateTypes"
 
-export enum AuthConfirmationStateTypes {
-  SESSION_UNAUTHORIZED = 'sessionUnauthorized',
-}
-
-export const authConfirmationMessages: {[key in AuthConfirmationStateTypes]: {
+const authConfirmationMessages: {[key in AuthConfirmationStateTypes]: {
   title: string
   getMessage: (confirmationState: UserState['confirmationState']) => string
   buttonLabel: string
@@ -15,3 +12,4 @@ export const authConfirmationMessages: {[key in AuthConfirmationStateTypes]: {
     buttonLabel: 'OK',
   },
 }
+export default authConfirmationMessages

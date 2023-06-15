@@ -5,7 +5,6 @@ import DarkIcon from '../assets/icon-dark-mode.svg'
 import DocumentIcon from '../assets/icon-document.svg'
 import LightIconHighlight from '../assets/icon-light-mode-highlight.svg'
 import LightIcon from '../assets/icon-light-mode.svg'
-import { DocumentConfirmationStateTypes } from '../constants/documentConfirmationMessages'
 import { sortDocumentsFromNewest } from '../helpers/sortDocuments'
 import useMediaquery, { MediaType } from '../hooks/useMediaquery'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
@@ -19,6 +18,7 @@ import ButtonWithHoverColorAnimation from './common/ButtonWithHoverColorAnimatio
 import SvgWrapper from './common/SvgWrapper'
 import { Text } from './common/withCustomFont'
 import Title from './Title'
+import DocumentConfirmationStateTypes from '../types/DocumentConfirmationStateTypes'
 
 export const SIDEBAR_WIDTH = 250
 

@@ -1,5 +1,5 @@
 import { DocumentFromDevice as DocumentToApi } from '@api/document'
-import { DocumentConfirmationStateTypes } from "../../constants/documentConfirmationMessages"
+import DocumentConfirmationStateTypes from '../../types/DocumentConfirmationStateTypes'
 
 export interface DocumentOnDevice extends DocumentToApi {
   isUploaded: boolean
