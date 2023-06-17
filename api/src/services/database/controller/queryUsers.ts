@@ -25,6 +25,14 @@ export function _getUser(db: ConnectionPool) {
   }
 }
 
+export function _getUserEmail(db: ConnectionPool) {
+  return async function getUserEmail(userId: number): Promise<string | undefined> {
+    return (await db.query(sql`
+      CALL get_user_email(${userId});
+    `))[0][0]?.email
+  }
+}
+
 export function _updateUserEmail(db: ConnectionPool) {
   return async function updateUserEmail(userId: number, email: string): Promise<void> {
     await db.query(sql`

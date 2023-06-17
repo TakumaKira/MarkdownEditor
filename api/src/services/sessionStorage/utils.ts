@@ -11,10 +11,10 @@ export function getRedisKeyName(...args: string[]): string {
  * Call this before replying EVERY request to prevent Session Fixation Attack.
  * What the heck is it? @see https://www.geeksforgeeks.org/session-fixation-attack/
  */
-export function regenerateSession(req: Express.Request, sessionStorage: SessionStorageController, webSocketServer: Server, newUserData?: { id?: string, email?: string }): Promise<void> {
+export function regenerateSession(req: Express.Request, sessionStorage: SessionStorageController, webSocketServer: Server, newUserData?: { id?: string }): Promise<void> {
   return new Promise((resolve, reject) => {
-    const { id: newUserId, email: newUserEmail } = newUserData || {}
-    const { userId: oldUserId, userEmail: oldUserEmail, wsHandshakeToken: oldWsHandshakeToken } = req.session
+    const { id: newUserId } = newUserData || {}
+    const { userId: oldUserId, wsHandshakeToken: oldWsHandshakeToken } = req.session
     if (oldWsHandshakeToken) {
       sessionStorage.removeWsHandshakeToken(oldWsHandshakeToken)
     }
@@ -22,7 +22,6 @@ export function regenerateSession(req: Express.Request, sessionStorage: SessionS
       if (err) return reject(err)
       const { id: newSessionId } = req.session
       req.session.userId = newUserId || oldUserId
-      req.session.userEmail = newUserEmail || oldUserEmail
       const newWsHandshakeToken = uid.sync(24)
       // wsHandshakeToken should also be regenerated here.
       req.session.wsHandshakeToken = newWsHandshakeToken

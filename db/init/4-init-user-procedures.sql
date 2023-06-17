@@ -78,6 +78,18 @@ BEGIN
 END $$
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS get_user_email;
+DELIMITER $$
+CREATE PROCEDURE get_user_email (
+	p_id INT
+)
+BEGIN
+	SELECT email
+		FROM users
+		WHERE id = p_id;
+END $$
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS update_user;
 DELIMITER $$
 CREATE PROCEDURE update_user (

@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt'
 import { Router } from 'express'
 import { TokenExpiredError } from 'jsonwebtoken'
-import { API_PATHS, EMAIL_LENGTH_MAX, MIN_PASSWORD_LENGTH, WS_HANDSHAKE_TOKEN_KEY } from '../constants'
+import { API_PATHS, EMAIL_LENGTH_MAX, MIN_PASSWORD_LENGTH, HEADER_WS_HANDSHAKE_TOKEN_KEY } from '../constants'
 import getConfirmationEmail from '../services/emailTemplates'
 import { JWT_SECRET_KEY } from '../getEnvs' // <- import is already done when setting up apiApp in global setup file before jest is ready, so there's no way to mock!
 import decodeToken from '../services/decodeToken'
@@ -92,9 +92,9 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
         if (!is_activated) {
           throw new Error(`User with email ${email} is not activated successfully. Please try again.`)
         }
-        await regenerateSession(req, sessionStorage, wsServer, { id: String(id), email })
+        await regenerateSession(req, sessionStorage, wsServer, { id: String(id) })
         return res
-          .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
+          .header(HEADER_WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
           .send({message: 'Confirmation successful.', email})
       } catch (error: any) {
         if (error?.sqlState === '45011') {
@@ -140,9 +140,9 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
         return res.status(400).send({message: 'Email/Password is incorrect.'})
       }
 
-      await regenerateSession(req, sessionStorage, wsServer, { id: String(user.id), email })
+      await regenerateSession(req, sessionStorage, wsServer, { id: String(user.id) })
       res
-        .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
+        .header(HEADER_WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
         .send({message: 'Login successful.' })
     } catch (e) {
       next(e)
@@ -169,9 +169,13 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
         return res.status(400).send({message: result.error.message})
       }
       const { email: newEmail, password: newPassword } = result.value
-      const { userId: id, userEmail: oldEmail } = req.session
+      const { userId: id } = req.session
+      const oldEmail = await db.getUserEmail(Number(id))
       if (!id || !oldEmail) {
         throw new Error('Session does not have required fields')
+      }
+      if (newEmail === oldEmail) {
+        return res.status(400).send({message: `Email is already changed to ${newEmail}.`})
       }
 
       if (newPassword) {
@@ -185,12 +189,12 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
         await mailServer.send(newEmail, subject, text, html)
         await regenerateSession(req, sessionStorage, wsServer)
         res
-          .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
+          .header(HEADER_WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
           .send({message: `Confirmation email was sent to ${newEmail}. Please check the inbox and confirm.`})
       } else {
         await regenerateSession(req, sessionStorage, wsServer)
         res
-          .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
+          .header(HEADER_WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
           .send({message: 'Password update successful.'})
       }
     } catch (e) {
@@ -235,9 +239,9 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
       if (!isValidPassword) return res.status(400).send({message: 'Password is incorrect.'})
 
       await db.updateUserEmail(user.id, newEmail)
-      await regenerateSession(req, sessionStorage, wsServer, { email: newEmail })
+      await regenerateSession(req, sessionStorage, wsServer)
       return res
-        .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
+        .header(HEADER_WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
         .send({message: 'Email change successful.', email: newEmail})
     } catch (e) {
       next(e)
@@ -265,7 +269,7 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
       await mailServer.send(email, subject, text, html)
       await regenerateSession(req, sessionStorage, wsServer)
       res
-        .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
+        .header(HEADER_WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
         .send({message: `Confirmation email was sent to ${email}. Please check the inbox and confirm.`})
     } catch (e) {
       next(e)
@@ -307,7 +311,7 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
       await db.updateUserPassword(user.id, hashedPassword)
       await regenerateSession(req, sessionStorage, wsServer)
       return res
-        .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
+        .header(HEADER_WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
         .send({message: 'Password reset successful.', email})
     } catch (e) {
       next(e)

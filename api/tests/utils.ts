@@ -1,7 +1,7 @@
 import request from 'supertest'
 import cookie from 'cookie'
 import { sql } from '@databases/mysql';
-import { SESSION_SID_KEY, SESSION_MAX_AGE, REDIS_KEYS, WS_HANDSHAKE_TOKEN_KEY } from '../src/constants'
+import { SESSION_SID_KEY, SESSION_MAX_AGE, REDIS_KEYS, HEADER_WS_HANDSHAKE_TOKEN_KEY, DOCUMENT_RESPONSE_HEADER_USER_EMAIL_KEY } from '../src/constants'
 import { getRedisKeyName } from '../src/services/sessionStorage/utils'
 import getWsServer from '../src/servers/wsServer'
 import getDBClient from '../src/services/database/client'
@@ -100,7 +100,7 @@ export const sessionStorageClientForTest = {
   }
 }
 
-export async function assertSession(res: request.Response, email: string) {
+export async function assertSession(res: request.Response, isOnDocumentResponse?: boolean, email?: string) {
   const setCookieHeaders: string[] = res.headers['set-cookie']
   const cookies = setCookieHeaders.map(headerValue => cookie.parse(headerValue))
   const sessionCookieIndex = cookies.findIndex((cookie: any) => cookie.hasOwnProperty(SESSION_SID_KEY))
@@ -121,8 +121,10 @@ export async function assertSession(res: request.Response, email: string) {
   const sessionStr = await sessionStorageClient.get(getRedisKeyName(REDIS_KEYS.SESSION, sessionId!))
   expect(sessionStr).toBeTruthy()
   const session: Express.Request['session'] = JSON.parse(sessionStr!)
-  expect(session.userEmail).toBe(email)
-  expect(res.headers[WS_HANDSHAKE_TOKEN_KEY]).toBe(session.wsHandshakeToken)
+  expect(res.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]).toBe(session.wsHandshakeToken)
+  if (isOnDocumentResponse) {
+    expect(res.headers[DOCUMENT_RESPONSE_HEADER_USER_EMAIL_KEY]).toBe(email)
+  }
 }
 
 export function retrieveSessionId(connectSid: string | undefined): string | undefined {

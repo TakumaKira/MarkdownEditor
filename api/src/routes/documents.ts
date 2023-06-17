@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { DOCUMENT_UPDATED_WS_EVENT, WS_HANDSHAKE_TOKEN_KEY } from '../constants'
+import { DOCUMENT_UPDATED_WS_EVENT, DOCUMENT_RESPONSE_HEADER_USER_EMAIL_KEY, HEADER_WS_HANDSHAKE_TOKEN_KEY } from '../constants'
 import { getApiAuthMiddleware } from '../middlewares/auth'
 import { documentsRequestValidatorMiddleware } from '../middlewares/validator'
 import { DocumentsUpdateResponse, Document, DocumentUpdatedWsMessage } from '../models/document'
@@ -130,8 +130,10 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
 
       await regenerateSession(req, sessionStorage, wsServer)
 
+      const userEmail = await db.getUserEmail(Number(req.session.userId))
       res
-        .header(WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
+        .header(HEADER_WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
+        .header(DOCUMENT_RESPONSE_HEADER_USER_EMAIL_KEY, userEmail)
         .send({allDocuments, updatedIdsAsUnavailable, duplicatedIdsAsConflicted, savedOnDBAt} as DocumentsUpdateResponse)
 
       // If there's update to database, send update notification.

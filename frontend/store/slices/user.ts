@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { confirmChangeEmail, confirmResetPassword, confirmSignupEmail, deleteUser, editUser, login, logout, resetPassword, signup } from "../../services/api";
 import { getData } from "../../services/asyncStorage";
 import { AuthStateConfirmChangeEmail, AuthStateConfirmResetPassword, AuthStateConfirmSignupEmail, AuthStateDelete, AuthStateEdit, AuthStateLogin, AuthStateResetPassword, AuthStateSignup, UserState } from "../models/user";
-import { WS_HANDSHAKE_TOKEN_KEY } from "../../constants";
+import { HEADER_WS_HANDSHAKE_TOKEN_KEY } from "../../constants";
 
 const initialState: UserState = {
   email: null,
@@ -107,7 +107,7 @@ export const askServerConfirmSignupEmail = createAsyncThunk(
   async (payload: {token: string}) => {
     try {
       const response = await confirmSignupEmail(payload)
-      return {successMessage: response.data.message, email: response.data.email, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
+      return {successMessage: response.data.message, email: response.data.email, wsHandshakeToken: response.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]}
     } catch (err) {
       return Promise.reject(err)
     }
@@ -118,7 +118,7 @@ export const askServerLogin = createAsyncThunk(
   async (payload: {email: string, password: string}) => {
     try {
       const response = await login(payload)
-      return {email: payload.email, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
+      return {email: payload.email, wsHandshakeToken: response.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]}
     } catch (err) {
       return Promise.reject(err)
     }
@@ -141,7 +141,7 @@ export const askServerEdit = createAsyncThunk(
   async (payload: {email?: string, password?: string}) => {
     try {
       const response = await editUser(payload)
-      return {successMessage: response.data.message, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
+      return {successMessage: response.data.message, wsHandshakeToken: response.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]}
     } catch (err) {
       return Promise.reject(err)
     }
@@ -152,7 +152,7 @@ export const askServerConfirmChangeEmail = createAsyncThunk(
   async (payload: {token: string, password: string}) => {
     try {
       const response = await confirmChangeEmail(payload)
-      return {successMessage: response.data.message, email: response.data.email, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
+      return {successMessage: response.data.message, email: response.data.email, wsHandshakeToken: response.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]}
     } catch (err) {
       return Promise.reject(err)
     }
@@ -163,7 +163,7 @@ export const askServerResetPassword = createAsyncThunk(
   async (payload: {email: string}) => {
     try {
       const response = await resetPassword(payload)
-      return {successMessage: response.data.message, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
+      return {successMessage: response.data.message, wsHandshakeToken: response.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]}
     } catch (err) {
       return Promise.reject(err)
     }
@@ -174,7 +174,7 @@ export const askServerConfirmResetPassword = createAsyncThunk(
   async (payload: {token: string, password: string}) => {
     try {
       const response = await confirmResetPassword(payload)
-      return {successMessage: response.data.message, email: response.data.email, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY]}
+      return {successMessage: response.data.message, email: response.data.email, wsHandshakeToken: response.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]}
     } catch (err) {
       return Promise.reject(err)
     }
@@ -276,8 +276,9 @@ const userSlice = createSlice({
         }
       }
     },
-    updateWsHandshakeToken: (state, action: PayloadAction<{wsHandshakeToken: string, isFirstAfterLogin: boolean | undefined}>) => {
+    updateAuth: (state, action: PayloadAction<{wsHandshakeToken: string, email: string, isFirstAfterLogin: boolean | undefined}>) => {
       state.wsHandshakeToken = action.payload.wsHandshakeToken
+      state.email = action.payload.email
     },
     firstSyncIsDone: state => {
       state.firstSyncIsDone = true
@@ -477,7 +478,7 @@ export const {
   submitResetPassword,
   submitNewPassword,
   validationError,
-  updateWsHandshakeToken,
+  updateAuth,
   firstSyncIsDone,
   removeAuth,
   authConfirmationStateChanged,

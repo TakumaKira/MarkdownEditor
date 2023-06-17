@@ -1,5 +1,5 @@
 import request from 'supertest'
-import { API_PATHS, REDIS_KEYS, SESSION_SID_KEY, WS_HANDSHAKE_TOKEN_KEY } from '../../src/constants'
+import { API_PATHS, REDIS_KEYS, SESSION_SID_KEY, HEADER_WS_HANDSHAKE_TOKEN_KEY } from '../../src/constants'
 import { JWT_SECRET_KEY } from '../../src/getEnvs'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
@@ -279,7 +279,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.path}`, () => {
       .send({token})
     expect(res.status).toBe(200)
     expect(res.body.email).toBe(email)
-    await assertSession(res, email)
+    await assertSession(res)
   })
 })
 
@@ -397,7 +397,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email, password })
     expect(res.status).toBe(200)
-    await assertSession(res, email)
+    await assertSession(res)
     // Send next request with gotten session cookie
     const nextRequestRes = await request(apiApp)
       .post(API_PATHS.DOCUMENTS.path)
@@ -407,7 +407,7 @@ describe(`POST ${API_PATHS.AUTH.LOGIN.path}`, () => {
     // Connect WebSocket server with gotten wsHandshakeToken
     const wsClientSocket = io(TESTING_WS_SERVER_AP, {
       autoConnect: false,
-      auth: {wsHandshakeToken: nextRequestRes.headers[WS_HANDSHAKE_TOKEN_KEY]}
+      auth: {wsHandshakeToken: nextRequestRes.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]}
     })
     const onConnect = jest.fn()
     wsClientSocket.on('connect', onConnect)
@@ -449,7 +449,7 @@ describe(`POST ${API_PATHS.AUTH.LOGOUT.path}`, () => {
     const connectSid: string | undefined = cookies[sessionCookieIndex]?.[SESSION_SID_KEY]
     const sessionId = retrieveSessionId(connectSid)
     expect(sessionId).toBeTruthy()
-    const wsHandshakeToken = loginRes.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const wsHandshakeToken = loginRes.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
     expect(wsHandshakeToken).toBeTruthy()
     const sessionStrInSessionStorage = await sessionStorageClient.get(getRedisKeyName(REDIS_KEYS.SESSION, sessionId!))
     expect(sessionStrInSessionStorage).toBeTruthy()
@@ -471,7 +471,7 @@ describe(`POST ${API_PATHS.AUTH.LOGOUT.path}`, () => {
     expect(nextRequestRes.status).toBe(401)
     const wsClientSocket = io(TESTING_WS_SERVER_AP, {
       autoConnect: false,
-      auth: {wsHandshakeToken: loginRes.headers[WS_HANDSHAKE_TOKEN_KEY]}
+      auth: {wsHandshakeToken: loginRes.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]}
     })
     const onConnectError = jest.fn()
     wsClientSocket.on('connect_error', onConnectError)
@@ -1291,7 +1291,7 @@ describe(`POST ${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.path}`, () => {
     expect(res.status).toBe(200)
     expect(res.body.message).toBe('Email change successful.')
     expect(res.body.email).toBe(newEmail)
-    await assertSession(res, newEmail)
+    await assertSession(res)
     // Make sure email is updated.
     const result = await dbClient.query(sql`
       SELECT email

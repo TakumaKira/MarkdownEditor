@@ -6,7 +6,7 @@ import { sortDocumentsFromNewest } from '../../helpers/sortDocuments'
 import { ApiError, upload } from '../../services/api'
 import { getData } from '../../services/asyncStorage'
 import { DocumentOnDevice, DocumentOnEdit, DocumentState } from '../models/document'
-import { WS_HANDSHAKE_TOKEN_KEY } from '../../constants'
+import { DOCUMENT_RESPONSE_HEADER_USER_EMAIL_KEY, HEADER_WS_HANDSHAKE_TOKEN_KEY } from '../../constants'
 import DocumentConfirmationStateTypes from '../../types/DocumentConfirmationStateTypes'
 
 const generateNewDocument = (): DocumentOnDevice => ({
@@ -46,7 +46,7 @@ export const askServerUpdate = createAsyncThunk(
   async ({documentState, isFirstAfterLogin}: {documentState: DocumentState, isFirstAfterLogin?: boolean}, {rejectWithValue}) => {
     try {
       const response = await upload(documentState)
-      return { response: response.data, wsHandshakeToken: response.headers[WS_HANDSHAKE_TOKEN_KEY] as string, isFirstAfterLogin }
+      return { response: response.data, wsHandshakeToken: response.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY] as string, email: response.headers[DOCUMENT_RESPONSE_HEADER_USER_EMAIL_KEY] as string, isFirstAfterLogin }
     } catch (err: any) {
       if ((err as ApiError).originalError.response?.status === 401) {
         return rejectWithValue(SESSION_UNAUTHORIZED_ERROR)
@@ -54,7 +54,7 @@ export const askServerUpdate = createAsyncThunk(
       return Promise.reject(err)
     }
   }
-) as AsyncThunk<{response: DocumentsUpdateResponse, wsHandshakeToken: string, isFirstAfterLogin: boolean | undefined}, {documentState: DocumentState, isFirstAfterLogin?: boolean}, {rejectValue: typeof SESSION_UNAUTHORIZED_ERROR}>
+) as AsyncThunk<{response: DocumentsUpdateResponse, wsHandshakeToken: string, email: string, isFirstAfterLogin: boolean | undefined}, {documentState: DocumentState, isFirstAfterLogin?: boolean}, {rejectValue: typeof SESSION_UNAUTHORIZED_ERROR}>
 
 const documentSlice = createSlice({
   name: 'document',

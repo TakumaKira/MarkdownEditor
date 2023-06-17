@@ -1,6 +1,6 @@
 import cors from 'cors'
 import express, { Express } from 'express'
-import { API_PATHS, WS_HANDSHAKE_TOKEN_KEY } from '../../constants'
+import { API_PATHS, DOCUMENT_RESPONSE_HEADER_USER_EMAIL_KEY, HEADER_WS_HANDSHAKE_TOKEN_KEY } from '../../constants'
 import { FRONTEND_DOMAIN, FRONTEND_PORT, FRONTEND_PROTOCOL } from '../../getEnvs'
 import errorMiddleware from '../../middlewares/error'
 import getAuthApiRouter from '../../routes/auth'
@@ -15,7 +15,7 @@ const setupApiRoutes = (apiApp: Express, wsServer: Server, dbClient: DatabaseCli
   apiApp.use(cors({
     origin: `${FRONTEND_PROTOCOL}://${FRONTEND_DOMAIN}${FRONTEND_PORT ? ':' + FRONTEND_PORT : ''}`,
     credentials: true,
-    exposedHeaders: [WS_HANDSHAKE_TOKEN_KEY],
+    exposedHeaders: [HEADER_WS_HANDSHAKE_TOKEN_KEY, DOCUMENT_RESPONSE_HEADER_USER_EMAIL_KEY],
   }))
   apiApp.use(express.json())
   const sessionMiddleware = getSessionMiddleware(sessionStorageClient)

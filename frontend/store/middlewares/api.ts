@@ -2,7 +2,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { ThunkMiddleware } from 'redux-thunk';
 import { RootState } from "..";
 import { SESSION_UNAUTHORIZED_ERROR, acceptServerResponse, askServerUpdate, deleteSelectedDocument, newDocument, saveDocument, selectLatestDocument } from "../slices/document";
-import { authConfirmationStateChanged, firstSyncIsDone, removeAuth, updateWsHandshakeToken } from '../slices/user';
+import { authConfirmationStateChanged, firstSyncIsDone, removeAuth, updateAuth } from '../slices/user';
 import AuthConfirmationStateTypes from '../../types/AuthConfirmationStateTypes';
 
 export const apiMiddleware: ThunkMiddleware<RootState, AnyAction> = store => next => action => {
@@ -25,8 +25,8 @@ export const apiMiddleware: ThunkMiddleware<RootState, AnyAction> = store => nex
   ) {
     const { payload } = action as ReturnType<typeof askServerUpdate.fulfilled>
     if (payload) {
-      const {wsHandshakeToken, isFirstAfterLogin} = payload
-      store.dispatch(updateWsHandshakeToken({wsHandshakeToken, isFirstAfterLogin}))
+      const {wsHandshakeToken, email, isFirstAfterLogin} = payload
+      store.dispatch(updateAuth({wsHandshakeToken, email, isFirstAfterLogin}))
       store.dispatch(acceptServerResponse(payload.response))
     }
   }
@@ -49,9 +49,9 @@ export const apiMiddleware: ThunkMiddleware<RootState, AnyAction> = store => nex
   }
 
   if (
-    action.type === updateWsHandshakeToken.type
+    action.type === updateAuth.type
   ) {
-    const _action = action as ReturnType<typeof updateWsHandshakeToken>
+    const _action = action as ReturnType<typeof updateAuth>
     if (_action.payload.isFirstAfterLogin) {
       store.dispatch(firstSyncIsDone())
     }

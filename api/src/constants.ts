@@ -1,5 +1,6 @@
 export const SESSION_SID_KEY = 'connect.sid'
-export const WS_HANDSHAKE_TOKEN_KEY = 'ws-handshake-token'
+export const HEADER_WS_HANDSHAKE_TOKEN_KEY = 'ws-handshake-token'
+export const DOCUMENT_RESPONSE_HEADER_USER_EMAIL_KEY = 'user-email'
 /** 1 week in milliseconds */
 export const SESSION_MAX_AGE = 7 * 24 * 60 * 60 * 1000
 export const DOCUMENT_UPDATED_WS_EVENT = 'documents_updated'

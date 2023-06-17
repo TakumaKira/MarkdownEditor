@@ -164,6 +164,39 @@ describe('get_user', () => {
   })
 })
 
+describe('get_user_email', () => {
+  test('returns a user email if the user with the given id exists', async () => {
+    const email = 'test@email.com'
+    const hashed_password = 'hashed_password'
+    // Create a user.
+    await db.query(sql`
+      CALL create_user(${email}, ${hashed_password});
+    `)
+    // Get the user's id
+    const id = (await db.query(sql`
+      CALL get_user(${email});
+    `))[0][0].id
+    // TESTED PROCEDURE
+    const result = (await db.query(sql`
+      CALL get_user_email(${id});
+    `))[0]
+    // EXPECTED RESULT
+    expect(result).toEqual([{
+      "email": email
+    }])
+  })
+
+  test('returns empty array if the user with the given id not exists', async () => {
+    const id = 1
+    // TESTED PROCEDURE
+    const result = (await db.query(sql`
+      CALL get_user_email(${id});
+    `))[0]
+    // EXPECTED RESULT
+    expect(result).toEqual([])
+  })
+})
+
 describe('update_user', () => {
   test('updates email of the user with given id if new email is provided', async () => {
     const email1 = 'test1@email.com'

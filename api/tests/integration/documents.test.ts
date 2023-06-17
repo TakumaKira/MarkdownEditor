@@ -9,11 +9,11 @@ import cookie from 'cookie'
 import { io } from 'socket.io-client'
 import { v4 as uuidv4 } from 'uuid'
 import { fromISOStringToDatetimeString, normalizeDocument } from '../../src/services/database'
-import { API_PATHS, DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT, DOCUMENT_UPDATED_WS_EVENT, SESSION_SID_KEY, WS_HANDSHAKE_TOKEN_KEY } from "../../src/constants"
+import { API_PATHS, DOCUMENT_CONTENT_LENGTH_LIMIT, DOCUMENT_NAME_LENGTH_LIMIT, DOCUMENT_UPDATED_WS_EVENT, SESSION_SID_KEY, HEADER_WS_HANDSHAKE_TOKEN_KEY } from "../../src/constants"
 import { DocumentFromDevice, DocumentFromDB, DocumentsUpdateRequest, DocumentsUpdateResponse, Document, DocumentUpdatedWsMessage } from '../../src/models/document'
 import { WS_PORT } from '../../src/getEnvs'
 import { regIsISODateString } from '../../src/middlewares/validator'
-import { apiAppForTest, sleep, waitForShutdown } from '../utils'
+import { apiAppForTest, assertSession, sleep, waitForShutdown } from '../utils'
 
 beforeAll(async () => {
   await apiAppForTest.setup()
@@ -95,7 +95,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const mainUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: mainUser.email, password: mainUser.password })
-    const mainUserWsHandshakeToken = mainUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const mainUserWsHandshakeToken = mainUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
     const mainUserSetCookieHeaders: string[] = mainUserResLogin.headers['set-cookie']
     const mainUserCookies = mainUserSetCookieHeaders.map(headerValue => cookie.parse(headerValue))
     const mainUserSessionCookieIndex = mainUserCookies.findIndex((cookie: any) => cookie.hasOwnProperty(SESSION_SID_KEY))
@@ -106,7 +106,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const otherUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: otherUser.email, password: otherUser.password })
-    const otherUserWsHandshakeToken = otherUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const otherUserWsHandshakeToken = otherUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
 
     const mainUserCallback = jest.fn()
     const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: mainUserWsHandshakeToken}})
@@ -221,7 +221,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const mainUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: mainUser.email, password: mainUser.password })
-    const oldMainUserWsHandshakeToken = mainUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const oldMainUserWsHandshakeToken = mainUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
     const mainUserSetCookieHeaders: string[] = mainUserResLogin.headers['set-cookie']
 
     const documentsRequest: DocumentsUpdateRequest = {
@@ -231,7 +231,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       .post(API_PATHS.DOCUMENTS.path)
       .set('Cookie', mainUserSetCookieHeaders)
       .send(documentsRequest)
-    const newMainUserWsHandshakeToken = mainUserResForSecondReq.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const newMainUserWsHandshakeToken = mainUserResForSecondReq.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
 
     const mainUserSocketWithOldToken = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: oldMainUserWsHandshakeToken}})
     const mainUserSocketWithNewToken = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: newMainUserWsHandshakeToken}})
@@ -260,13 +260,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const mainUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: mainUser.email, password: mainUser.password })
-    const mainUserWsHandshakeToken = mainUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const mainUserWsHandshakeToken = mainUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
     const mainUserSetCookieHeaders: string[] = mainUserResLogin.headers['set-cookie']
 
     const otherUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: otherUser.email, password: otherUser.password })
-    const otherUserWsHandshakeToken = otherUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const otherUserWsHandshakeToken = otherUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
 
     const mainUserCallback = jest.fn()
     const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: mainUserWsHandshakeToken}})
@@ -356,13 +356,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const mainUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: mainUser.email, password: mainUser.password })
-    const mainUserWsHandshakeToken = mainUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const mainUserWsHandshakeToken = mainUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
     const mainUserSetCookieHeaders: string[] = mainUserResLogin.headers['set-cookie']
 
     const otherUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: otherUser.email, password: otherUser.password })
-    const otherUserWsHandshakeToken = otherUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const otherUserWsHandshakeToken = otherUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
 
     const mainUserCallback = jest.fn()
     const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: mainUserWsHandshakeToken}})
@@ -418,13 +418,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const mainUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: mainUser.email, password: mainUser.password })
-    const mainUserWsHandshakeToken = mainUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const mainUserWsHandshakeToken = mainUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
     const mainUserSetCookieHeaders: string[] = mainUserResLogin.headers['set-cookie']
 
     const otherUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: otherUser.email, password: otherUser.password })
-    const otherUserWsHandshakeToken = otherUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const otherUserWsHandshakeToken = otherUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
 
     const mainUserCallback = jest.fn()
     const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: mainUserWsHandshakeToken}})
@@ -468,6 +468,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       // EXPECTED RESPONSE
       expect(res.status).toBe(200)
       expect(res.body).toEqual(documentsUploadResponse)
+      await assertSession(res, true, mainUser.email)
       // Check database.
       const result = await dbClient.query(sql`
         SELECT id
@@ -494,13 +495,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const mainUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: mainUser.email, password: mainUser.password })
-    const mainUserWsHandshakeToken = mainUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const mainUserWsHandshakeToken = mainUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
     const mainUserSetCookieHeaders: string[] = mainUserResLogin.headers['set-cookie']
 
     const otherUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: otherUser.email, password: otherUser.password })
-    const otherUserWsHandshakeToken = otherUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const otherUserWsHandshakeToken = otherUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
 
     const mainUserCallback = jest.fn()
     const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: mainUserWsHandshakeToken}})
@@ -556,13 +557,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const mainUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: mainUser.email, password: mainUser.password })
-    const mainUserWsHandshakeToken = mainUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const mainUserWsHandshakeToken = mainUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
     const mainUserSetCookieHeaders: string[] = mainUserResLogin.headers['set-cookie']
 
     const otherUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: otherUser.email, password: otherUser.password })
-    const otherUserWsHandshakeToken = otherUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const otherUserWsHandshakeToken = otherUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
 
     const mainUserCallback = jest.fn()
     const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: mainUserWsHandshakeToken}})
@@ -606,6 +607,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       // EXPECTED RESPONSE
       expect(res.status).toBe(200)
       expect(res.body).toEqual(documentsUploadResponse)
+      await assertSession(res, true, mainUser.email)
       // Check database.
       const result = await dbClient.query(sql`
         SELECT id
@@ -632,13 +634,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const mainUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: mainUser.email, password: mainUser.password })
-    const mainUserWsHandshakeToken = mainUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const mainUserWsHandshakeToken = mainUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
     const mainUserSetCookieHeaders: string[] = mainUserResLogin.headers['set-cookie']
 
     const otherUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: otherUser.email, password: otherUser.password })
-    const otherUserWsHandshakeToken = otherUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const otherUserWsHandshakeToken = otherUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
 
     const mainUserCallback = jest.fn()
     const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: mainUserWsHandshakeToken}})
@@ -719,6 +721,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       // EXPECTED RESPONSE
       expect(res.status).toBe(200)
       expect(res.body).toEqual(documentsUploadResponse)
+      await assertSession(res, true, mainUser.email)
       const response: DocumentsUpdateResponse = res.body
       expect(response.allDocuments[0].id).not.toBe(mainUsersNewDocument.id)
       expect(response.updatedIdsAsUnavailable[0].to).toBe(response.allDocuments[0].id)
@@ -748,7 +751,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const mainUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: mainUser.email, password: mainUser.password })
-    const mainUserWsHandshakeToken = mainUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const mainUserWsHandshakeToken = mainUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
     const mainUserSetCookieHeaders: string[] = mainUserResLogin.headers['set-cookie']
 
     const mainUserCallback = jest.fn()
@@ -827,6 +830,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       // EXPECTED RESPONSE
       expect(res.status).toBe(200)
       expect(res.body).toEqual(documentsUploadResponse)
+      await assertSession(res, true, mainUser.email)
       const response: DocumentsUpdateResponse = res.body
       expect(response.allDocuments[0].id).not.toBe(newDocument.id)
       expect(response.updatedIdsAsUnavailable[0].to).toBe(response.allDocuments[0].id)
@@ -856,13 +860,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const mainUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: mainUser.email, password: mainUser.password })
-    const mainUserWsHandshakeToken = mainUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const mainUserWsHandshakeToken = mainUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
     const mainUserSetCookieHeaders: string[] = mainUserResLogin.headers['set-cookie']
 
     const otherUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: otherUser.email, password: otherUser.password })
-    const otherUserWsHandshakeToken = otherUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const otherUserWsHandshakeToken = otherUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
 
     const mainUserCallback = jest.fn()
     const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: mainUserWsHandshakeToken}})
@@ -906,6 +910,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       // EXPECTED RESPONSE
       expect(res.status).toBe(200)
       expect(res.body).toEqual(documentsUploadResponse)
+      await assertSession(res, true, mainUser.email)
       // Check database.
       const result = await dbClient.query(sql`
         SELECT id
@@ -932,13 +937,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const mainUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: mainUser.email, password: mainUser.password })
-    const mainUserWsHandshakeToken = mainUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const mainUserWsHandshakeToken = mainUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
     const mainUserSetCookieHeaders: string[] = mainUserResLogin.headers['set-cookie']
 
     const otherUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: otherUser.email, password: otherUser.password })
-    const otherUserWsHandshakeToken = otherUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const otherUserWsHandshakeToken = otherUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
 
     const mainUserCallback = jest.fn()
     const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: mainUserWsHandshakeToken}})
@@ -1038,6 +1043,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       // EXPECTED RESPONSE
       expect(res.status).toBe(200)
       expect(res.body).toEqual(documentsUploadResponse)
+      await assertSession(res, true, mainUser.email)
       // Check no event on websocket.
       await sleep(100)
       expect(mainUserCallback).not.toBeCalled()
@@ -1054,13 +1060,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const mainUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: mainUser.email, password: mainUser.password })
-    const mainUserWsHandshakeToken = mainUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const mainUserWsHandshakeToken = mainUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
     const mainUserSetCookieHeaders: string[] = mainUserResLogin.headers['set-cookie']
 
     const otherUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: otherUser.email, password: otherUser.password })
-    const otherUserWsHandshakeToken = otherUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const otherUserWsHandshakeToken = otherUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
 
     const mainUserCallback = jest.fn()
     const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: mainUserWsHandshakeToken}})
@@ -1136,6 +1142,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       // EXPECTED RESPONSE
       expect(res.status).toBe(200)
       expect(res.body).toEqual(documentsUploadResponse)
+      await assertSession(res, true, mainUser.email)
       // Check no event on websocket.
       await sleep(100)
       const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
@@ -1153,13 +1160,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const mainUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: mainUser.email, password: mainUser.password })
-    const mainUserWsHandshakeToken = mainUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const mainUserWsHandshakeToken = mainUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
     const mainUserSetCookieHeaders: string[] = mainUserResLogin.headers['set-cookie']
 
     const otherUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: otherUser.email, password: otherUser.password })
-    const otherUserWsHandshakeToken = otherUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const otherUserWsHandshakeToken = otherUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
 
     const mainUserCallback = jest.fn()
     const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: mainUserWsHandshakeToken}})
@@ -1245,6 +1252,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
       // EXPECTED RESPONSE
       expect(res.status).toBe(200)
       expect(res.body).toEqual(documentsUploadResponse)
+      await assertSession(res, true, mainUser.email)
       // Check no event on websocket.
       await sleep(100)
       const message: DocumentUpdatedWsMessage = {savedOnDBAt: expect.stringMatching(regIsISODateString)}
@@ -1263,13 +1271,13 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
     const mainUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: mainUser.email, password: mainUser.password })
-    const mainUserWsHandshakeToken = mainUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const mainUserWsHandshakeToken = mainUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
     const mainUserSetCookieHeaders: string[] = mainUserResLogin.headers['set-cookie']
 
     const otherUserResLogin = await request(apiApp)
       .post(API_PATHS.AUTH.LOGIN.path)
       .send({ email: otherUser.email, password: otherUser.password })
-    const otherUserWsHandshakeToken = otherUserResLogin.headers[WS_HANDSHAKE_TOKEN_KEY]
+    const otherUserWsHandshakeToken = otherUserResLogin.headers[HEADER_WS_HANDSHAKE_TOKEN_KEY]
 
     const mainUserCallback = jest.fn()
     const mainUserSocket = io(TESTING_WS_SERVER_AP, {autoConnect: false, auth: {wsHandshakeToken: mainUserWsHandshakeToken}})
@@ -1540,6 +1548,7 @@ describe(`POST ${API_PATHS.DOCUMENTS.path}`, () => {
         .send(documentsRequest)
       expect(res.status).toBe(200)
       expect(res.body).toEqual(documentsUploadResponse)
+      await assertSession(res, true, mainUser.email)
       expect(copiedOnConflictDuplication.id).not.toBe(conflictedAsBeingModifiedOnDevice.id)
       expect(conflictedAsBeingModifiedOnDevice.updatedAt < copiedOnConflictDuplication.updatedAt).toBe(true)
       const onDatabase = (await dbClient.query(sql`
