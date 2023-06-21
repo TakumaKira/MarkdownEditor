@@ -53,6 +53,7 @@ describe('documents sync', () => {
         expect(documents).to.have.length(1)
         expect(documents[0].id).to.equal(document1.id)
       })
+      cy.logout()
     })
   })
 
@@ -110,6 +111,7 @@ describe('documents sync', () => {
         expect(newDocument.name).to.equal(newTitle)
         expect(newDocument.content).to.equal(newContent)
       })
+      cy.logout()
     })
   })
 
@@ -151,6 +153,7 @@ describe('documents sync', () => {
       cy.getBySel('topbar-title-input').should('have.value', document1.name)
       cy.getBySel('main-editor-input').should('have.value', document1.content)
       cy.getBySel('sidebar-documents-list').should('contain.text', document1.name)
+      cy.logout()
     })
   })
 
@@ -188,6 +191,7 @@ describe('documents sync', () => {
       cy.getBySel('sidebar-documents-list').should('contain.text', documentFromOtherDevice.name)
       cy.getBySel('topbar-title-input').should('have.value', documentFromOtherDevice.name)
       cy.getBySel('main-editor-input').should('have.value', documentFromOtherDevice.content)
+      cy.logout()
     })
   })
 
@@ -237,6 +241,7 @@ describe('documents sync', () => {
       cy.getBySel('auth-modal-ok-button').click()
       cy.getBySel('sidebar-documents-list').should('not.contain.text', user1sDocument.name)
       cy.getBySel('sidebar-documents-list').should('contain.text', user2sDocument.name)
+      cy.logout()
     })
   })
 })

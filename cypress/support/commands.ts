@@ -42,6 +42,7 @@ declare global {
       getBySel(value: string): Chainable<JQuery<HTMLElement>>
 
       login(email: string, password: string): Chainable<void>
+      logout(): Chainable<void>
 
       setDocumentStateOnAsyncStorage(documentStateOnAsyncStorage: DocumentStateOnAsyncStorage): Chainable<void>
 
@@ -51,6 +52,7 @@ declare global {
 
       getMessageSent(tag: string, receivedAfter: number): Chainable<Inbox>
 
+      /** This command leaves session on server, but in reality server session will also be deleted by its expiration date automatically. */
       expireSessionCookie(): Chainable<void>
     }
   }
@@ -92,6 +94,17 @@ Cypress.Commands.add('login', (email, password) => {
       },
     }
   )
+})
+Cypress.Commands.add('logout', () => {
+  cy.request({
+    method: 'POST',
+    url: `${Cypress.env('API_BASE_URL')}${API_PATHS.AUTH.LOGOUT.path}`,
+  })
+})
+Cypress.Commands.add('expireSessionCookie', () => {
+  cy.getCookie('connect.sid').then(cookie => {
+    cy.setCookie('connect.sid', cookie.value, { expiry: Date.now() / 1000 })
+  })
 })
 
 Cypress.Commands.add('setDocumentStateOnAsyncStorage', (documentStateOnAsyncStorage: DocumentStateOnAsyncStorage) => {
@@ -135,10 +148,4 @@ Cypress.Commands.add('getMessageSent', (tag, receivedAfter) => {
     method: 'GET',
     url: `${TESTMAIL_ENDPOINT}&tag=${tag}&timestamp_from=${receivedAfter}&livequery=true`
   }).then(resp => resp.body)
-})
-
-Cypress.Commands.add('expireSessionCookie', () => {
-  cy.getCookie('connect.sid').then(cookie => {
-    cy.setCookie('connect.sid', cookie.value, { expiry: Date.now() / 1000 })
-  })
 })

@@ -7,7 +7,6 @@ import SessionStorageController from '../services/sessionStorage/controller';
 const getApiAuthMiddleware: () => RequestHandler = () => {
   return (req, res, next) => {
     try {
-      console.log(req.session)
       if (!req.session.userId) {
         return res.status(401).send({message: 'Access denied. Request is not authorized.'})
       }

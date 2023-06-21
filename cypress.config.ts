@@ -1,2 +1,3 @@
-import config from './cypress/config'
+import getConfig from './cypress/config'
+const config = getConfig()
 export default config

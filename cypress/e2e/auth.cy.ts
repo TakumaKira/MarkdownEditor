@@ -94,6 +94,8 @@ describe('auth', () => {
 
         cy.getBySel('auth-modal-ok-button').click()
         cy.contains(testEmail)
+
+        cy.logout()
       })
     })
   })
@@ -122,6 +124,8 @@ describe('auth', () => {
 
       cy.getBySel('auth-modal-ok-button').click()
       cy.contains(testEmail)
+
+      cy.logout()
     })
 
     it('can be logged out', () => {
@@ -146,6 +150,7 @@ describe('auth', () => {
     })
 
     // Needs to test session expiration on server case for someone trying to extend session by modifying cookie on browser?
+
   })
 
   context('edit account', () => {
@@ -188,6 +193,8 @@ describe('auth', () => {
 
       cy.getBySel('auth-modal-ok-button').click()
       cy.contains(oldEmail)
+
+      cy.logout()
     })
 
     it('sends confirmation email with url including token if email is changed', () => {
@@ -264,6 +271,8 @@ describe('auth', () => {
 
       cy.getBySel('auth-modal-ok-button').click()
       cy.contains(oldEmail)
+
+      cy.logout()
     })
 
     it('shows success message and gets logged in with new email when accessing sent url in html', () => {
@@ -299,6 +308,8 @@ describe('auth', () => {
         cy.getBySel('auth-modal-ok-button').click()
         cy.contains(newEmail)
       })
+
+      cy.logout()
     })
 
     it('changes password immediately and sends confirmation email with url including token if asked both change at the same time', () => {
@@ -390,6 +401,8 @@ describe('auth', () => {
 
       cy.getBySel('auth-modal-ok-button').click()
       cy.contains(oldEmail)
+
+      cy.logout()
     })
 
     it('shows success message and gets logged in with new email when accessing sent url in html', () => {
@@ -444,6 +457,7 @@ describe('auth', () => {
         cy.getBySel('auth-modal-ok-button').click()
         cy.contains(newEmail)
       })
+      cy.logout()
     })
   })
 
@@ -519,6 +533,8 @@ describe('auth', () => {
 
       cy.getBySel('auth-modal-ok-button').click()
       cy.contains(testEmail)
+
+      cy.logout()
     })
 
     it('shows success message and changes password when accessing sent url', () => {
@@ -553,6 +569,8 @@ describe('auth', () => {
         cy.getBySel('auth-modal-ok-button').click()
         cy.contains(testEmail)
       })
+
+      cy.logout()
     })
   })
 
