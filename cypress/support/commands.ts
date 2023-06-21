@@ -50,6 +50,8 @@ declare global {
       retrieveDestinationURLFromSendGridRedirectURL(sendGridRedirectURL: string): Chainable<string>
 
       getMessageSent(tag: string, receivedAfter: number): Chainable<Inbox>
+
+      expireSessionCookie(): Chainable<void>
     }
   }
 }
@@ -133,4 +135,10 @@ Cypress.Commands.add('getMessageSent', (tag, receivedAfter) => {
     method: 'GET',
     url: `${TESTMAIL_ENDPOINT}&tag=${tag}&timestamp_from=${receivedAfter}&livequery=true`
   }).then(resp => resp.body)
+})
+
+Cypress.Commands.add('expireSessionCookie', () => {
+  cy.getCookie('connect.sid').then(cookie => {
+    cy.setCookie('connect.sid', cookie.value, { expiry: Date.now() / 1000 })
+  })
 })

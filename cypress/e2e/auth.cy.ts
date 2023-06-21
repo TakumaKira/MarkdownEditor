@@ -131,6 +131,21 @@ describe('auth', () => {
       cy.getBySel('sidebar-logout-button').click()
       cy.getBySel('sidebar-login-button')
     })
+
+    it('shows dialog when session is expired', () => {
+      cy.login(testEmail, testPassword)
+      cy.visit('/')
+      cy.getBySel('topbar-menu-button').click()
+      cy.contains(testEmail)
+      cy.expireSessionCookie()
+      cy.reload()
+      cy.contains('Please login again.')
+      cy.getBySel('message-modal-ok-button').click()
+      cy.getBySel('topbar-menu-button').click()
+      cy.getBySel('sidebar-login-button')
+    })
+
+    // Needs to test session expiration on server case for someone trying to extend session by modifying cookie on browser?
   })
 
   context('edit account', () => {

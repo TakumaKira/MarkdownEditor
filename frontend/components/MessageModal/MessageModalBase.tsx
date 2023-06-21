@@ -65,6 +65,7 @@ const MessageModalBase = ({
           onBgColorRGB={colors.OrangeHover}
           style={styles.button}
           childrenWrapperStyle={styles.buttonContents}
+          testID="message-modal-ok-button"
         >
           <Text style={[styles.buttonLabel, textStyles.headingM]}>
             {buttonLabel}
