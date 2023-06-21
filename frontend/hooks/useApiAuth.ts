@@ -159,7 +159,7 @@ const useApiAuth = (): void => {
       dispatch(askServerUpdate({documentState}))
       setShouldCheckUpdate(null)
     }
-  }, [shouldCheckUpdate, documentState.isAskingUpdate, shouldCheckUpdate])
+  }, [shouldCheckUpdate, documentState.isAskingUpdate])
 
   React.useEffect(() => {
     socket?.on(DOCUMENT_UPDATED_WS_EVENT, documentsUpdated)

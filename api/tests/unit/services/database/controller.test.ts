@@ -21,7 +21,7 @@ beforeAll(async () => {
   await addUsers()
 })
 afterAll(async () => {
-  await clearUsers()
+  await deleteUsers()
   await dbClientForTest.close()
   await waitForShutdown()
 })
@@ -59,7 +59,7 @@ async function addUserToDatabase(email: string, password: string): Promise<numbe
       WHERE email = ${email};
   `))[0].id
 }
-const clearUsers = async () => {
+const deleteUsers = async () => {
   dbClient.query(sql`
     DELETE FROM users;
   `)

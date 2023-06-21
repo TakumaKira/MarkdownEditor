@@ -239,7 +239,7 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
       if (!isValidPassword) return res.status(400).send({message: 'Password is incorrect.'})
 
       await db.updateUserEmail(user.id, newEmail)
-      await regenerateSession(req, sessionStorage, wsServer)
+      await regenerateSession(req, sessionStorage, wsServer, { id: String(user.id) })
       return res
         .header(HEADER_WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
         .send({message: 'Email change successful.', email: newEmail})
@@ -267,9 +267,7 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
       const token = generateEmailConfirmationToken('ResetPasswordToken', email, {expiresIn: '30m'})
       const {subject, text, html} = getConfirmationEmail('resetPassword', token)
       await mailServer.send(email, subject, text, html)
-      await regenerateSession(req, sessionStorage, wsServer)
       res
-        .header(HEADER_WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
         .send({message: `Confirmation email was sent to ${email}. Please check the inbox and confirm.`})
     } catch (e) {
       next(e)
@@ -309,7 +307,7 @@ export default (wsServer: Server, dbClient: DatabaseClient, sessionStorageClient
       const salt = await bcrypt.genSalt(10)
       const hashedPassword = await bcrypt.hash(password, salt)
       await db.updateUserPassword(user.id, hashedPassword)
-      await regenerateSession(req, sessionStorage, wsServer)
+      await regenerateSession(req, sessionStorage, wsServer, { id: String(user.id) })
       return res
         .header(HEADER_WS_HANDSHAKE_TOKEN_KEY, req.session.wsHandshakeToken)
         .send({message: 'Password reset successful.', email})

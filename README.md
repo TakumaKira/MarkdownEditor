@@ -200,21 +200,19 @@ To open testing window, run the following command.
 
 ```sh
 CYPRESS_BASE_URL=<frontend-url> \
-CYPRESS_MAILOSAUR_API_KEY=<your-mailosaur-api-key> \
 DATABASE_HOST=<your-database-host-ip> \
 MYSQL_DATABASE=markdown_editor \
 MYSQL_USER=markdown_editor_app \
 MYSQL_PASSWORD=<your-password-for-app> \
 API_JWT_SECRET_KEY=<your-api-jwt-secret-key> \
 yarn cypress:open \
---env MAILOSAUR_SERVER_ID=<your-mailosaur-server-id>,API_BASE_URL=<your-api-base-url>
+--env TESTMAIL_APIKEY=<your-testmail-api-key>,TESTMAIL_APIKEY=<your-testmail-namespace>,API_BASE_URL=<your-api-base-url>
 ```
 
 To run tests and record result on [Cypress Cloud](https://docs.cypress.io/guides/cloud/introduction), run the following command.
 
 ```sh
 CYPRESS_BASE_URL=<frontend-url> \
-CYPRESS_MAILOSAUR_API_KEY=<your-mailosaur-api-key> \
 DATABASE_HOST=<your-database-host-ip> \
 MYSQL_DATABASE=markdown_editor \
 MYSQL_USER=markdown_editor_app \
@@ -222,5 +220,5 @@ MYSQL_PASSWORD=<your-password-for-app> \
 API_JWT_SECRET_KEY=<your-api-jwt-secret-key> \
 yarn cypress:record \
 --key <your-cypress-cloud-record-key>
---env MAILOSAUR_SERVER_ID=<your-mailosaur-server-id>,API_BASE_URL=<your-api-base-url>
+--env TESTMAIL_APIKEY=<your-testmail-api-key>,TESTMAIL_APIKEY=<your-testmail-namespace>,API_BASE_URL=<your-api-base-url>
 ```

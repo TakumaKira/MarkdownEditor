@@ -17,7 +17,7 @@ const config = defineConfig({
           return db.query(sql`
             INSERT INTO users (
               email,
-              password,
+              hashed_password,
               is_activated
             )
             VALUES (
@@ -27,7 +27,7 @@ const config = defineConfig({
             )
           `)
         },
-        clearUser(email: string) {
+        deleteUser(email: string) {
           return db.query(sql`
             DELETE FROM users
               WHERE email = ${email};
@@ -79,7 +79,7 @@ const config = defineConfig({
               );
           `)
         },
-        updateDocuments(data: {email: string, documents: Document[]}) {
+        updateDocumentsOnDB(data: {email: string, documents: Document[]}) {
           return db.tx(async _db => {
             const userId: number = (await _db.query(sql`
               SELECT id

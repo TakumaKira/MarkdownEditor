@@ -14,8 +14,8 @@ describe('documents sync', () => {
     cy.task('clearUserDocuments', user2.email)
   })
   after(() => {
-    cy.task('clearUser', user1.email)
-    cy.task('clearUser', user2.email)
+    cy.task('deleteUser', user1.email)
+    cy.task('deleteUser', user2.email)
   })
 
   context('when user signed in for the first time', () => {
@@ -58,6 +58,7 @@ describe('documents sync', () => {
 
   context('edit from the first device', () => {
     it('uploads newly saved document to database', () => {
+      cy.login(user1.email, user1.password)
       const document1: DocumentOnDevice = {
         id: uuidv4(),
         name: "Test document #1.md",
@@ -78,13 +79,13 @@ describe('documents sync', () => {
         lastSyncWithDBAt: null
       }
       cy.setDocumentStateOnAsyncStorage(documentStateOnAsyncStorage)
-      cy.setLoginTokenOnAsyncStorage(user1.email, user1.password)
       cy.visit('/')
-      cy.getBySel('topbar-menu-button').click()
+      cy.wait(100)
       cy.task('getUserDocuments', user1.email).should((documents: Document[]) => {
         expect(documents).to.have.length(1)
         expect(documents[0].id).to.equal(document1.id)
       })
+      cy.getBySel('topbar-menu-button').click()
       cy.contains('New Document').click()
       cy.wait(100)
       cy.task('getUserDocuments', user1.email).should((documents: Document[]) => {
@@ -126,7 +127,7 @@ describe('documents sync', () => {
       const documents: Document[] = [
         document1,
       ]
-      cy.task('updateDocuments', {email: user1.email, documents})
+      cy.task('updateDocumentsOnDB', {email: user1.email, documents})
       const documentStateOnAsyncStorage: DocumentStateOnAsyncStorage = {
         documentList: [],
         documentOnEdit: {
@@ -155,6 +156,7 @@ describe('documents sync', () => {
 
   context('the first device gets result of edit from the second device', () => {
     it('the first device gets updated documents in real time when the second device uploaded updates', () => {
+      cy.login(user1.email, user1.password)
       const documentFromOtherDevice: Document = {
         id: uuidv4(),
         name: 'Document from other device.md',
@@ -177,7 +179,6 @@ describe('documents sync', () => {
         lastSyncWithDBAt: null
       }
       cy.setDocumentStateOnAsyncStorage(documentStateOnAsyncStorage)
-      cy.setLoginTokenOnAsyncStorage(user1.email, user1.password)
       cy.visit('/')
       cy.getBySel('topbar-menu-button').click()
       cy.getBySel('sidebar-documents-list').should('not.contain.text', documentFromOtherDevice.name)
