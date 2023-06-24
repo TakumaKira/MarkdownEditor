@@ -24,7 +24,7 @@ To run it on docker:
 
 ```sh
 MYSQL_ROOT_PASSWORD=<mysql-server-root-password> \
-MYSQL_PASSWORD=<password-for-app-as-a-database-user> \
+MYSQL_PASSWORD=<password-for-api-as-a-database-user> \
 docker compose -p markdown-dev-db up
 ```
 
@@ -41,7 +41,7 @@ Then initialize it:
 ```sh
 MYSQL_CONTAINER_NAME=db-dev \
 MYSQL_ROOT_PASSWORD=<mysql-server-root-password> \
-MYSQL_PASSWORD=<password-for-app-as-a-database-user> \
+MYSQL_PASSWORD=<password-for-api-as-a-database-user> \
 ./init-docker.sh
 ```
 
@@ -53,11 +53,11 @@ To use MySQL Community Server, start your mysql local server, and to set up data
 
 ```sh
 MYSQL_ROOT_PASSWORD=<your-local-mysql-server-root-password> \
-MYSQL_PASSWORD=<password-for-app-as-a-database-user> \
+MYSQL_PASSWORD=<password-for-api-as-a-database-user> \
 ./init.sh
 ```
 
-After running one of these commands, you can access the database using [MySQL Workbench](https://dev.mysql.com/downloads/workbench/) with `Hostname: localhost` / `Port: 3306` / `Username: root` + `Password: <mysql-server-root-password>` or `Username: markdown_editor_app` + `Password: <password-for-app-as-a-database-user>`.
+After running one of these commands, you can access the database using [MySQL Workbench](https://dev.mysql.com/downloads/workbench/) with `Hostname: localhost` / `Port: 3306` / `Username: root` + `Password: <mysql-server-root-password>` or `Username: markdown_api` + `Password: <password-for-api-as-a-database-user>`.
 
 *If you want to use mysql command to the database running inside container, you need to run the command **inside** the container.*
 

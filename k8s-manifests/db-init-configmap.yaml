@@ -5,21 +5,21 @@ metadata:
 data:
   1-init-database.sql: |
     SET @@global.time_zone = '+00:00';
-    CREATE DATABASE markdown_editor;
+    CREATE DATABASE markdown_db;
 
   2-init-user.sh: |
     #!/bin/bash
 
     mysql -uroot -p$MYSQL_ROOT_PASSWORD << EOF
-    DROP USER IF EXISTS markdown_editor_app;
-    CREATE USER markdown_editor_app IDENTIFIED BY '$MYSQL_PASSWORD';
+    DROP USER IF EXISTS markdown_api;
+    CREATE USER markdown_api IDENTIFIED BY '$MYSQL_PASSWORD';
     GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE
-      ON markdown_editor.*
-      TO markdown_editor_app;
+      ON markdown_db.*
+      TO markdown_api;
     EOF
 
   3-init-tables.sql: |
-    USE markdown_editor;
+    USE markdown_db;
 
     CREATE TABLE users (
       id INT NOT NULL auto_increment PRIMARY KEY,
@@ -41,7 +41,7 @@ data:
     );
 
   4-init-user-procedures.sql: |
-    USE markdown_editor;
+    USE markdown_db;
 
     DROP PROCEDURE IF EXISTS create_user;
     DELIMITER $$
@@ -111,6 +111,18 @@ data:
     END $$
     DELIMITER ;
 
+    DROP PROCEDURE IF EXISTS get_user_email;
+    DELIMITER $$
+    CREATE PROCEDURE get_user_email (
+      p_id INT
+    )
+    BEGIN
+      SELECT email
+        FROM users
+        WHERE id = p_id;
+    END $$
+    DELIMITER ;
+
     DROP PROCEDURE IF EXISTS update_user;
     DELIMITER $$
     CREATE PROCEDURE update_user (
@@ -153,7 +165,7 @@ data:
     DELIMITER ;
 
   5-init-document-procedures.sql: |
-    USE markdown_editor;
+    USE markdown_db;
 
     DROP PROCEDURE IF EXISTS get_document;
     DELIMITER $$

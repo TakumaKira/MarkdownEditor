@@ -1,6 +1,6 @@
 import { API_PATHS } from "../../constants"
 
-export default function getResetPasswordConfirmation(frontendProtocol: string, frontendDomain: string, token: string, frontendPort?: string): {subject: string, text: string, html: string} {
+export default function getResetPasswordConfirmation(frontendProtocol: string, frontendDomain: string, token: string, frontendPort?: number): {subject: string, text: string, html: string} {
   return {
     subject: 'Markdown: You asked to reset your password.',
     text: `Please access to ${frontendProtocol}://${frontendDomain}${frontendPort !== undefined ? `:${frontendPort}` : ''}${API_PATHS.AUTH.CONFIRM_RESET_PASSWORD.dir}?token=${token} to confirm your email.`,

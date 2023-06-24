@@ -1,6 +1,6 @@
 import { API_PATHS } from "../../constants"
 
-export default function getSignupEmailConfirmation(frontendProtocol: string, frontendDomain: string, token: string, frontendPort?: string): {subject: string, text: string, html: string} {
+export default function getSignupEmailConfirmation(frontendProtocol: string, frontendDomain: string, token: string, frontendPort?: number): {subject: string, text: string, html: string} {
   return {
     subject: 'Welcome to Markdown Editor!',
     text: `Please access to ${frontendProtocol}://${frontendDomain}${frontendPort !== undefined ? `:${frontendPort}` : ''}${API_PATHS.AUTH.CONFIRM_SIGNUP_EMAIL.dir}?token=${token} to confirm your email.`,

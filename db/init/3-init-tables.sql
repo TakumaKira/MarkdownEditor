@@ -1,6 +1,6 @@
 -- You must sync scripts here manually with /k8s-manifests/db-init-configmap.yaml
 
-USE markdown_editor;
+USE markdown_db;
 
 CREATE TABLE users (
 	id INT NOT NULL auto_increment PRIMARY KEY,

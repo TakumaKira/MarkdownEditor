@@ -8,7 +8,7 @@
 -- SIGNAL SQLSTATE '45021' SET MESSAGE_TEXT = "Another user's document is using the same id.";
 -- SIGNAL SQLSTATE '45022' SET MESSAGE_TEXT = "Another document of this user is using the same id.";
 
-USE markdown_editor;
+USE markdown_db;
 
 DROP PROCEDURE IF EXISTS get_document;
 DELIMITER $$

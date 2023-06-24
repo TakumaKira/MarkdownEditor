@@ -16,11 +16,15 @@ const jwtSecretKey = process.env.JWT_SECRET_KEY
 // Database settings
 const databaseHost = process.env.DATABASE_HOST
 const mysqlDatabase = process.env.MYSQL_DATABASE
+const mysqlPort = process.env.MYSQL_PORT
 const mysqlUser = process.env.MYSQL_USER
 const mysqlPassword = process.env.MYSQL_PASSWORD
 
 // Redis settings
 const redisHost = process.env.REDIS_HOST
+const redisPort = process.env.REDIS_PORT
+const redisUser = process.env.REDIS_USER
+const redisPassword = process.env.REDIS_PASSWORD
 
 // Confirmation email settings
 /** Needed to be set to the address you own. */
@@ -91,6 +95,7 @@ if (process.env.NODE_ENV !== 'test') {
   if (
     !databaseHost
     || !mysqlDatabase
+    || !mysqlPort
     || !mysqlUser
     || !mysqlPassword
   ) {
@@ -99,6 +104,9 @@ if (process.env.NODE_ENV !== 'test') {
     }
     if (!mysqlDatabase) {
       console.error('MYSQL_DATABASE is not defined.')
+    }
+    if (!mysqlPort) {
+      console.error('MYSQL_PORT is not defined.')
     }
     if (!mysqlUser) {
       console.error('MYSQL_USER is not defined.')
@@ -113,8 +121,22 @@ if (process.env.NODE_ENV !== 'test') {
   // Redis settings
   if (
     !redisHost
+    || !redisPort
+    || !redisUser
+    || !redisPassword
   ) {
-    console.error('REDIS_HOST is not defined.')
+    if (!redisHost) {
+      console.error('REDIS_HOST is not defined.')
+    }
+    if (!redisPort) {
+      console.error('REDIS_PORT is not defined.')
+    }
+    if (!redisUser) {
+      console.error('REDIS_USER is not defined.')
+    }
+    if (!redisPassword) {
+      console.error('REDIS_PASSWORD is not defined.')
+    }
 
     isMissing = true
   }
@@ -194,19 +216,23 @@ export const WS_PORT = Number(wsPort)
 export const FRONTEND_PROTOCOL = frontendProtocol
 export const FRONTEND_DOMAIN = frontendDomain!
 /** This is used only frontend is in development mode. */
-export const FRONTEND_PORT = frontendPort
+export const FRONTEND_PORT = frontendPort !== undefined ? Number(frontendPort) : undefined
 
 // Json Web Token settings
 export const JWT_SECRET_KEY = jwtSecretKey!
 
-// Redis settings
-export const REDIS_HOST = redisHost || 'localhost'
-
 // Database settings
 export const DATABASE_HOST = databaseHost!
 export const MYSQL_DATABASE = mysqlDatabase!
+export const MYSQL_PORT = Number(mysqlPort!)
 export const MYSQL_USER = mysqlUser!
 export const MYSQL_PASSWORD = mysqlPassword!
+
+// Redis settings
+export const REDIS_HOST = redisHost!
+export const REDIS_PORT = Number(redisPort!)
+export const REDIS_USER = redisUser!
+export const REDIS_PASSWORD = redisPassword!
 
 // Confirmation email settings
 export const SENDER_EMAIL = senderEmail!

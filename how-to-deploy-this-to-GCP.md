@@ -79,11 +79,11 @@ mysql -uroot -p<your-database-root-password> -h0.0.0.0 < ./db/init/1-init-databa
 ```
 
 ```sql
-mysql -uroot -p<your-database-root-password> -h0.0.0.0 -e "CREATE USER markdown_editor_app IDENTIFIED BY 'password-for-app';"
+mysql -uroot -p<your-database-root-password> -h0.0.0.0 -e "CREATE USER markdown_api IDENTIFIED BY 'password-for-api';"
 ```
 
 ```sql
-mysql -uroot -p<your-database-root-password> -h0.0.0.0 -e "GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON markdown_editor.* TO markdown_editor_app;"
+mysql -uroot -p<your-database-root-password> -h0.0.0.0 -e "GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON markdown_db.* TO markdown_api;"
 ```
 
 *This is granting required privileges to the app as a database user.*
@@ -175,8 +175,9 @@ Set environment variables below.
 - `API_PORT`: Just set `3000`.
 - `WS_PORT`: Just set `3001`.
 - `DATABASE_HOST`: Just set `127.0.0.1`.
-- `MYSQL_DATABASE`: Just set `markdown_editor`.
-- `MYSQL_USER`: Just set `markdown_editor_app`.
+- `MYSQL_DATABASE`: Just set `markdown_db`.
+- `MYSQL_PORT`: Just set `3306`.
+- `MYSQL_USER`: Just set `markdown_api`.
 - `SENDER_EMAIL`: Sender email of confirmation emails like `your-email-address-to-send-confirmation-emails@your-email-service-provider.com`.
 - `CONFIRMATION_EMAIL_SERVER_TYPE`: You can choose from `StandardMailServer | SendGrid | Gmail`.
 
@@ -207,7 +208,8 @@ If you choose `StandardMailServer` as `CONFIRMATION_EMAIL_SERVER_TYPE`:
 ```sh
 kubectl create secret generic api-secret \
   --from-literal=JWT_SECRET_KEY=<secret-key-for-api-to-verify-json-web-tokens> \
-  --from-literal=MYSQL_PASSWORD=<password-for-app-as-a-database-user> \
+  --from-literal=MYSQL_PASSWORD=<password-for-api-as-a-database-user> \
+  --from-literal=REDIS_PASSWORD=<password-for-api-as-a-redis-user> \
   --from-literal=STANDARD_MAIL_SERVER_HOST=<your-email-service-provider.com> \
   --from-literal=STANDARD_MAIL_SERVER_USER=<your-email-user-name> \
   --from-literal=STANDARD_MAIL_SERVER_PASS=<your-email-user-password>
@@ -218,7 +220,8 @@ If you choose `SendGrid` as `CONFIRMATION_EMAIL_SERVER_TYPE`:
 ```sh
 kubectl create secret generic api-secret \
   --from-literal=JWT_SECRET_KEY=<secret-key-for-api-to-verify-json-web-tokens> \
-  --from-literal=MYSQL_PASSWORD=<password-for-app-as-a-database-user> \
+  --from-literal=MYSQL_PASSWORD=<password-for-api-as-a-database-user> \
+  --from-literal=REDIS_PASSWORD=<password-for-api-as-a-redis-user> \
   --from-literal=SENDGRID_API_KEY=<api-key-you-obtain-from-SendGrid>
 ```
 
@@ -227,7 +230,8 @@ If you choose `Gmail` as `CONFIRMATION_EMAIL_SERVER_TYPE`:
 ```sh
 kubectl create secret generic api-secret \
   --from-literal=JWT_SECRET_KEY=<secret-key-for-api-to-verify-json-web-tokens> \
-  --from-literal=MYSQL_PASSWORD=<password-for-app-as-a-database-user> \
+  --from-literal=MYSQL_PASSWORD=<password-for-api-as-a-database-user> \
+  --from-literal=REDIS_PASSWORD=<password-for-api-as-a-redis-user> \
   --from-literal=OAUTH_USER=<your_oAuth_user> \
   --from-literal=OAUTH_CLIENT_ID=<your_oAuth_client_id> \
   --from-literal=OAUTH_CLIENT_SECRET=<your-oauth-client-secret> \
@@ -248,6 +252,11 @@ If you choose `StandardMailServer` as `CONFIRMATION_EMAIL_SERVER_TYPE`:
           valueFrom:
             secretKeyRef:
               key: MYSQL_PASSWORD
+              name: api-secret
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: REDIS_PASSWORD
               name: api-secret
         - name: STANDARD_MAIL_SERVER_HOST
           valueFrom:
@@ -279,6 +288,11 @@ If you choose `SendGrid` as `CONFIRMATION_EMAIL_SERVER_TYPE`:
             secretKeyRef:
               key: MYSQL_PASSWORD
               name: api-secret
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: REDIS_PASSWORD
+              name: api-secret
         - name: SENDGRID_API_KEY
           valueFrom:
             secretKeyRef:
@@ -298,6 +312,11 @@ If you choose `Gmail` as `CONFIRMATION_EMAIL_SERVER_TYPE`:
           valueFrom:
             secretKeyRef:
               key: MYSQL_PASSWORD
+              name: api-secret
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: REDIS_PASSWORD
               name: api-secret
         - name: OAUTH_USER
           valueFrom:

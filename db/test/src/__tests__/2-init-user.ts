@@ -8,17 +8,17 @@ afterAll(() => {
   return db.dispose()
 })
 
-test('markdown_editor_app has minimum required grants', async () => {
+test('markdown_api has minimum required grants', async () => {
   await expect(
     db.query(sql`
-      SHOW GRANTS FOR 'markdown_editor_app';
+      SHOW GRANTS FOR 'markdown_api';
     `)
   ).resolves.toEqual([
     {
-      "Grants for markdown_editor_app@%": "GRANT USAGE ON *.* TO `markdown_editor_app`@`%`",
+      "Grants for markdown_api@%": "GRANT USAGE ON *.* TO `markdown_api`@`%`",
     },
     {
-      "Grants for markdown_editor_app@%": "GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON `markdown_editor`.* TO `markdown_editor_app`@`%`",
+      "Grants for markdown_api@%": "GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON `markdown_db`.* TO `markdown_api`@`%`",
     },
   ]);
 })

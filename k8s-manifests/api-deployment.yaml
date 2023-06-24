@@ -60,6 +60,11 @@ spec:
                 configMapKeyRef:
                   key: MYSQL_DATABASE
                   name: api-configmap
+            - name: MYSQL_PORT
+              valueFrom:
+                configMapKeyRef:
+                  key: MYSQL_PORT
+                  name: api-configmap
             - name: MYSQL_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -97,6 +102,21 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   key: REDIS_HOST
+                  name: api-configmap
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  key: REDIS_PORT
+                  name: api-configmap
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: REDIS_PASSWORD
+                  name: api-secret
+            - name: REDIS_USER
+              valueFrom:
+                configMapKeyRef:
+                  key: REDIS_USER
                   name: api-configmap
             - name: SENDER_EMAIL
               valueFrom:

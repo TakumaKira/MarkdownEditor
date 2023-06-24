@@ -24,7 +24,23 @@ spec:
         io.kompose.service: redis
     spec:
       containers:
-        - image: redis:6.2.12
+        - env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: REDIS_PASSWORD
+                  name: redis-secret
+            - name: REDIS_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: REDIS_ROOT_PASSWORD
+                  name: redis-secret
+            - name: REDIS_USER
+              valueFrom:
+                configMapKeyRef:
+                  key: REDIS_USER
+                  name: redis-configmap
+          image: redis
           name: redis
           ports:
             - containerPort: 6379

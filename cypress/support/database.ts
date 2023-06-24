@@ -1,8 +1,8 @@
 import createConnectionPool from '@databases/mysql';
 
 export default () => {
-  const { DATABASE_HOST, MYSQL_DATABASE, MYSQL_PASSWORD, MYSQL_USER } = process.env
-  const dbClient = createConnectionPool(`mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@${DATABASE_HOST}:3306/${MYSQL_DATABASE}`)
+  const { DATABASE_HOST, MYSQL_DATABASE, MYSQL_PORT, MYSQL_PASSWORD, MYSQL_USER } = process.env
+  const dbClient = createConnectionPool(`mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@${DATABASE_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}`)
   const closeDBClient = async () => {
     return dbClient.dispose()
       .then(() => console.info('Database client disposed.'))

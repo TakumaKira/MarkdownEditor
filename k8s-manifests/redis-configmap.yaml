@@ -1,0 +1,9 @@
+apiVersion: v1
+data:
+  REDIS_USER: markdown_api
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: redis-redis-configmap
+  name: redis-configmap

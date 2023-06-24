@@ -1,9 +1,9 @@
 import { createClient } from 'redis'
-import { REDIS_HOST } from '../../getEnvs'
+import { REDIS_HOST, REDIS_PORT, REDIS_USER, REDIS_PASSWORD } from '../../getEnvs'
 
 export default () => {
   const sessionStorageClient = createClient({
-    url: `redis://${REDIS_HOST}`
+    url: `redis://${REDIS_USER}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}`
   })
   const sessionStorageClientIsReady = sessionStorageClient.connect()
     .then(() => {

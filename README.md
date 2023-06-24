@@ -123,7 +123,13 @@ For db, please run below:
 ```sh
 kubectl create secret generic db-secret \
   --from-literal=MYSQL_ROOT_PASSWORD=<password-for-root-user-of-your-local-mysql-container> \
-  --from-literal=MYSQL_PASSWORD=<password-for-app-as-a-database-user>
+  --from-literal=MYSQL_PASSWORD=<password-for-api-as-a-database-user>
+```
+
+```sh
+kubectl create secret generic redis-secret \
+  --from-literal=REDIS_ROOT_PASSWORD=<password-for-root-user-of-your-local-redis-container> \
+  --from-literal=REDIS_PASSWORD=<password-for-api-as-a-redis-user>
 ```
 
 And below is for api:
@@ -131,7 +137,8 @@ And below is for api:
 ```sh
 kubectl create secret generic api-secret \
   --from-literal=JWT_SECRET_KEY=<secret-key-for-api-to-verify-json-web-tokens> \
-  --from-literal=MYSQL_PASSWORD=<password-for-app-as-a-database-user> \
+  --from-literal=MYSQL_PASSWORD=<password-for-api-as-a-database-user> \
+  --from-literal=REDIS_PASSWORD=<password-for-api-as-a-redis-user> \
   --from-literal=STANDARD_MAIL_SERVER_HOST=<your-email-service-provider.com> \
   --from-literal=STANDARD_MAIL_SERVER_USER=<your-email-user-name> \
   --from-literal=STANDARD_MAIL_SERVER_PASS=<your-email-user-password>
@@ -201,9 +208,10 @@ To open testing window, run the following command.
 ```sh
 CYPRESS_BASE_URL=<frontend-url> \
 DATABASE_HOST=<your-database-host-ip> \
-MYSQL_DATABASE=markdown_editor \
-MYSQL_USER=markdown_editor_app \
-MYSQL_PASSWORD=<your-password-for-app> \
+MYSQL_DATABASE=markdown_db \
+MYSQL_PORT=3306 \
+MYSQL_USER=markdown_api \
+MYSQL_PASSWORD=<your-password-for-api> \
 API_JWT_SECRET_KEY=<your-api-jwt-secret-key> \
 yarn cypress:open \
 --env TESTMAIL_APIKEY=<your-testmail-api-key>,TESTMAIL_APIKEY=<your-testmail-namespace>,API_BASE_URL=<your-api-base-url>
@@ -214,9 +222,10 @@ To run tests and record result on [Cypress Cloud](https://docs.cypress.io/guides
 ```sh
 CYPRESS_BASE_URL=<frontend-url> \
 DATABASE_HOST=<your-database-host-ip> \
-MYSQL_DATABASE=markdown_editor \
-MYSQL_USER=markdown_editor_app \
-MYSQL_PASSWORD=<your-password-for-app> \
+MYSQL_DATABASE=markdown_db \
+MYSQL_PORT=3306 \
+MYSQL_USER=markdown_api \
+MYSQL_PASSWORD=<your-password-for-api> \
 API_JWT_SECRET_KEY=<your-api-jwt-secret-key> \
 yarn cypress:record \
 --key <your-cypress-cloud-record-key>

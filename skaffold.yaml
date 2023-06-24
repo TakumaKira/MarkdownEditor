@@ -4,6 +4,10 @@ metadata:
   name: markdowneditor
 build:
   artifacts:
+    - image: redis
+      context: redis
+      docker:
+        dockerfile: Dockerfile
     - image: api
       context: api
       docker:

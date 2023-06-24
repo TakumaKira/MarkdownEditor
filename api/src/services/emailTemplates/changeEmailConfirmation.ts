@@ -1,6 +1,6 @@
 import { API_PATHS } from "../../constants"
 
-export default function getChangeEmailConfirmation(frontendProtocol: string, frontendDomain: string, token: string, frontendPort?: string): {subject: string, text: string, html: string} {
+export default function getChangeEmailConfirmation(frontendProtocol: string, frontendDomain: string, token: string, frontendPort?: number): {subject: string, text: string, html: string} {
   return {
     subject: 'Markdown: Confirm your new email address.',
     text: `Please access to ${frontendProtocol}://${frontendDomain}${frontendPort !== undefined ? `:${frontendPort}` : ''}${API_PATHS.AUTH.CONFIRM_CHANGE_EMAIL.dir}?token=${token} to confirm your email.`,

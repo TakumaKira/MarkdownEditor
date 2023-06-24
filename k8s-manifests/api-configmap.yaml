@@ -5,9 +5,12 @@ data:
   FRONTEND_DOMAIN: localhost
   FRONTEND_PORT: "4503" # Expecting Kubernetes port forwards frontend to this port
   DATABASE_HOST: db
-  MYSQL_DATABASE: markdown_editor
-  MYSQL_USER: markdown_editor_app
+  MYSQL_DATABASE: markdown_db
+  MYSQL_PORT: "3306"
+  MYSQL_USER: markdown_api
   REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_USER: markdown_api
   SENDER_EMAIL: markdown@kirakiraworx.com
   CONFIRMATION_EMAIL_SERVER_TYPE: SendGrid # Options: StandardMailServer | SendGrid | Gmail
 kind: ConfigMap
