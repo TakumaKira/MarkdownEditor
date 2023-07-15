@@ -23,7 +23,7 @@ const mysqlPassword = process.env.MYSQL_PASSWORD
 // Redis settings
 const redisHost = process.env.REDIS_HOST
 const redisPort = process.env.REDIS_PORT
-const redisUser = process.env.REDIS_USER
+const redisUser = process.env.REDIS_USER || 'default'
 const redisPassword = process.env.REDIS_PASSWORD
 
 // Confirmation email settings
@@ -122,17 +122,12 @@ if (process.env.NODE_ENV !== 'test') {
   if (
     !redisHost
     || !redisPort
-    || !redisUser
-    || !redisPassword
   ) {
     if (!redisHost) {
       console.error('REDIS_HOST is not defined.')
     }
     if (!redisPort) {
       console.error('REDIS_PORT is not defined.')
-    }
-    if (!redisUser) {
-      console.error('REDIS_USER is not defined.')
     }
     if (!redisPassword) {
       console.error('REDIS_PASSWORD is not defined.')
@@ -231,8 +226,8 @@ export const MYSQL_PASSWORD = mysqlPassword!
 // Redis settings
 export const REDIS_HOST = redisHost!
 export const REDIS_PORT = Number(redisPort!)
-export const REDIS_USER = redisUser!
-export const REDIS_PASSWORD = redisPassword!
+export const REDIS_USER = redisUser
+export const REDIS_PASSWORD = redisPassword
 
 // Confirmation email settings
 export const SENDER_EMAIL = senderEmail!
