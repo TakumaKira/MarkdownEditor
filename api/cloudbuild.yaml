@@ -5,7 +5,7 @@ steps:
   dir: api
 # Build image
 - name: gcr.io/cloud-builders/docker
-  args: ['build', '-t', 'containers/api:$COMMIT_SHA', '.']
+  args: ['build', '-t', '$LOCATION-docker.pkg.dev/$PROJECT_ID/containers/api:$COMMIT_SHA', '.']
   dir: api
 images:
-- containers/api:$COMMIT_SHA
+- $LOCATION-docker.pkg.dev/$PROJECT_ID/containers/api:$COMMIT_SHA
