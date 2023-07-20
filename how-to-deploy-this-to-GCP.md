@@ -459,7 +459,7 @@ kubectl apply \
 -f ./gke-manifests/ingress-static-ip.yaml
 ```
 
-At this point, you should be able to access our frontend app from your browser with the address like `https://<YOUR-DOMAIN>` and you can see Signup/Login feature is working as API also works publicly.
+At this point, you should be able to access our frontend app from your browser with the address like `https://<YOUR-DOMAIN>` and you can see Signup/Login feature is working as API also works publicly(but may take a while before working as this involves DNS).
 
 ##### Redirect HTTP access to HTTPS
 
@@ -467,16 +467,15 @@ If you try to access the same domain with HTTP protocol(e.g. accessing `http://<
 Ideally, access using HTTP protocol should be redirected to HTTPS protocol.
 
 - Go Network services/Load balancing.
-- Create a load balancer using `HTTP(S) Load Balancing`.
+- Create a load balancer using `Application Load Balancer (HTTP/S)`.
 - Internet facing or internal only: `From Internet to my VMs or serverless services`
-- Global or Regional: `Global HTTP(S) Load Balancer (classic)`
+- Global or Regional: `Global external Application Load Balancer`
 - Name: `http-redirect`
 
 Frontend configuration
 
 - Name: `http-redirect-frontend`
 - Protocol: `HTTP`
-- Network Service Tier: `Premium`
 - IP version: `IPv4`
 - IP address: `markdown-static-ip`
 - Port: `80`
@@ -484,6 +483,10 @@ Frontend configuration
 Backend configuration
 
 - Skip this section.
+
+Routing rules
+
+- Mode: `Advanced host and path rule`
 
 Host and path rules
 
@@ -494,6 +497,7 @@ Edit host and path rules
 For ` (Default) Host and path rule for any unmatched `:
 
 - Action: `Redirect the client to different host/path`
+- Redirect response code: `303 - See Other`
 - HTTPS redirect: Check `Enable`
 
 After create this load balancer, you will see the access to `http://<YOUR-DOMAIN>` is redirected to `https://<YOUR-DOMAIN>`.
@@ -545,8 +549,8 @@ Set Runtime environment variables:
 Set source code:
 
 - Runtime: `Python 3.7`
-- Entry Point: `onNewImage`
 - Source Code: Select `Cloud Source repository`
+- Entry Point: `onNewImage`
 - Project ID: `<YOUR-PROJECT-ID>`
 - Repository: `github_yourgithubaccountname_update-k8s-deployment-cloudfunc`
 - Select `Branch`/`master`.
