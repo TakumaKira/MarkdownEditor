@@ -72,17 +72,19 @@ See [this document](https://cloud.google.com/sql/docs/mysql/connect-admin-proxy)
 
 #### Initialize database
 
+*If MySQL shell(which makes mysql commands available) is not installed on your computer, please install one, following [this](https://dev.mysql.com/doc/mysql-shell/8.0/en/mysql-shell-install.html).*
+
 When you are connecting to the Cloud SQL instance, run following commands in order:
 
 ```sh
 mysql -uroot -p<your-database-root-password> -h0.0.0.0 < ./db/init/1-init-database.sql
 ```
 
-```sql
-mysql -uroot -p<your-database-root-password> -h0.0.0.0 -e "CREATE USER markdown_api IDENTIFIED BY 'password-for-api';"
+```sh
+mysql -uroot -p<your-database-root-password> -h0.0.0.0 -e "CREATE USER markdown_api IDENTIFIED BY '<password-for-api>';"
 ```
 
-```sql
+```sh
 mysql -uroot -p<your-database-root-password> -h0.0.0.0 -e "GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON markdown_db.* TO markdown_api;"
 ```
 
